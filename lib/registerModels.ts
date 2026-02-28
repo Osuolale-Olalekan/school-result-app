@@ -1,0 +1,11 @@
+import "@/models/User";
+import "@/models/Student";
+import "@/models/Teacher";
+import "@/models/Parent";
+import "@/models/Class";
+import "@/models/Subject";
+import "@/models/Notification";
+import "@/models/AuditLog";
+import "@/models/ReportCard";
+import "@/models/Session";
+import "@/models/PaymentRecord"
