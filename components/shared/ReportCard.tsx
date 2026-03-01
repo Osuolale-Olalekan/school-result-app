@@ -2509,7 +2509,7 @@ export default function ReportCardComponent({
                 }}
               >
                 <p style={{ margin: 0 }}>
-                  📍 NO 5C SIYANBOLA STREET, OSOGBO, OSUN STATE
+                  📍 NO 12 SIYANBOLA STREET, OSOGBO, OSUN STATE
                 </p>
                 <p style={{ margin: 0 }}>
                   📞 08069825847, 08067110930 &nbsp;|&nbsp; ✉️

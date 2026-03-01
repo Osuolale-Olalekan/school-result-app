@@ -61,7 +61,7 @@ const FEATURES = [
 const PROGRAMS = [
   {
     level: "Primary School",
-    classes: ["Primary 2", "Primary 3", "Primary 4", "Primary 5"],
+    classes: ["Nurseries", "Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5"],
     description: "A nurturing foundation that builds lifelong learners with strong academic and moral values.",
     icon: "🌱",
     accent: "#0ea5e9",
@@ -698,7 +698,7 @@ export default function LandingPage() {
             {[
               { icon: Phone, label: "Phone", value: "08069825847, 08067110930", href: "tel:+2348069825847, +2348067110930" },
               { icon: Mail, label: "Email", value: "godswaygroupofschools@gmail.com", href: "mailto:godswaygroupofschools@gmail.com" },
-              { icon: MapPin, label: "Address", value: "No 5 Siyanbola Street, Osogbo, Osun-State" },
+              { icon: MapPin, label: "Address", value: "No 12 Siyanbola Street, Osogbo, Osun-State" },
             ].map((contact) => (
               <motion.a
                 key={contact.label}
