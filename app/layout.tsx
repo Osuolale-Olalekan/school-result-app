@@ -3,6 +3,7 @@ import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import Script from "next/script";
 
 const displayFont = Playfair_Display({
   subsets: ["latin"],
@@ -17,13 +18,23 @@ const bodyFont = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://gods-way-app.vercel.app"),
   title: {
     default: "God's Way Model Groups of Schools",
     template: "%s | GWMGS",
   },
   description:
     "A world-class school management system for God's Way Model Groups of Schools. Excellence, Integrity, and Faith.",
-  keywords: ["school management", "education", "Nigeria", "Gods way", "GWMGS", "school results", "report cards", "student management"],
+  keywords: [
+    "school management",
+    "education",
+    "Nigeria",
+    "Gods way",
+    "GWMGS",
+    "school results",
+    "report cards",
+    "student management",
+  ],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -61,22 +72,33 @@ export const metadata: Metadata = {
     ],
   },
 
+  // ── Open Graph (Facebook, WhatsApp, LinkedIn, Telegram) ──
   openGraph: {
     title: "God's Way Model Groups of Schools",
     description:
       "A world-class school management system for God's Way Model Groups of Schools. Excellence, Integrity, and Faith.",
-    url: "https://www.gwmgs.com",
-    siteName: "GWMGS",
+    url: "https://gods-way-app.vercel.app",
+    siteName: "God's Way Model Groups of Schools",
     images: [
       {
-        url: "/icons/icon/favicon-16x16.png",
+        url: "https://gods-way-app.vercel.app/og-image.png",
         width: 1200,
         height: 630,
         alt: "God's Way Model Groups of Schools",
+        type: "image/png",
       },
     ],
     locale: "en_US",
     type: "website",
+  },
+
+  // ── Twitter / X ──
+  twitter: {
+    card: "summary_large_image",
+    title: "God's Way Model Groups of Schools",
+    description:
+      "A world-class school management system for God's Way Model Groups of Schools. Excellence, Integrity, and Faith.",
+    images: ["https://gods-way-app.vercel.app/og-image.png"],
   },
 };
 
@@ -103,6 +125,25 @@ export default function RootLayout({
               style: { fontFamily: "var(--font-body)" },
             }}
           />
+          {/* Tawk.to Live Chat Widget */}
+          <Script
+            id="tawk-to"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+      var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+      (function(){
+        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+        s1.async=true;
+        s1.src='https://embed.tawk.to/69a40450a8b9521c367287f5/1jikb1mv3';
+        s1.charset='UTF-8';
+        s1.setAttribute('crossorigin','*');
+        s0.parentNode.insertBefore(s1,s0);
+      })();
+    `,
+            }}
+          />
+          {/* End of Tawk.to Script */}
         </SessionProvider>
       </body>
     </html>
