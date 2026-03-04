@@ -24,10 +24,12 @@ export async function initializePaystackPayment(data: {
 
   const json = await res.json() as {
     status: boolean;
+    message?: string;
     data: { authorization_url: string; access_code: string; reference: string };
   };
 
-  if (!json.status) throw new Error("Failed to initialize Paystack payment");
+  // if (!json.status) throw new Error("Failed to initialize Paystack payment");
+  if (!json.status) throw new Error(`Paystack error: ${json.message}`);
   return json.data;
 }
 
