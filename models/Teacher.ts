@@ -6,7 +6,7 @@ export interface ITeacherDocument extends Document {
   qualification?: string;
   specialization?: string;
   dateOfEmployment?: Date;
-  children?: mongoose.Types.ObjectId[]; // For parent access to students
+  // children?: mongoose.Types.ObjectId[]; // For parent access to students
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,7 +17,7 @@ const TeacherSchema = new Schema<ITeacherDocument>(
     qualification: { type: String },
     specialization: { type: String },
     dateOfEmployment: { type: Date },
-    children: [{ type: Schema.Types.ObjectId, ref: "student" }], // For teacher access to students
+    // children: [{ type: Schema.Types.ObjectId, ref: "student" }], // For teacher access to students
   },
   { timestamps: true }
 );

@@ -86,7 +86,7 @@ function baseTemplate(content: string): string {
         <div style="max-width:600px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
           <div style="background:linear-gradient(135deg,#1e3a5f 0%,#0a1628 100%);padding:32px;text-align:center;">
             <h1 style="color:#f59e0b;font-size:20px;margin:0 0 4px;">${SCHOOL}</h1>
-            <p style="color:#94a3b8;font-size:12px;margin:0;">Excellence • Integrity • Faith</p>
+            <p style="color:#94a3b8;font-size:12px;margin:0;">Sowing the Seed of Merit and Excellence</p>
           </div>
           <div style="padding:32px;">
             ${content}

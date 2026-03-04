@@ -12,8 +12,9 @@ interface Props {
 
 export default function CreateAdminModal({ onClose, onSuccess }: Props) {
   const [form, setForm] = useState({
+    surname: "",
     firstName: "",
-    lastName: "",
+    otherName: "",
     email: "",
     phone: "",
   });
@@ -24,8 +25,8 @@ export default function CreateAdminModal({ onClose, onSuccess }: Props) {
   }
 
   async function handleCreate() {
-    if (!form.firstName || !form.lastName || !form.email) {
-      toast.error("First name, last name and email are required");
+    if (!form.surname || !form.firstName ||!form.otherName || !form.email) {
+      toast.error("Surname name, first name, Other names and email are required");
       return;
     }
 
@@ -87,6 +88,17 @@ export default function CreateAdminModal({ onClose, onSuccess }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
+                Surname <span className="text-red-500">*</span>
+              </label>
+              <input
+                value={form.surname}
+                onChange={(e) => update("surname", e.target.value)}
+                placeholder="Family Name"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 First Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -98,15 +110,17 @@ export default function CreateAdminModal({ onClose, onSuccess }: Props) {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Last Name <span className="text-red-500">*</span>
+                Other Name <span className="text-red-500">*</span>
               </label>
               <input
-                value={form.lastName}
-                onChange={(e) => update("lastName", e.target.value)}
+                value={form.otherName}
+                onChange={(e) => update("otherName", e.target.value)}
                 placeholder="Doe"
                 className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
               />
             </div>
+
+
           </div>
 
           <div>

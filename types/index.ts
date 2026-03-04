@@ -24,8 +24,9 @@ export interface BaseDocument {
 // ─── User ─────────────────────────────────────────────────────────────────────
 
 export interface IUser extends BaseDocument {
+  surname: string;
   firstName: string;
-  lastName: string;
+  otherName: string;
   email: string;
   phone?: string;
   // role: UserRole;

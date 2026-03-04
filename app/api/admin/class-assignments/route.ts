@@ -21,7 +21,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<object[]>>> {
   try {
     await connectDB();
     const assignments = await ClassAssignmentModel.find({ isActive: true })
-      .populate("teacher", "firstName lastName email employeeId")
+      .populate("teacher", "surname firstName otherName email employeeId")
       .populate("class", "name section department")
       .populate("session", "name status")
       .sort({ createdAt: -1 })
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.CREATE,
       entity: "ClassAssignment",
@@ -98,7 +98,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
     if (!id) return NextResponse.json({ success: false, error: "Assignment ID required" }, { status: 400 });
 
     const assignment = await ClassAssignmentModel.findById(id)
-      .populate("teacher", "firstName lastName")
+      .populate("teacher", "surname firstName otherName")
       .populate("class", "name");
 
     if (!assignment) return NextResponse.json({ success: false, error: "Assignment not found" }, { status: 404 });
@@ -107,7 +107,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse<ApiResp
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.DELETE,
       entity: "ClassAssignment",

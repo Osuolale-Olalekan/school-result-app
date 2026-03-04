@@ -58,8 +58,9 @@ export const authConfig: NextAuthOptions = {
           return {
             id: parent._id.toString(),
             email: (parent as unknown as IUser).email,
+            surname: (parent as unknown as IUser).surname,
             firstName: (parent as unknown as IUser).firstName,
-            lastName: (parent as unknown as IUser).lastName,
+            otherName: (parent as unknown as IUser).otherName,
             // role: UserRole.PARENT,
             roles: parentTyped.roles,
             activeRole: UserRole.PARENT,
@@ -95,8 +96,9 @@ export const authConfig: NextAuthOptions = {
         return {
           id: typedUser._id.toString(),
           email: typedUser.email,
+          surname: typedUser.surname,
           firstName: typedUser.firstName,
-          lastName: typedUser.lastName,
+          otherName: typedUser.otherName,
           roles: typedUser.roles,
           activeRole: typedUser.roles[0],
           status: typedUser.status,
@@ -112,8 +114,9 @@ export const authConfig: NextAuthOptions = {
     token.id = user.id;
     token.roles = user.roles;
     token.activeRole = user.activeRole;
+    token.surname = user.surname;
     token.firstName = user.firstName;
-    token.lastName = user.lastName;
+    token.otherName = user.otherName;
     token.status = user.status;
   }
   // fires when frontend calls update({ activeRole: "parent" })
@@ -130,8 +133,9 @@ async session({ session, token }) {
     session.user.id = token.id as string;
     session.user.roles = token.roles as UserRole[];
     session.user.activeRole = token.activeRole as UserRole;
+    session.user.surname = token.surname as string;
     session.user.firstName = token.firstName as string;
-    session.user.lastName = token.lastName as string;
+    session.user.otherName = token.otherName as string;
     session.user.status = token.status as UserStatus;
   }
   return session;

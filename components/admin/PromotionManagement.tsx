@@ -13,8 +13,9 @@ import { toast } from "sonner";
 
 interface Student {
   _id: string;
+  surname: string;
   firstName: string;
-  lastName: string;
+  otherName: string;
   admissionNumber: string;
   studentStatus: StudentStatus;
   currentClass: {
@@ -126,8 +127,9 @@ export default function PromotionManagement() {
   const filtered = students.filter((s) => {
     const term = search.toLowerCase();
     return (
+      s.surname.toLowerCase().includes(term) ||
       s.firstName.toLowerCase().includes(term) ||
-      s.lastName.toLowerCase().includes(term) ||
+      s.otherName.toLowerCase().includes(term) ||
       s.admissionNumber.toLowerCase().includes(term)
     );
   });
@@ -211,7 +213,7 @@ export default function PromotionManagement() {
                   <tr key={student._id} className="hover:bg-gray-50/50">
                     <td className="px-5 py-3.5">
                       <p className="font-medium text-gray-900">
-                        {student.firstName} {student.lastName}
+                        {student.surname} {student.firstName} {student.otherName}
                       </p>
                       <p className="text-xs text-gray-400 font-mono">
                         {student.admissionNumber}
@@ -273,7 +275,7 @@ export default function PromotionManagement() {
               Promote Student
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              {promoteModal.firstName} {promoteModal.lastName} — currently in{" "}
+              {promoteModal.surname} {promoteModal.firstName} {promoteModal.otherName} — currently in{" "}
               {promoteModal.currentClass?.name ?? "Unknown"}
             </p>
 

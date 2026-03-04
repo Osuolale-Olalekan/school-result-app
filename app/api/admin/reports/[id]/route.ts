@@ -146,7 +146,7 @@ export async function PATCH(
 
     const report = await ReportCardModel.findById(id).populate(
       "submittedBy",
-      "firstName lastName email",
+      "surname firstName otherName email",
     );
 
     if (!report) {
@@ -165,8 +165,9 @@ export async function PATCH(
 
     const submittedBy = report.submittedBy as unknown as {
       _id: string;
+      surname: string;
       firstName: string;
-      lastName: string;
+      otherName: string;
       email: string;
     };
 
@@ -226,22 +227,23 @@ export async function PATCH(
       // Notify parents
       const studentWithParents = await UserModel.findById(
         report.student,
-      ).populate("parents", "firstName lastName email");
+      ).populate("parents", "surname firstName otherName email");
 
       if (studentWithParents) {
         const parents = (
           studentWithParents as {
             parents?: Array<{
               _id: { toString(): string };
+              surname: string
               firstName: string;
-              lastName: string;
+              otherName: string;
               email: string;
             }>;
           }
         ).parents ?? [];
 
         for (const parent of parents) {
-          let notifMessage = `${report.studentSnapshot.firstName}'s ${report.termName} term report is available.`;
+          let notifMessage = `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName} ${report.termName} term report is available.`;
 
           if (isThirdTerm && report.promotedToClass) {
             if (report.promotedToClass === "Performance Under Review") {
@@ -269,8 +271,8 @@ export async function PATCH(
 
           await sendReportAvailableEmail(
             parent.email,
-            `${parent.firstName} ${parent.lastName}`,
-            `${report.studentSnapshot.firstName} ${report.studentSnapshot.lastName}`,
+            `${parent.surname} ${parent.firstName} ${parent.otherName}`,
+            `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName}`,
             report.sessionName,
             report.termName,
             `${process.env.NEXT_PUBLIC_APP_URL}/parent/reports`,
@@ -280,12 +282,12 @@ export async function PATCH(
 
       await createAuditLog({
         actorId: session.user.id,
-        actorName: `${session.user.firstName} ${session.user.lastName}`,
+        actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
         actorRole: UserRole.ADMIN,
         action: AuditAction.APPROVE,
         entity: "ReportCard",
         entityId: id,
-        description: `Approved report: ${report.studentSnapshot.firstName} ${report.studentSnapshot.lastName} - ${report.className} ${report.termName}${report.promotedToClass ? ` | ${report.promotedToClass}` : ""}`,
+        description: `Approved report: ${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName} - ${report.className} ${report.termName}${report.promotedToClass ? ` | ${report.promotedToClass}` : ""}`,
       });
 
       return NextResponse.json({
@@ -316,7 +318,7 @@ export async function PATCH(
 
       await sendReportDeclinedEmail(
         submittedBy.email,
-        `${submittedBy.firstName} ${submittedBy.lastName}`,
+        `${submittedBy.surname} ${submittedBy.firstName} ${submittedBy.otherName}`,
         report.className,
         report.termName,
         declineReason,
@@ -324,7 +326,7 @@ export async function PATCH(
 
       await createAuditLog({
         actorId: session.user.id,
-        actorName: `${session.user.firstName} ${session.user.lastName}`,
+        actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
         actorRole: UserRole.ADMIN,
         action: AuditAction.DECLINE,
         entity: "ReportCard",
@@ -368,8 +370,8 @@ export async function GET(
   try {
     await connectDB();
     const report = await ReportCardModel.findById(id)
-      .populate("submittedBy", "firstName lastName")
-      .populate("approvedBy", "firstName lastName")
+      .populate("submittedBy", "surname firstName otherName")
+      .populate("approvedBy", "surname firstName otherName")
       .lean();
 
     if (!report) {

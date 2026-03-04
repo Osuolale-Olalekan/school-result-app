@@ -5,11 +5,17 @@ export interface IPaymentRecordDocument extends Document {
   student: mongoose.Types.ObjectId;
   session: mongoose.Types.ObjectId;
   term: mongoose.Types.ObjectId;
+  type: "school_fees" | "report_card"; //new field for payment
   status: PaymentStatus;
   amount?: number;
-  markedBy: mongoose.Types.ObjectId;
+  markedBy?: mongoose.Types.ObjectId;
   markedAt?: Date;
   note?: string;
+  //Paystack fields
+  paystackReference: string;
+  paystackAccessCode: string;
+  paidAt: Date;
+  paymentMethod: "manual" | "paystack";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,17 +25,31 @@ const PaymentRecordSchema = new Schema<IPaymentRecordDocument>(
     student: { type: Schema.Types.ObjectId, ref: "User", required: true },
     session: { type: Schema.Types.ObjectId, ref: "Session", required: true },
     term: { type: Schema.Types.ObjectId, ref: "Term", required: true },
-    status: { type: String, enum: Object.values(PaymentStatus), default: PaymentStatus.UNPAID },
+    type: {
+      type: String,
+      enum: ["school_fees", "report_card"],
+      required: true,
+      default: "school_fees",
+    },
+    status: {
+      type: String,
+      enum: Object.values(PaymentStatus),
+      default: PaymentStatus.UNPAID,
+    },
     amount: { type: Number },
-    markedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    markedBy: { type: Schema.Types.ObjectId, ref: "User" },
     markedAt: { type: Date },
     note: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-PaymentRecordSchema.index({ student: 1, session: 1, term: 1 }, { unique: true });
+PaymentRecordSchema.index(
+  { student: 1, session: 1, term: 1, type: 1 },
+  { unique: true },
+);
 PaymentRecordSchema.index({ status: 1 });
+PaymentRecordSchema.index({ paystackReference: 1 });
 
 const PaymentRecordModel: Model<IPaymentRecordDocument> =
   mongoose.models.PaymentRecord ??

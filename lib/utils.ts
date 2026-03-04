@@ -54,8 +54,15 @@ export function formatDateTime(date: Date | string): string {
   });
 }
 
-export function getInitials(firstName: string, lastName: string): string {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+// export function getInitials(surname: string, firstName: string, otherName: string): string {
+//   return `${surname.charAt(0)}${firstName.charAt(0)}${otherName.charAt(0)}`.toUpperCase();
+// }
+export function getInitials(surname?: string, firstName?: string, otherName?: string): string {
+  return [surname, firstName, otherName]
+    .filter(Boolean)
+    .map(name => name!.charAt(0))
+    .join('')
+    .toUpperCase();
 }
 
 export function isPassMark(percentage: number): boolean {

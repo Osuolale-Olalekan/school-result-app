@@ -53,7 +53,7 @@ export async function POST(
 
     await createAuditLog({
       actorId: user._id.toString(),
-      actorName: `${user.firstName} ${user.lastName}`,
+      actorName: `${user.surname} ${user.firstName} ${user.otherName}`,
       actorRole: user.activeRole,
       action: AuditAction.PASSWORD_RESET,
       entity: "User",

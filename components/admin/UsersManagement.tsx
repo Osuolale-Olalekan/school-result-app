@@ -295,12 +295,12 @@ export default function UsersManagement() {
                                 className="w-full h-full rounded-lg object-cover"
                               />
                             ) : (
-                              getInitials(user.firstName, user.lastName)
+                              getInitials(user.surname, user.firstName, user.otherName)
                             )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-gray-900 truncate">
-                              {user.firstName} {user.lastName}
+                              {user.surname} {user.firstName} {user.otherName}
                             </p>
                             <p className="text-xs text-gray-400 truncate">
                               {user.email}
@@ -448,7 +448,7 @@ export default function UsersManagement() {
 
       {deleteUser && (
         <DeleteConfirmModal
-          userName={`${deleteUser.firstName} ${deleteUser.lastName}`}
+          userName={`${deleteUser.surname} ${deleteUser.firstName} ${deleteUser.otherName}`}
           onConfirm={handleConfirmDelete}
           onCancel={() => setDeleteUser(null)}
         />

@@ -23,7 +23,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<object[]>>> {
     await connectDB();
     const classes = await ClassModel.find()
       .populate("subjects", "name code hasPractical")
-      .populate("classTeacher", "firstName lastName email")
+      .populate("classTeacher", "surname firstName otherName email")
       .sort({ order: 1 })
       .lean();
     return NextResponse.json({ success: true, data: classes });
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.CREATE,
       entity: "Class",

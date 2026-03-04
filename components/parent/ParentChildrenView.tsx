@@ -6,8 +6,9 @@ import Link from "next/link";
 
 interface ChildInfo {
   _id: string;
+  surname: string;
   firstName: string;
-  lastName: string;
+  otherName: string;
   admissionNumber: string;
   profilePhoto?: string;
   currentClass: { name: string; section: string };
@@ -72,11 +73,11 @@ export default function ParentChildrenView() {
                     {child.profilePhoto ? (
                       <img src={child.profilePhoto} alt="" className="w-full h-full object-cover rounded-2xl" />
                     ) : (
-                      `${child.firstName.charAt(0)}${child.lastName.charAt(0)}`
+                      `${child.surname.charAt(0)}${child.firstName.charAt(0)}${child.otherName.charAt(0)}`
                     )}
                   </div>
                   <div>
-                    <h3 className="font-display font-bold text-gray-900">{child.firstName} {child.lastName}</h3>
+                    <h3 className="font-display font-bold text-gray-900">{child.surname} {child.firstName} {child.otherName}</h3>
                     <p className="text-sm text-gray-500">{child.currentClass?.name}</p>
                     <p className="text-xs font-mono text-gray-400">{child.admissionNumber}</p>
                   </div>

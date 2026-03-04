@@ -17,8 +17,9 @@ import { toast } from "sonner";
 interface ReportSummary {
   _id: string;
   studentSnapshot: {
+    surname: string;
     firstName: string;
-    lastName: string;
+    otherName: string;
     admissionNumber: string;
   };
   className: string;
@@ -29,7 +30,7 @@ interface ReportSummary {
   position: number;
   totalStudentsInClass: number;
   submittedAt?: string;
-  submittedBy: { firstName: string; lastName: string };
+  submittedBy: { surname: string; firstName: string; otherName: string };
   paymentStatus: string;
   teacherComment?: string;
   subjects?: Array<{
@@ -239,7 +240,7 @@ export default function AdminReportsView() {
                     <tr key={report._id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-5 py-3.5">
                         <p className="font-medium text-gray-900">
-                          {report.studentSnapshot.firstName} {report.studentSnapshot.lastName}
+                          {report.studentSnapshot.surname} {report.studentSnapshot.firstName} {report.studentSnapshot.otherName}
                         </p>
                         <p className="text-xs text-gray-400">{report.studentSnapshot.admissionNumber}</p>
                       </td>
@@ -259,7 +260,7 @@ export default function AdminReportsView() {
                         </span>
                       </td>
                       <td className="px-4 py-3.5 hidden md:table-cell text-xs text-gray-500">
-                        {report.submittedBy.firstName} {report.submittedBy.lastName}
+                        {report.submittedBy.surname} {report.submittedBy.firstName} {report.submittedBy.otherName}
                         {report.submittedAt && (
                           <p className="text-gray-400">{formatDateTime(report.submittedAt)}</p>
                         )}
@@ -341,7 +342,7 @@ export default function AdminReportsView() {
                   <div>
                     <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Student</p>
                     <p className="font-semibold text-gray-900">
-                      {previewReport.studentSnapshot.firstName} {previewReport.studentSnapshot.lastName}
+                      {previewReport.studentSnapshot.surname} {previewReport.studentSnapshot.firstName} {previewReport.studentSnapshot.otherName}
                     </p>
                     <p className="text-xs text-gray-500">{previewReport.studentSnapshot.admissionNumber}</p>
                   </div>
@@ -367,7 +368,7 @@ export default function AdminReportsView() {
                     {previewReport.status}
                   </span>
                   <span className="text-xs text-gray-400">
-                    Submitted by {previewReport.submittedBy.firstName} {previewReport.submittedBy.lastName}
+                    Submitted by {previewReport.submittedBy.surname} {previewReport.submittedBy.firstName} {previewReport.submittedBy.otherName}
                     {previewReport.submittedAt && ` · ${formatDateTime(previewReport.submittedAt)}`}
                   </span>
                 </div>
@@ -465,7 +466,7 @@ export default function AdminReportsView() {
                 {actionModal.type === "approve" ? "Approve Report Card" : "Decline Report Card"}
               </h3>
               <p className="text-sm text-gray-500 mb-4">
-                {actionModal.report.studentSnapshot.firstName} {actionModal.report.studentSnapshot.lastName} —{" "}
+                {actionModal.report.studentSnapshot.surname} {actionModal.report.studentSnapshot.firstName} {actionModal.report.studentSnapshot.otherName} —{" "}
                 {actionModal.report.className} — {actionModal.report.termName} term
               </p>
 

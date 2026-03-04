@@ -7,8 +7,9 @@ import { toast } from "sonner";
 
 interface ExtendedUser {
   _id: string;
+  surname: string;
   firstName: string;
-  lastName: string;
+  otherName: string;
   email: string;
   phone?: string;
   // role: UserRole;
@@ -28,7 +29,7 @@ interface ExtendedUser {
   // Parent fields
   occupation?: string;
   relationship?: string;
-  children?: Array<{ _id: string; firstName: string; lastName: string }> | string[];
+  children?: Array<{ _id: string; surname: string; firstName: string; otherName: string }> | string[];
 }
 
 interface Props {
@@ -43,7 +44,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(user.profilePhoto ?? null);
   const [classes, setClasses] = useState<Array<{ _id: string; name: string }>>([]);
-  const [students, setStudents] = useState<Array<{ _id: string; firstName: string; lastName: string }>>([]);
+  const [students, setStudents] = useState<Array<{ _id: string; surname: string; firstName: string; otherName: string }>>([]);
   const [selectedChildren, setSelectedChildren] = useState<string[]>(() => {
     if (!user.children) return [];
     return user.children.map((c) => typeof c === "string" ? c : c._id);
@@ -55,8 +56,9 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
 );
 
   const [form, setForm] = useState({
+    surname: user.surname ?? "",
     firstName: user.firstName ?? "",
-    lastName: user.lastName ?? "",
+    otherName: user.otherName ?? "",
     phone: user.phone ?? "",
     address: user.address ?? "",
     guardianName: user.guardianName ?? "",
@@ -83,7 +85,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
   if (primaryRole === UserRole.PARENT || primaryRole === UserRole.TEACHER) {
     fetch("/api/admin/users?role=student&limit=100")
       .then((r) => r.json())
-      .then((j: { success: boolean; data?: Array<{ _id: string; firstName: string; lastName: string }> }) => {
+      .then((j: { success: boolean; data?: Array<{ _id: string; surname: string; firstName: string; otherName: string }> }) => {
         if (j.success && j.data) setStudents(j.data);
       });
   }
@@ -170,7 +172,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Edit User</h2>
-            <p className="text-xs text-gray-400 mt-0.5">{user.firstName} {user.lastName} · {primaryRole}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{user.surname} {user.firstName} {user.otherName} · {primaryRole}</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
             <X className="w-5 h-5" />
@@ -207,13 +209,20 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
           {/* Basic fields */}
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <label className={labelClass}>Surname *</label>
+              <input name="surname" value={form.surname} onChange={handleChange} required className={inputClass} />
+            </div>
+            <div>
               <label className={labelClass}>First Name *</label>
               <input name="firstName" value={form.firstName} onChange={handleChange} required className={inputClass} />
             </div>
+
             <div>
-              <label className={labelClass}>Last Name *</label>
-              <input name="lastName" value={form.lastName} onChange={handleChange} required className={inputClass} />
+              <label className={labelClass}>Other Name</label>
+              <input name="otherName" value={form.otherName} onChange={handleChange} className={inputClass} />
             </div>
+
+            
           </div>
 
           <div>
@@ -331,7 +340,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
                   }`}
                 >
                   <span className="text-sm text-gray-700">
-                    {s.firstName} {s.lastName}
+                    {s.surname} {s.firstName} {s.otherName}
                   </span>
                   <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                     isSelected ? "bg-blue-600 border-blue-600" : "border-gray-300"
@@ -385,7 +394,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
                             isSelected ? "bg-[#1e3a5f]/5" : "hover:bg-gray-50"
                           }`}
                         >
-                          <span className="text-sm text-gray-700">{s.firstName} {s.lastName}</span>
+                          <span className="text-sm text-gray-700">{s.surname} {s.firstName} {s.otherName}</span>
                           <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
                             isSelected ? "bg-[#1e3a5f] border-[#1e3a5f]" : "border-gray-300"
                           }`}>

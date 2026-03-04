@@ -62,7 +62,7 @@ export async function PATCH(
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.UPDATE,
       entity: "Class",
@@ -72,7 +72,7 @@ export async function PATCH(
 
     const updated = await ClassModel.findById(id)
       .populate("subjects", "name code hasPractical")
-      .populate("classTeacher", "firstName lastName email")
+      .populate("classTeacher", "surname firstName otherName email")
       .lean();
 
     return NextResponse.json({ success: true, data: updated!, message: "Class updated successfully" });
@@ -112,7 +112,7 @@ export async function DELETE(
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.DELETE,
       entity: "Class",

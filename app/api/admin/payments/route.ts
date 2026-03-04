@@ -55,21 +55,23 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     }
 
     // Fetch payment records with filters
+    const type = searchParams.get("type") ?? "school_fees";
     const query: Record<string, unknown> = {
       session: sessionId,
       term: termId,
+      type,
     };
     if (status) query.status = status;
 
     const payments = await PaymentRecordModel.find(query)
       .populate({
         path: "student",
-        select: "firstName lastName admissionNumber currentClass",
+        select: "surname firstName otherName admissionNumber currentClass",
         populate: { path: "currentClass", select: "name section" },
       })
       .populate("session", "name")
       .populate("term", "name")
-      .populate("markedBy", "firstName lastName")
+      .populate("markedBy", "surname firstName otherName")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -100,13 +102,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       studentId: string;
       sessionId: string;
       termId: string;
+      type: "school_fees" | "report_card";
       status: PaymentStatus;
       amount?: number;
       note?: string;
     };
 
     const payment = await PaymentRecordModel.findOneAndUpdate(
-      { student: body.studentId, session: body.sessionId, term: body.termId },
+      { student: body.studentId, session: body.sessionId, term: body.termId, type: body.type },
       {
         status: body.status,
         amount: body.amount,
@@ -130,7 +133,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.PAYMENT_UPDATE,
       entity: "Payment",

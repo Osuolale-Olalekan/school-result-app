@@ -59,7 +59,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.CREATE,
       entity: "Subject",

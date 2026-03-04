@@ -30,7 +30,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     const total = await AuditLogModel.countDocuments(query);
     const logs = await AuditLogModel.find(query)
-      .populate("actor", "firstName lastName email role")
+      .populate("actor", "surname firstName otherName email role")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)

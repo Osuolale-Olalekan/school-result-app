@@ -6,8 +6,9 @@ declare module "next-auth" {
     user: {
       id: string;
       email: string;
+      surname: string;
       firstName: string;
-      lastName: string;
+      otherName: string;
       // role: UserRole;
       roles: UserRole[];
       activeRole: UserRole;
@@ -19,8 +20,9 @@ declare module "next-auth" {
   interface User {
     id: string;
     email: string;
+    surname
     firstName: string;
-    lastName: string;
+    otherName: string;
     // role: UserRole;
     roles: UserRole[];
     activeRole: UserRole
@@ -34,8 +36,9 @@ declare module "next-auth/jwt" {
     // role: UserRole;
     roles: UserRole[];
     activeRole: UserRole;
+    surname: string;
     firstName: string;
-    lastName: string;
+    otherName: string;
     status: UserStatus;
   }
 }

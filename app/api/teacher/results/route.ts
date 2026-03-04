@@ -127,8 +127,9 @@ export async function POST(
     }
 
     const typedStudent = student as {
+      surname: string;
       firstName: string;
-      lastName: string;
+      otherName: string;
       admissionNumber?: string;
       profilePhoto?: string;
       gender?: string;
@@ -199,8 +200,9 @@ export async function POST(
     const reportData = {
       student: body.studentId,
       studentSnapshot: {
+        surname: typedStudent.surname,
         firstName: typedStudent.firstName,
-        lastName: typedStudent.lastName,
+        otherName: typedStudent.otherName,
         admissionNumber: typedStudent.admissionNumber ?? "",
         profilePhoto: typedStudent.profilePhoto,
         gender: (typedStudent.gender ?? "male") as "male" | "female",
@@ -305,14 +307,14 @@ export async function PATCH(
         recipientRole: UserRole.ADMIN,
         type: NotificationType.REPORT_SUBMITTED,
         title: "Report Cards Submitted for Review",
-        message: `${session.user.firstName} ${session.user.lastName} has submitted ${reports.length} report card(s) for approval.`,
+        message: `${session.user.surname} ${session.user.firstName} ${session.user.otherName} has submitted ${reports.length} report card(s) for approval.`,
         link: "/admin/reports",
       });
     }
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.TEACHER,
       action: AuditAction.UPDATE,
       entity: "ReportCard",

@@ -12,14 +12,15 @@ export async function POST(
   try {
     const body = (await request.json()) as {
       secret: string;
+      surname: string;
       firstName: string;
-      lastName: string;
+      otherName: string;
       email: string;
       password: string;
       phone?: string;
     };
 
-    const { secret, firstName, lastName, email, password, phone } = body;
+    const { secret, surname, firstName, otherName, email, password, phone } = body;
 
     if (secret !== process.env.ADMIN_SETUP_SECRET) {
       return NextResponse.json(
@@ -28,7 +29,7 @@ export async function POST(
       );
     }
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!surname || !firstName || !otherName || !email || !password) {
       return NextResponse.json(
         { success: false, error: "All fields are required" },
         { status: 400 },
@@ -48,8 +49,9 @@ export async function POST(
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const admin = await UserModel.create({
+      surname: surname.trim(),
       firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      otherName: otherName.trim(),
       email: email.toLowerCase().trim(),
       password: hashedPassword,
       phone,
@@ -61,7 +63,7 @@ export async function POST(
 
     await createAuditLog({
       actorId: admin._id.toString(),
-      actorName: `${admin.firstName} ${admin.lastName}`,
+      actorName: `${admin.surname} ${admin.firstName} ${admin.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.CREATE,
       entity: "Admin",

@@ -2,28 +2,34 @@
 
 import { useEffect, useState, useCallback } from "react";
 import {
-  CreditCard, CheckCircle, Clock, ChevronLeft, ChevronRight,
-  Filter, Users, AlertCircle
+  CreditCard, CheckCircle, AlertCircle, Filter,
+  ChevronDown, Banknote, FileText,
 } from "lucide-react";
 import { PaymentStatus } from "@/types/enums";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 
+type PaymentType = "school_fees" | "report_card";
+
 interface PaymentRecord {
   _id: string;
   student: {
     _id: string;
+    surname: string;
     firstName: string;
-    lastName: string;
+    otherName: string;
     admissionNumber: string;
     currentClass?: { _id: string; name: string };
   };
   session: { _id: string; name: string };
   term: { _id: string; name: string };
+  type: PaymentType;
   status: PaymentStatus;
   amount?: number;
-  markedBy?: { firstName: string; lastName: string };
+  paymentMethod?: "manual" | "paystack";
+  markedBy?: { surname: string; firstName: string; otherName: string };
   markedAt?: string;
+  paidAt?: string;
   note?: string;
 }
 
@@ -37,24 +43,33 @@ const STATUS_COLORS = {
   [PaymentStatus.PARTIAL]: "bg-amber-100 text-amber-700",
 };
 
+const TAB_CONFIG: { label: string; value: PaymentType; icon: React.ReactNode; description: string }[] = [
+  {
+    label: "School Fees",
+    value: "school_fees",
+    icon: <Banknote className="w-4 h-4" />,
+    description: "Track and manage school fees payments",
+  },
+  {
+    label: "Report Card Payments",
+    value: "report_card",
+    icon: <FileText className="w-4 h-4" />,
+    description: "Manage report card access payments",
+  },
+];
+
 export default function AdminPaymentsView() {
-  // Filter state
+  const [activeTab, setActiveTab] = useState<PaymentType>("school_fees");
   const [sessions, setSessions] = useState<Session[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedSession, setSelectedSession] = useState("");
   const [selectedTerm, setSelectedTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-
-  // Data state
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-
-  // Bulk select state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  // Mark modal state
   const [markModal, setMarkModal] = useState<PaymentRecord | null>(null);
   const [markForm, setMarkForm] = useState({
     status: PaymentStatus.PAID,
@@ -62,11 +77,8 @@ export default function AdminPaymentsView() {
     note: "",
   });
   const [markLoading, setMarkLoading] = useState(false);
-
-  // Bulk mark state
   const [bulkLoading, setBulkLoading] = useState(false);
 
-  // Load sessions and classes on mount
   useEffect(() => {
     fetch("/api/admin/sessions")
       .then((r) => r.json())
@@ -80,7 +92,13 @@ export default function AdminPaymentsView() {
       });
   }, []);
 
-  // Get terms for selected session
+  // Reset results when tab changes
+  useEffect(() => {
+    setPayments([]);
+    setHasSearched(false);
+    setSelectedIds(new Set());
+  }, [activeTab]);
+
   const selectedSessionData = sessions.find((s) => s._id === selectedSession);
   const terms = selectedSessionData?.terms ?? [];
 
@@ -96,6 +114,7 @@ export default function AdminPaymentsView() {
       const params = new URLSearchParams({
         sessionId: selectedSession,
         termId: selectedTerm,
+        type: activeTab,
         ...(selectedClass && { classId: selectedClass }),
         ...(statusFilter && { status: statusFilter }),
       });
@@ -118,6 +137,7 @@ export default function AdminPaymentsView() {
           studentId: markModal.student._id,
           sessionId: markModal.session._id,
           termId: markModal.term._id,
+          type: activeTab,
           status: markForm.status,
           amount: markForm.amount ? parseFloat(markForm.amount) : undefined,
           note: markForm.note,
@@ -150,6 +170,7 @@ export default function AdminPaymentsView() {
             studentId: payment.student._id,
             sessionId: payment.session._id,
             termId: payment.term._id,
+            type: activeTab,
             status,
           }),
         });
@@ -168,132 +189,152 @@ export default function AdminPaymentsView() {
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   }
 
   function toggleSelectAll() {
-    if (selectedIds.size === payments.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(payments.map((p) => p._id)));
-    }
+    setSelectedIds(
+      selectedIds.size === payments.length
+        ? new Set()
+        : new Set(payments.map((p) => p._id))
+    );
   }
 
-  // Stats
   const paid = payments.filter((p) => p.status === PaymentStatus.PAID).length;
   const unpaid = payments.filter((p) => p.status === PaymentStatus.UNPAID).length;
   const partial = payments.filter((p) => p.status === PaymentStatus.PARTIAL).length;
 
   return (
     <div className="space-y-5">
+      {/* Header */}
       <div>
         <h1 className="font-display text-2xl font-bold text-gray-900">
           Payments Management
         </h1>
         <p className="text-gray-500 text-sm">
-          Filter by session and term to manage student payment status
+          Manage school fees and report card payments
         </p>
       </div>
 
-      {/* ── Filters ── */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-          <Filter className="w-4 h-4" />
-          Filter Payments
+      {/* ── Tabs ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="flex border-b border-gray-100">
+          {TAB_CONFIG.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-semibold transition-all ${
+                activeTab === tab.value
+                  ? "text-[#1e3a5f] border-b-2 border-[#1e3a5f] bg-blue-50/30"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="px-5 py-3 bg-gray-50/50 border-b border-gray-100">
+          <p className="text-xs text-gray-500">
+            {TAB_CONFIG.find((t) => t.value === activeTab)?.description}
+            {activeTab === "report_card" && (
+              <span className="ml-2 text-amber-600 font-medium">
+                · Marking paid here unlocks the report card for parents
+              </span>
+            )}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Session */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Session <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={selectedSession}
-              onChange={(e) => {
-                setSelectedSession(e.target.value);
-                setSelectedTerm("");
-                setPayments([]);
-                setHasSearched(false);
-              }}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
-            >
-              <option value="">Select session...</option>
-              {sessions.map((s) => (
-                <option key={s._id} value={s._id}>{s.name}</option>
-              ))}
-            </select>
+        {/* ── Filters ── */}
+        <div className="p-5 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+            <Filter className="w-4 h-4" />
+            Filter Payments
           </div>
-
-          {/* Term */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Term <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={selectedTerm}
-              onChange={(e) => {
-                setSelectedTerm(e.target.value);
-                setPayments([]);
-                setHasSearched(false);
-              }}
-              disabled={!selectedSession}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400"
-            >
-              <option value="">Select term...</option>
-              {terms.map((t) => (
-                <option key={t._id} value={t._id}>
-                  {t.name.charAt(0).toUpperCase() + t.name.slice(1)} Term
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Session <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedSession}
+                onChange={(e) => {
+                  setSelectedSession(e.target.value);
+                  setSelectedTerm("");
+                  setPayments([]);
+                  setHasSearched(false);
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+              >
+                <option value="">Select session...</option>
+                {sessions.map((s) => (
+                  <option key={s._id} value={s._id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Term <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedTerm}
+                onChange={(e) => {
+                  setSelectedTerm(e.target.value);
+                  setPayments([]);
+                  setHasSearched(false);
+                }}
+                disabled={!selectedSession}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400"
+              >
+                <option value="">Select term...</option>
+                {terms.map((t) => (
+                  <option key={t._id} value={t._id}>
+                    {t.name.charAt(0).toUpperCase() + t.name.slice(1)} Term
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Class <span className="text-gray-400">(optional)</span>
+              </label>
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+              >
+                <option value="">All classes</option>
+                {classes.map((c) => (
+                  <option key={c._id} value={c._id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Payment Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+              >
+                <option value="">All statuses</option>
+                <option value={PaymentStatus.PAID}>Paid</option>
+                <option value={PaymentStatus.UNPAID}>Unpaid</option>
+                <option value={PaymentStatus.PARTIAL}>Partial</option>
+              </select>
+            </div>
           </div>
-
-          {/* Class */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Class <span className="text-gray-400">(optional)</span>
-            </label>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
-            >
-              <option value="">All classes</option>
-              {classes.map((c) => (
-                <option key={c._id} value={c._id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Payment Status
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
-            >
-              <option value="">All statuses</option>
-              <option value={PaymentStatus.PAID}>Paid</option>
-              <option value={PaymentStatus.UNPAID}>Unpaid</option>
-              <option value={PaymentStatus.PARTIAL}>Partial</option>
-            </select>
-          </div>
+          <button
+            onClick={fetchPayments}
+            disabled={!selectedSession || !selectedTerm || loading}
+            className="px-5 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold hover:bg-[#152847] disabled:opacity-50 transition-colors"
+          >
+            {loading ? "Loading..." : "Load Payments"}
+          </button>
         </div>
-
-        <button
-          onClick={fetchPayments}
-          disabled={!selectedSession || !selectedTerm || loading}
-          className="px-5 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold hover:bg-[#152847] disabled:opacity-50 transition-colors"
-        >
-          {loading ? "Loading..." : "Load Payments"}
-        </button>
       </div>
 
       {/* ── Stats ── */}
@@ -324,7 +365,7 @@ export default function AdminPaymentsView() {
               disabled={bulkLoading}
               className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 disabled:opacity-50"
             >
-              Mark all Paid
+              {bulkLoading ? "Processing..." : "Mark all Paid"}
             </button>
             <button
               onClick={() => handleBulkMark(PaymentStatus.UNPAID)}
@@ -372,36 +413,35 @@ export default function AdminPaymentsView() {
             <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
             <p className="font-medium text-gray-500">No payment records found</p>
             <p className="text-xs mt-1">
-              No approved reports exist for the selected filters
+              {activeTab === "report_card"
+                ? "No approved report cards exist for the selected filters"
+                : "No school fees records found for the selected filters"}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-50">
+                <tr className="bg-gray-50/50 border-b border-gray-100">
                   <th className="px-5 py-3">
                     <input
                       type="checkbox"
-                      checked={selectedIds.size === payments.length}
+                      checked={selectedIds.size === payments.length && payments.length > 0}
                       onChange={toggleSelectAll}
                       className="rounded"
                     />
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
-                    Student
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">
-                    Class
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
-                    Status
-                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Class</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Amount</th>
+                  {activeTab === "report_card" && (
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">
+                      Method
+                    </th>
+                  )}
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">
-                    Amount
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">
-                    Marked By
+                    {activeTab === "report_card" ? "Paid / Marked" : "Marked By"}
                   </th>
                   <th className="px-4 py-3" />
                 </tr>
@@ -424,7 +464,8 @@ export default function AdminPaymentsView() {
                     </td>
                     <td className="px-4 py-3.5">
                       <p className="font-medium text-gray-900">
-                        {payment.student.firstName} {payment.student.lastName}
+                        {payment.student.surname} {payment.student.firstName}{" "}
+                        {payment.student.otherName}
                       </p>
                       <p className="text-xs text-gray-400 font-mono">
                         {payment.student.admissionNumber}
@@ -434,20 +475,36 @@ export default function AdminPaymentsView() {
                       {payment.student.currentClass?.name ?? "—"}
                     </td>
                     <td className="px-4 py-3.5">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[payment.status]}`}
-                      >
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[payment.status]}`}>
                         {payment.status}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 hidden md:table-cell text-gray-600">
                       {payment.amount ? `₦${payment.amount.toLocaleString()}` : "—"}
                     </td>
+                    {activeTab === "report_card" && (
+                      <td className="px-4 py-3.5 hidden md:table-cell">
+                        {payment.paymentMethod ? (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            payment.paymentMethod === "paystack"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}>
+                            {payment.paymentMethod === "paystack" ? "Online" : "Manual"}
+                          </span>
+                        ) : "—"}
+                      </td>
+                    )}
                     <td className="px-4 py-3.5 hidden md:table-cell">
-                      {payment.markedBy ? (
+                      {payment.paymentMethod === "paystack" && payment.paidAt ? (
+                        <div>
+                          <p className="text-sm text-emerald-600 font-medium">Paid online</p>
+                          <p className="text-xs text-gray-400">{formatDate(payment.paidAt)}</p>
+                        </div>
+                      ) : payment.markedBy ? (
                         <div>
                           <p className="text-sm text-gray-600">
-                            {payment.markedBy.firstName} {payment.markedBy.lastName}
+                            {payment.markedBy.surname} {payment.markedBy.firstName}
                           </p>
                           {payment.markedAt && (
                             <p className="text-xs text-gray-400">{formatDate(payment.markedAt)}</p>
@@ -456,15 +513,18 @@ export default function AdminPaymentsView() {
                       ) : "—"}
                     </td>
                     <td className="px-4 py-3.5">
-                      <button
-                        onClick={() => {
-                          setMarkModal(payment);
-                          setMarkForm({ status: PaymentStatus.PAID, amount: "", note: "" });
-                        }}
-                        className="px-3 py-1 rounded-lg bg-[#1e3a5f]/10 text-[#1e3a5f] text-xs font-medium hover:bg-[#1e3a5f]/20"
-                      >
-                        Update
-                      </button>
+                      {/* Don't show Update button for Paystack-paid report cards */}
+                      {!(activeTab === "report_card" && payment.paymentMethod === "paystack" && payment.status === PaymentStatus.PAID) && (
+                        <button
+                          onClick={() => {
+                            setMarkModal(payment);
+                            setMarkForm({ status: PaymentStatus.PAID, amount: "", note: "" });
+                          }}
+                          className="px-3 py-1 rounded-lg bg-[#1e3a5f]/10 text-[#1e3a5f] text-xs font-medium hover:bg-[#1e3a5f]/20"
+                        >
+                          Update
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -479,12 +539,22 @@ export default function AdminPaymentsView() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
             <h3 className="font-display text-lg font-bold text-gray-900 mb-1">
-              Update Payment Status
+              Update {activeTab === "report_card" ? "Report Card" : "School Fees"} Payment
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              {markModal.student.firstName} {markModal.student.lastName} —{" "}
-              {markModal.session.name} · {markModal.term.name} term
+              {markModal.student.surname} {markModal.student.firstName}{" "}
+              {markModal.student.otherName} —{" "}
+              {markModal.session.name} ·{" "}
+              {markModal.term.name} term
             </p>
+
+            {activeTab === "report_card" && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <p className="text-xs text-amber-700 font-medium">
+                  ⚠️ Marking this as Paid will immediately unlock the report card for the parent to view and download.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>
@@ -500,7 +570,7 @@ export default function AdminPaymentsView() {
                       className={`py-2 rounded-xl text-sm font-medium border transition-all capitalize ${
                         markForm.status === status
                           ? "bg-[#1e3a5f] text-white border-[#1e3a5f]"
-                          : "border-gray-200 text-gray-600"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
                       {status}
@@ -510,23 +580,24 @@ export default function AdminPaymentsView() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Amount (₦)
+                  Amount (₦) <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <input
                   type="number"
                   value={markForm.amount}
                   onChange={(e) => setMarkForm({ ...markForm, amount: e.target.value })}
-                  placeholder="e.g. 50000"
+                  placeholder="e.g. 5000"
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Note (optional)
+                  Note <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <input
                   value={markForm.note}
                   onChange={(e) => setMarkForm({ ...markForm, note: e.target.value })}
+                  placeholder="e.g. Paid via bank transfer"
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
                 />
               </div>
@@ -535,7 +606,8 @@ export default function AdminPaymentsView() {
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => setMarkModal(null)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600"
+                disabled={markLoading}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 disabled:opacity-40"
               >
                 Cancel
               </button>

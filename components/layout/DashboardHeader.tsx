@@ -11,8 +11,9 @@ import Image from "next/image";
 interface SessionUser {
   id: string;
   email: string;
+  surname: string;
   firstName: string;
-  lastName: string;
+  otherName: string;
   // role: UserRole;
   roles: UserRole[];
   activeRole: UserRole;
@@ -59,6 +60,7 @@ export default function DashboardHeader({ user }: Props) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
 
   //   const fetchNotifications = useCallback(async () => {
   //   try {
@@ -210,12 +212,12 @@ export default function DashboardHeader({ user }: Props) {
                   className="w-full h-full rounded-lg object-cover"
                 />
               ) : (
-                getInitials(user.firstName, user.lastName)
+                getInitials(user.surname, user.firstName, user.otherName)
               )}
             </div>
             <div className="hidden sm:block text-left">
               <p className="text-xs font-semibold text-gray-800 leading-tight">
-                {user.firstName} {user.lastName}
+                {user.surname} {user.firstName} {user.otherName}
               </p>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${getRoleBadgeColor(user.activeRole)}`}
@@ -230,7 +232,7 @@ export default function DashboardHeader({ user }: Props) {
             <div className="absolute right-0 top-11 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
               <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-sm font-semibold text-gray-800">
-                  {user.firstName} {user.lastName}
+                  {user.surname} {user.firstName} {user.otherName}
                 </p>
                 <p className="text-xs text-gray-400">{user.email}</p>
               </div>

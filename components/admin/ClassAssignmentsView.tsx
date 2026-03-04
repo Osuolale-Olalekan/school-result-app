@@ -7,7 +7,7 @@ import DeleteConfirmModal from "./DeleteConfirmModal";
 
 interface Assignment {
   _id: string;
-  teacher: { _id: string; firstName: string; lastName: string; email: string };
+  teacher: { _id: string; surname: string; firstName: string; otherName:string; email: string };
   class: { _id: string; name: string; section: string };
   session: { _id: string; name: string; status: string };
   isActive: boolean;
@@ -15,8 +15,9 @@ interface Assignment {
 
 interface Teacher {
   _id: string;
+  surname: string,
   firstName: string;
-  lastName: string;
+  otherName: string;
   email: string;
 }
 
@@ -187,7 +188,7 @@ export default function ClassAssignmentsView() {
                   <tr key={a._id} className="hover:bg-gray-50/50">
                     <td className="px-5 py-3.5">
                       <p className="font-medium text-gray-900">
-                        {a.teacher.firstName} {a.teacher.lastName}
+                        {a.teacher.surname} {a.teacher.firstName} {a.teacher.otherName}
                       </p>
                       <p className="text-xs text-gray-400">{a.teacher.email}</p>
                     </td>
@@ -260,7 +261,7 @@ export default function ClassAssignmentsView() {
                   <option value="">Select teacher...</option>
                   {teachers.map((t) => (
                     <option key={t._id} value={t._id}>
-                      {t.firstName} {t.lastName}
+                      {t.surname} {t.firstName} {t.otherName}
                     </option>
                   ))}
                 </select>
@@ -325,7 +326,7 @@ export default function ClassAssignmentsView() {
 
       {deleteTarget && (
         <DeleteConfirmModal
-          userName={`${deleteTarget.teacher.firstName} ${deleteTarget.teacher.lastName} → ${deleteTarget.class.name}`}
+          userName={`${deleteTarget.teacher.surname} ${deleteTarget.teacher.firstName} ${deleteTarget.teacher.otherName} → ${deleteTarget.class.name}`}
           onConfirm={handleConfirmDelete}
           onCancel={() => setDeleteTarget(null)}
         />

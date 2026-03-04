@@ -50,7 +50,7 @@ export async function GET(
       studentStatus: StudentStatus.ACTIVE,
     })
       .select("-password")
-      .sort({ lastName: 1, firstName: 1 })
+      .sort({ surname: 1, firstName: 1, otherName: 1 })
       .lean();
 
    

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authConfig } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import "@/lib/registerModels";
+import mongoose from "mongoose";
 import UserModel from "@/models/User";
 import StudentModel from "@/models/Student";
 import TeacherModel from "@/models/Teacher";
@@ -43,8 +44,11 @@ export async function GET(
     const user = await UserModel.findById(id)
       .select("-password")
       .populate("currentClass", "name section department")
-      .populate("parents", "firstName lastName email phone")
-      .populate("children", "firstName lastName admissionNumber currentClass")
+      .populate("parents", "surname firstName otherName email phone")
+      .populate(
+        "children",
+        "surname firstName otherName admissionNumber currentClass",
+      )
       .lean();
 
     if (!user)
@@ -87,8 +91,11 @@ export async function PATCH(
         { status: 404 },
       );
 
+    // Raw collection reference — bypasses discriminator scoping
+    const collection = mongoose.connection.collection("users");
+
     let auditAction = AuditAction.UPDATE;
-    let description = `Updated user ${user.firstName} ${user.lastName}`;
+    let description = `Updated user ${user.surname} ${user.firstName} ${user.otherName}`;
 
     if (action === "activate") {
       user.status = UserStatus.ACTIVE;
@@ -98,7 +105,7 @@ export async function PATCH(
         });
       }
       auditAction = AuditAction.ACTIVATE;
-      description = `Activated account for ${user.firstName} ${user.lastName}`;
+      description = `Activated account for ${user.surname} ${user.firstName} ${user.otherName}`;
       await user.save();
     } else if (action === "deactivate") {
       user.status = UserStatus.INACTIVE;
@@ -108,7 +115,7 @@ export async function PATCH(
         });
       }
       auditAction = AuditAction.DEACTIVATE;
-      description = `Deactivated account for ${user.firstName} ${user.lastName}`;
+      description = `Deactivated account for ${user.surname} ${user.firstName} ${user.otherName}`;
       await user.save();
     } else if (action === "suspend") {
       user.status = UserStatus.SUSPENDED;
@@ -118,13 +125,22 @@ export async function PATCH(
         });
       }
       auditAction = AuditAction.SUSPEND;
-      description = `Suspended account for ${user.firstName} ${user.lastName}`;
+      description = `Suspended account for ${user.surname} ${user.firstName} ${user.otherName}`;
       await user.save();
     } else {
+      let skipSave = false;
+  console.log("user.roles:", user.roles);
+  console.log("UserRole.PARENT value:", UserRole.PARENT);
+  console.log("includes check:", user.roles.includes(UserRole.PARENT));
+  console.log("updateData:", JSON.stringify(updateData));
+  console.log("USER FETCHED:", JSON.stringify(user, null, 2));
+  console.log("BODY RECEIVED:", JSON.stringify(body, null, 2));
+
       // ── 1. Basic allowed fields ──────────────────────────────────
       const allowedFields = [
+        "surname",
         "firstName",
-        "lastName",
+        "otherName",
         "phone",
         "profilePhoto",
         "address",
@@ -167,59 +183,94 @@ export async function PATCH(
         ).toUpperCase();
       }
 
-      // ── 3. Roles + children (uses findByIdAndUpdate to bypass Mongoose tracking) ──
-      // ── 3. Roles + children
+      // ── 3. Roles + children (teacher gaining/losing parent role) ──
       if (updateData.roles && Array.isArray(updateData.roles)) {
         const newRoles = updateData.roles as UserRole[];
         const newChildren = Array.isArray(updateData.children)
           ? (updateData.children as string[])
           : [];
-        const oldChildren =
-          ((user as unknown as Record<string, unknown>).children as string[]) ??
-          [];
+
+        // Fetch old children directly from raw collection
+        const rawDoc = await collection.findOne({
+          _id: new mongoose.Types.ObjectId(id),
+        });
+        const oldChildren: string[] = (rawDoc?.children ?? []).map(
+          (c: unknown) => c?.toString() ?? "",
+        );
 
         if (newRoles.includes(UserRole.PARENT)) {
           const removedChildren = oldChildren.filter(
-            (c) => !newChildren.includes(c.toString()),
+            (c) => !newChildren.includes(c),
           );
-
           if (removedChildren.length > 0) {
             await StudentModel.updateMany(
               { _id: { $in: removedChildren } },
               { $pull: { parents: id } },
             );
           }
-
           if (newChildren.length > 0) {
             await StudentModel.updateMany(
               { _id: { $in: newChildren } },
               { $addToSet: { parents: id } },
             );
           }
-
-          // const updateResult = await TeacherModel.findByIdAndUpdate(
-          await UserModel.findByIdAndUpdate(
-            id,
-            { $set: { roles: newRoles, children: newChildren } },
-            { new: true },
+          await collection.updateOne(
+            { _id: new mongoose.Types.ObjectId(id) },
+            {
+              $set: {
+                roles: newRoles,
+                children: newChildren.map(
+                  (c) => new mongoose.Types.ObjectId(c),
+                ),
+              },
+            },
+          );
+        } else {
+          // Teacher removing parent role — clean up all child links
+          if (oldChildren.length > 0) {
+            await StudentModel.updateMany(
+              { _id: { $in: oldChildren } },
+              { $pull: { parents: id } },
+            );
+          }
+          await collection.updateOne(
+            { _id: new mongoose.Types.ObjectId(id) },
+            { $set: { roles: newRoles, children: [] } },
           );
         }
+
+        skipSave = true;
       }
 
       // ── 4. Children update for pure parents (no role change) ────
       if (
-        !updateData.roles &&
-        user.roles.includes(UserRole.PARENT) &&
-        Array.isArray(updateData.children)
-      ) {
-        const oldChildren =
-          ((user as unknown as Record<string, unknown>).children as string[]) ??
-          [];
+  !updateData.roles &&
+  Array.isArray(updateData.children) &&
+  (user.activeRole === UserRole.PARENT || user.roles?.includes(UserRole.PARENT))
+) {
         const newChildren = updateData.children as string[];
 
-        const removedChildren = oldChildren.filter(
-          (c) => !newChildren.includes(c.toString()),
+        console.log("=== BLOCK 4 RUNNING ===");
+        console.log("newChildren:", newChildren);
+        console.log("user.roles:", user.roles);
+
+        const rawDoc = await collection.findOne({
+          _id: new mongoose.Types.ObjectId(id),
+        });
+
+        console.log("rawDoc.children before update:", rawDoc?.children);
+
+        const oldChildren: string[] = (rawDoc?.children ?? []).map(
+          (c: unknown) => c?.toString() ?? "",
         );
+
+        const removedChildren = oldChildren.filter(
+          (c) => !newChildren.includes(c),
+        );
+
+        console.log("oldChildren:", oldChildren);
+        console.log("removedChildren:", removedChildren);
+
         if (removedChildren.length > 0) {
           await StudentModel.updateMany(
             { _id: { $in: removedChildren } },
@@ -232,18 +283,40 @@ export async function PATCH(
             { $addToSet: { parents: id } },
           );
         }
-        await UserModel.findByIdAndUpdate(id, {
-          $set: { children: newChildren },
+
+        const updateResult = await collection.updateOne(
+          { _id: new mongoose.Types.ObjectId(id) },
+          {
+            $set: {
+              children: newChildren.map((c) => new mongoose.Types.ObjectId(c)),
+            },
+          },
+        );
+
+        console.log("updateResult:", updateResult);
+
+        // Verify it was saved
+        const afterDoc = await collection.findOne({
+          _id: new mongoose.Types.ObjectId(id),
         });
+        console.log("rawDoc.children AFTER update:", afterDoc?.children);
+
+        skipSave = true;
+        console.log("skipSave set to:", skipSave);
       }
 
-      // Save basic field changes
-      await user.save();
+      console.log("=== FINAL skipSave value:", skipSave, "===");
+
+      if (!skipSave) {
+        await user.save();
+      } else {
+        console.log("=== SKIPPING user.save() ===");
+      }
     }
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: auditAction,
       entity:
@@ -256,7 +329,7 @@ export async function PATCH(
     // Return fresh data from DB
     const updated = await UserModel.findById(id)
       .select("-password")
-      .populate("children", "firstName lastName admissionNumber")
+      .populate("children", "surname firstName otherName admissionNumber")
       .lean();
 
     return NextResponse.json({
@@ -314,7 +387,7 @@ export async function DELETE(
       }
     }
 
-    const userName = `${user.firstName} ${user.lastName}`;
+    const userName = `${user.surname} ${user.firstName} ${user.otherName}`;
     const userRole = user.activeRole;
 
     // await user.deleteOne();
@@ -322,7 +395,7 @@ export async function DELETE(
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: ` ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.DELETE,
       entity: userRole.charAt(0).toUpperCase() + userRole.slice(1),

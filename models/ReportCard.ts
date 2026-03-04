@@ -28,8 +28,9 @@ export interface IAttendanceDocument {
 export interface IReportCardDocument extends Document {
   student: mongoose.Types.ObjectId;
   studentSnapshot: {
+    surname: string;
     firstName: string;
-    lastName: string;
+    otherName: string;
     admissionNumber: string;
     profilePhoto?: string;
     gender: "male" | "female";
@@ -103,8 +104,9 @@ const ReportCardSchema = new Schema<IReportCardDocument>(
   {
     student: { type: Schema.Types.ObjectId, ref: "User", required: true },
     studentSnapshot: {
+      surname: { type: String, required: true },
       firstName: { type: String, required: true },
-      lastName: { type: String, required: true },
+      otherName: { type: String, required: true },
       admissionNumber: { type: String, required: true },
       profilePhoto: { type: String },
       gender: { type: String, enum: ["male", "female"], required: true },

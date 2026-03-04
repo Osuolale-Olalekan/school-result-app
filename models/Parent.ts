@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 import UserModel from "./User";
 
 export interface IParentDocument extends Document {
-  children: mongoose.Types.ObjectId[];
+  // children: mongoose.Types.ObjectId[];
   occupation?: string;
   relationship?: string;
   createdAt: Date;
@@ -11,7 +11,7 @@ export interface IParentDocument extends Document {
 
 const ParentSchema = new Schema<IParentDocument>(
   {
-    children: [{ type: Schema.Types.ObjectId, ref: "student" }],
+    // children: [{ type: Schema.Types.ObjectId, ref: "Student" }],
     occupation: { type: String },
     relationship: { type: String },
   },

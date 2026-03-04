@@ -9,8 +9,9 @@ import { useState } from "react";
 import { Department } from "@/types/enums";
 
 const baseSchema = z.object({
+  surname: z.string().min(2, "Required"),
   firstName: z.string().min(2, "Required"),
-  lastName: z.string().min(2, "Required"),
+  otherName: z.string().optional(),
   email: z.string().email("Valid email required"),
   phone: z.string().optional(),
   role: z.nativeEnum(UserRole),
@@ -64,7 +65,7 @@ const getSchema = (role: UserRole) => {
 interface UserFormProps {
   selectedRole: UserRole;
   classes: Array<{ _id: string; name: string }>;
-  students: Array<{ _id: string; firstName: string; lastName: string }>;
+  students: Array<{ _id: string; surname: string; firstName: string; otherName: string }>;
   isLoading: boolean;
   uploadingPhoto: boolean;
   onClose: () => void;
@@ -111,6 +112,20 @@ export default function UserForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
+            Surname *
+          </label>
+          <input
+            {...register("surname")}
+            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+          />
+          {typedErrors.surname && (
+            <p className="text-red-500 text-xs mt-1">
+              {typedErrors.surname.message}
+            </p>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             First Name *
           </label>
           <input
@@ -123,20 +138,24 @@ export default function UserForm({
             </p>
           )}
         </div>
-        <div>
+          <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Last Name *
+            Other Name
           </label>
           <input
-            {...register("lastName")}
+            {...register("otherName")}
             className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
           />
-          {typedErrors.lastName && (
+          {typedErrors.otherName && (
             <p className="text-red-500 text-xs mt-1">
-              {typedErrors.lastName.message}
+              {typedErrors.otherName.message}
             </p>
           )}
         </div>
+
+
+
+
       </div>
 
       <div>
@@ -388,7 +407,7 @@ export default function UserForm({
             >
               {students.map((s) => (
                 <option key={s._id} value={s._id}>
-                  {s.firstName} {s.lastName}
+                  {s.surname} {s.firstName} {s.otherName}
                 </option>
               ))}
             </select>

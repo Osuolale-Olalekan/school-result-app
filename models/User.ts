@@ -2,8 +2,9 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 import { UserRole, UserStatus } from "@/types/enums";
 
 export interface IUserDocument extends Document {
+  surname: string;
   firstName: string;
-  lastName: string;
+  otherName: string;
   email: string;
   password: string;
   phone?: string;
@@ -15,14 +16,16 @@ export interface IUserDocument extends Document {
   passwordResetToken?: string;
   passwordResetExpires?: Date;
   lastLogin?: Date;
+  children?: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 const UserSchema = new Schema<IUserDocument>(
   {
+    surname: { type: String, required: true, trim: true },
     firstName: { type: String, required: true, trim: true },
-    lastName: { type: String, required: true, trim: true },
+    otherName: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, select: false },
     phone: { type: String, trim: true },
@@ -34,6 +37,8 @@ const UserSchema = new Schema<IUserDocument>(
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
     lastLogin: { type: Date },
+    // ✅ Move children here so ALL models (Parent, Teacher) can use it
+      children: [{ type: Schema.Types.ObjectId, ref: "student" }],
   },
   { timestamps: true, discriminatorKey: "role" }
 );

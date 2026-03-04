@@ -36,8 +36,9 @@ interface ClassAssignment {
 
 interface Student {
   _id: string;
+  surname: string
   firstName: string;
-  lastName: string;
+  otherName: string;
   admissionNumber: string;
 }
 
@@ -160,29 +161,32 @@ export default function TeacherResultsView() {
     };
 
     if (json.success && json.data) {
-  const loadedDrafts: Record<string, ReportDraft> = {};
-  const loadedIds: string[] = [];
-  for (const report of json.data) {
-    const studentId =
-      typeof report.student === "string"
-        ? report.student
-        : String(report.student);
-    loadedDrafts[studentId] = {
-      studentId: report.student,
-      scores: report.subjects.map((s) => ({ ...s })),
-      attendance: report.attendance,
-      teacherComment: report.teacherComment ?? "",
-      status: report.status,
-      declineReason: report.declineReason,
-    };
-    // ← Only track IDs for reports that can still be submitted
-    if (report.status === ReportStatus.DRAFT || report.status === ReportStatus.DECLINED) {
-      loadedIds.push(report._id);
+      const loadedDrafts: Record<string, ReportDraft> = {};
+      const loadedIds: string[] = [];
+      for (const report of json.data) {
+        const studentId =
+          typeof report.student === "string"
+            ? report.student
+            : String(report.student);
+        loadedDrafts[studentId] = {
+          studentId: report.student,
+          scores: report.subjects.map((s) => ({ ...s })),
+          attendance: report.attendance,
+          teacherComment: report.teacherComment ?? "",
+          status: report.status,
+          declineReason: report.declineReason,
+        };
+        // ← Only track IDs for reports that can still be submitted
+        if (
+          report.status === ReportStatus.DRAFT ||
+          report.status === ReportStatus.DECLINED
+        ) {
+          loadedIds.push(report._id);
+        }
+      }
+      setDrafts(loadedDrafts);
+      setSavedReportIds(loadedIds); // ← approved IDs never enter this list
     }
-  }
-  setDrafts(loadedDrafts);
-  setSavedReportIds(loadedIds); // ← approved IDs never enter this list
-}
   }
 
   function toggleExpanded(studentId: string) {
@@ -291,36 +295,35 @@ export default function TeacherResultsView() {
     }
   }
 
-
   async function submitAllForReview() {
-  if (savedReportIds.length === 0) {
-    toast.error("No draft results to submit");
-    return;
-  }
-  setSubmitting(true);
-  try {
-    const res = await fetch("/api/teacher/results", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reportIds: savedReportIds }),
-    });
-    const json = (await res.json()) as { success: boolean; message?: string };
-    if (json.success) {
-      toast.success(json.message ?? "Reports submitted for review");
-      if (selectedAssignment && selectedTerm) {
-        await fetchDrafts(
-          selectedAssignment.class._id,
-          selectedAssignment.session._id,
-          selectedTerm,
-        );
-      }
-    } else {
-      toast.error("Failed to submit reports");
+    if (savedReportIds.length === 0) {
+      toast.error("No draft results to submit");
+      return;
     }
-  } finally {
-    setSubmitting(false);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/teacher/results", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportIds: savedReportIds }),
+      });
+      const json = (await res.json()) as { success: boolean; message?: string };
+      if (json.success) {
+        toast.success(json.message ?? "Reports submitted for review");
+        if (selectedAssignment && selectedTerm) {
+          await fetchDrafts(
+            selectedAssignment.class._id,
+            selectedAssignment.session._id,
+            selectedTerm,
+          );
+        }
+      } else {
+        toast.error("Failed to submit reports");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
-}
 
   // Split students into pending and drafted
   const pendingStudents = students.filter((s) => !drafts[s._id]);
@@ -727,12 +730,12 @@ function StudentCard({
                 : "bg-purple-100 text-purple-700"
             }`}
           >
-            {student.firstName.charAt(0)}
-            {student.lastName.charAt(0)}
+            {student.surname?.charAt(0) ?? "?"}
+            {student.firstName?.charAt(0) ?? "?"}
           </div>
           <div className="text-left">
             <p className="font-medium text-gray-900 text-sm">
-              {student.firstName} {student.lastName}
+              {student.surname} {student.firstName}
             </p>
             <p className="text-xs text-gray-400">{student.admissionNumber}</p>
           </div>
@@ -1031,4 +1034,3 @@ function StudentCard({
     </div>
   );
 }
-

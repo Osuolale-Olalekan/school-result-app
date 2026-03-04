@@ -58,8 +58,9 @@ export async function GET(
     if (status) query.status = status;
     if (search) {
       query.$or = [
+        { surname: {$regex: search, $options: "i"} },
         { firstName: { $regex: search, $options: "i" } },
-        { lastName: { $regex: search, $options: "i" } },
+        { otherName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
       ];
     }
@@ -108,8 +109,9 @@ export async function POST(
 
     let created: {
       _id: unknown;
+      surname: string;
       firstName: string;
-      lastName: string;
+      otherName: string;
       email: string;
       roles: UserRole[];
       activeRole: UserRole;
@@ -155,8 +157,9 @@ export async function POST(
       }
 
       created = (await StudentModel.create({
+        surname: (body.surname as string).trim(),
         firstName: (body.firstName as string).trim(),
-        lastName: (body.lastName as string).trim(),
+        otherName: (body.otherName as string).trim(),
         email: (body.email as string).toLowerCase().trim(),
         password: hashedPassword,
         phone: body.phone,
@@ -182,8 +185,9 @@ export async function POST(
         bloodGroup: body.bloodGroup,
       })) as unknown as {
         _id: unknown;
+        surname: string;
         firstName: string;
-        lastName: string;
+        otherName: string;
         email: string;
         roles: UserRole[];
         activeRole: UserRole;
@@ -193,8 +197,9 @@ export async function POST(
       const employeeId = generateEmployeeId(teacherCount + 1);
 
       created = (await TeacherModel.create({
+        surname: (body.surname as string).trim(),
         firstName: (body.firstName as string).trim(),
-        lastName: (body.lastName as string).trim(),
+        otherName: (body.otherName as string).trim(),
         email: (body.email as string).toLowerCase().trim(),
         password: hashedPassword,
         phone: body.phone,
@@ -209,16 +214,18 @@ export async function POST(
         dateOfEmployment: body.dateOfEmployment ?? new Date(),
       })) as unknown as {
         _id: unknown;
+        surname: string;
         firstName: string;
-        lastName: string;
+        otherName: string;
         email: string;
         roles: UserRole[];
         activeRole: UserRole;
       };
     } else if (role === UserRole.PARENT) {
       created = (await ParentModel.create({
+        surname: (body.surname as string).trim(),
         firstName: (body.firstName as string).trim(),
-        lastName: (body.lastName as string).trim(),
+        otherName: (body.otherName as string).trim(),
         email: (body.email as string).toLowerCase().trim(),
         password: hashedPassword,
         phone: body.phone,
@@ -232,8 +239,9 @@ export async function POST(
         relationship: body.relationship,
       })) as unknown as {
         _id: unknown;
+        surname: string;
         firstName: string;
-        lastName: string;
+        otherName: string;
         email: string;
         roles: UserRole[];
         activeRole: UserRole;
@@ -259,8 +267,9 @@ export async function POST(
       }
 
       created = (await UserModel.create({
+        surname: (body.surname as string).trim(),
         firstName: (body.firstName as string).trim(),
-        lastName: (body.lastName as string).trim(),
+        otherName: (body.otherName as string).trim(),
         email: (body.email as string).toLowerCase().trim(),
         password: hashedPassword,
         phone: body.phone,
@@ -269,8 +278,9 @@ export async function POST(
         status: UserStatus.ACTIVE,
       })) as unknown as {
         _id: unknown;
+        surname: string;
         firstName: string;
-        lastName: string;
+        otherName: string;
         email: string;
         roles: UserRole[];
         activeRole: UserRole;
@@ -308,12 +318,12 @@ export async function POST(
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.CREATE,
       entity: role.charAt(0).toUpperCase() + role.slice(1),
       entityId: created._id?.toString() ?? "",
-      description: `Created ${role} account for ${created.firstName} ${created.lastName}`,
+      description: `Created ${role} account for ${created.surname} ${created.firstName} ${created.otherName}`,
       ipAddress: request.headers.get("x-forwarded-for") ?? undefined,
     });
 

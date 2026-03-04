@@ -34,8 +34,9 @@ export async function POST(
     };
 
     const student = await StudentModel.findById(studentId).populate("currentClass") as unknown as {
+      surname: string;
       firstName: string;
-      lastName: string;
+      otherName: string;
       currentClass: { name: ClassLevel; _id: string };
     };
     if (!student) return NextResponse.json({ success: false, error: "Student not found" }, { status: 404 });
@@ -50,12 +51,12 @@ export async function POST(
       await StudentModel.findByIdAndUpdate(studentId, { studentStatus: StudentStatus.GRADUATED });
       await createAuditLog({
         actorId: session.user.id,
-        actorName: `${session.user.firstName} ${session.user.lastName}`,
+        actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
         actorRole: UserRole.ADMIN,
         action: AuditAction.PROMOTE,
         entity: "Student",
         entityId: studentId,
-        description: `Manually graduated student ${student.firstName} ${student.lastName}`,
+        description: `Manually graduated student ${student.surname} ${student.firstName} ${student.otherName}`,
       });
       return NextResponse.json({ success: true, message: "Student graduated successfully" });
     } else if (targetClassId) {
@@ -73,12 +74,12 @@ export async function POST(
         await StudentModel.findByIdAndUpdate(studentId, { studentStatus: StudentStatus.GRADUATED });
         await createAuditLog({
           actorId: session.user.id,
-          actorName: `${session.user.firstName} ${session.user.lastName}`,
+          actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
           actorRole: UserRole.ADMIN,
           action: AuditAction.PROMOTE,
           entity: "Student",
           entityId: studentId,
-          description: `Graduated student ${student.firstName} ${student.lastName} (${(currentClass as { name: string }).name})`,
+          description: `Graduated student ${student.surname} ${student.firstName} ${student.otherName} (${(currentClass as { name: string }).name})`,
         });
         return NextResponse.json({ success: true, message: "Student graduated successfully" });
       }
@@ -119,12 +120,12 @@ export async function POST(
 
     await createAuditLog({
       actorId: session.user.id,
-      actorName: `${session.user.firstName} ${session.user.lastName}`,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
       actorRole: UserRole.ADMIN,
       action: AuditAction.PROMOTE,
       entity: "Student",
       entityId: studentId,
-      description: `Promoted ${student.firstName} ${student.lastName} from ${currentClass.name} to ${newClassName}`,
+      description: `Promoted ${student.surname} ${student.firstName} ${student.otherName} from ${currentClass.name} to ${newClassName}`,
     });
 
     return NextResponse.json({

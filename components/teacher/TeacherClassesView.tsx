@@ -23,8 +23,9 @@ interface ClassAssignment {
 
 interface Student {
   _id: string;
+  surname: string;
   firstName: string;
-  lastName: string;
+  otherName: string;
   admissionNumber: string;
   gender: string;
   studentStatus: string;
@@ -226,11 +227,11 @@ export default function TeacherClassesView() {
                           >
                             <span className="text-xs text-gray-400 w-5 text-right `flex-shrink-0`">{idx + 1}.</span>
                             <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700 flex-shrink-0`">
-                              {student.firstName.charAt(0)}{student.lastName.charAt(0)}
+                              {student.surname.charAt(0)}{student.firstName.charAt(0)}
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-gray-800 truncate">
-                                {student.firstName} {student.lastName}
+                                {student.surname} {student.firstName}
                               </p>
                               <p className="text-xs text-gray-400 font-mono">{student.admissionNumber}</p>
                             </div>

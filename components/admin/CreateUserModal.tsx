@@ -18,7 +18,7 @@ export default function CreateUserModal({ onClose, onSuccess }: Props) {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [students, setStudents] = useState<Array<{ _id: string; firstName: string; lastName: string }>>([]);
+  const [students, setStudents] = useState<Array<{ _id: string; surname: string; firstName: string; otherName: string }>>([]);
 
 useEffect(() => {
   fetch("/api/admin/classes")
@@ -29,7 +29,7 @@ useEffect(() => {
 
   fetch("/api/admin/users?role=student&limit=100")
     .then((r) => r.json())
-    .then((j: { success: boolean; data?: Array<{ _id: string; firstName: string; lastName: string }> }) => {
+    .then((j: { success: boolean; data?: Array<{ _id: string; surname: string; firstName: string; otherName:string }> }) => {
       if (j.success && j.data) setStudents(j.data);
     });
 }, []);

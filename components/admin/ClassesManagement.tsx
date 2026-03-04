@@ -13,7 +13,7 @@ interface ClassInfo {
   capacity?: number;
   order: number;
   subjects: Array<{ _id: string; name: string }>;
-  classTeacher?: { _id: string; firstName: string; lastName: string };
+  classTeacher?: { _id: string; surname: string; firstName: string; otherName: string };
 }
 
 const SECTION_LABELS = {
@@ -206,7 +206,7 @@ export default function ClassesManagement() {
                       <p>{cls.subjects.length} subjects</p>
                       {cls.capacity && <p>Capacity: {cls.capacity}</p>}
                       {cls.classTeacher && (
-                        <p>Teacher: {cls.classTeacher.firstName} {cls.classTeacher.lastName}</p>
+                        <p>Teacher: {cls.classTeacher.surname} {cls.classTeacher.firstName} {cls.classTeacher.otherName}</p>
                       )}
                     </div>
                   </div>

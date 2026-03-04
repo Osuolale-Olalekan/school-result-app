@@ -2645,8 +2645,9 @@ export default function ReportCardComponent({
                   fontWeight: "bold",
                 }}
               >
+                {report.studentSnapshot.surname.charAt(0)}
                 {report.studentSnapshot.firstName.charAt(0)}
-                {report.studentSnapshot.lastName.charAt(0)}
+                {report.studentSnapshot.otherName.charAt(0)}
               </div>
             )}
           </div>
@@ -2664,7 +2665,7 @@ export default function ReportCardComponent({
             {[
               {
                 label: "Student Name",
-                value: `${report.studentSnapshot.firstName} ${report.studentSnapshot.lastName}`,
+                value: `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName}`,
               },
               {
                 label: "Admission No.",

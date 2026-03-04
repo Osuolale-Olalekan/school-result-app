@@ -32,7 +32,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     const total = await ReportCardModel.countDocuments(query);
     const reports = await ReportCardModel.find(query)
-      .populate("submittedBy", "firstName lastName email")
+      .populate("submittedBy", "surname firstName otherName email")
       .populate("class", "name section")
       .sort({ submittedAt: -1 })
       .skip((page - 1) * limit)
