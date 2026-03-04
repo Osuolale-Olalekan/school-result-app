@@ -161,8 +161,9 @@ export interface IAttendance {
 export interface IReportCard extends BaseDocument {
   student: string; // IStudent _id
   studentSnapshot: {
+    surname: string;
     firstName: string;
-    lastName: string;
+    otherName: string;
     admissionNumber: string;
     profilePhoto?: string;
     gender: "male" | "female";
