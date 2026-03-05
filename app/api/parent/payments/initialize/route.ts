@@ -25,6 +25,11 @@ export async function POST(
 
   try {
     await connectDB();
+    console.log(
+      "SK starts with:",
+      process.env.PAYSTACK_SECRET_KEY?.substring(0, 15),
+    );
+    console.log("SK length:", process.env.PAYSTACK_SECRET_KEY?.length);
 
     const { studentId, sessionId, termId, amount } = (await request.json()) as {
       studentId: string;
