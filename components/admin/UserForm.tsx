@@ -20,7 +20,37 @@ const baseSchema = z.object({
 const studentSchema = baseSchema.extend({
   role: z.literal(UserRole.STUDENT),
   admissionNumber: z.string().optional(), // can be auto-generated if not provided
-  dateOfBirth: z.string().min(1, "Required"),
+  dateOfBirth: z
+    .string()
+    .min(1, "Date of birth is required")
+    .refine(
+      (val) => {
+        const date = new Date(val);
+        const today = new Date();
+
+        // Must be a valid date
+        if (isNaN(date.getTime())) return false;
+
+        // No dates before 1900
+        if (date.getFullYear() < 1900) return false;
+
+        // No future dates
+        if (date > today) return false;
+
+        // Must be at least 5 years old
+        const minAgeDate = new Date(
+          today.getFullYear() - 5,
+          today.getMonth(),
+          today.getDate(),
+        );
+        if (date > minAgeDate) return false;
+
+        return true;
+      },
+      {
+        message: "Student must be at least 5 years old and date must be valid",
+      },
+    ),
   gender: z.enum(["male", "female"]),
   currentClass: z.string().min(1, "Class is required"),
   address: z.string().optional(),
@@ -65,7 +95,12 @@ const getSchema = (role: UserRole) => {
 interface UserFormProps {
   selectedRole: UserRole;
   classes: Array<{ _id: string; name: string }>;
-  students: Array<{ _id: string; surname: string; firstName: string; otherName: string }>;
+  students: Array<{
+    _id: string;
+    surname: string;
+    firstName: string;
+    otherName: string;
+  }>;
   isLoading: boolean;
   uploadingPhoto: boolean;
   onClose: () => void;
@@ -138,7 +173,7 @@ export default function UserForm({
             </p>
           )}
         </div>
-          <div>
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Other Name
           </label>
@@ -152,10 +187,6 @@ export default function UserForm({
             </p>
           )}
         </div>
-
-
-
-
       </div>
 
       <div>
@@ -286,7 +317,17 @@ export default function UserForm({
               <input
                 {...register("dateOfBirth")}
                 type="date"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+                min="1900-01-01"
+                max={
+                  new Date(new Date().setFullYear(new Date().getFullYear() - 5))
+                    .toISOString()
+                    .split("T")[0]
+                }
+                className={`w-full px-3 py-2 rounded-xl border text-sm focus:outline-none ${
+                  typedErrors.dateOfBirth
+                    ? "border-red-400 focus:border-red-400"
+                    : "border-gray-200 focus:border-[#1e3a5f]"
+                }`}
               />
               {typedErrors.dateOfBirth && (
                 <p className="text-red-500 text-xs mt-1">
