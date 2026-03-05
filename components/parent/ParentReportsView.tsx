@@ -25,6 +25,8 @@ interface ReportSummary {
   isLocked: boolean;
   session: { _id: string; name: string };
   term: { _id: string; name: string };
+  reportCardPaid: boolean;
+  schoolFeesPaid: boolean;
 }
 
 interface PaymentModalState {
@@ -161,6 +163,58 @@ export default function ParentReportsView() {
     }
   }
 
+  // Derive the dynamic payment banner based on the first locked report's payment state
+  function renderPaymentBanner() {
+    const lockedReport = reports.find(r => r.isLocked);
+    if (!lockedReport) return null;
+
+    const { reportCardPaid, schoolFeesPaid } = lockedReport;
+
+    if (!reportCardPaid && !schoolFeesPaid) {
+      return (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+          <CreditCard className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Two Payments Required</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Both <strong>school fees</strong> and the <strong>₦{REPORT_CARD_FEE.toLocaleString()} report card access fee</strong> must be paid each term before results can be accessed. Contact the school admin to confirm school fees, and pay the report card fee below.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (reportCardPaid && !schoolFeesPaid) {
+      return (
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-start gap-3">
+          <CheckCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-blue-800">Report Card Fee Paid ✓</p>
+            <p className="text-xs text-blue-700 mt-0.5">
+              Your report card access fee has been received. However, <strong>school fees for this term are yet to be confirmed</strong> by the school admin. Please contact the school to complete your school fees payment.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (schoolFeesPaid && !reportCardPaid) {
+      return (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+          <CreditCard className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Report Card Access Fee Required</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              School fees confirmed ✓. A fee of <strong>₦{REPORT_CARD_FEE.toLocaleString()}</strong> is required per term to access and download your child&apos;s report card. Pay online via Paystack or have the school admin confirm your cash payment.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  }
+
   if (!studentId) {
     return (
       <div className="text-center py-16">
@@ -198,17 +252,8 @@ export default function ParentReportsView() {
         </p>
       </div>
 
-      {/* Payment info banner */}
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-        <CreditCard className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-amber-800">Report Card Access Fee</p>
-          <p className="text-xs text-amber-700 mt-0.5">
-            A fee of <strong>₦{REPORT_CARD_FEE.toLocaleString()}</strong> is required per term to access and download
-            your child&apos;s report card. You can pay online via Paystack or have the school admin confirm your payment.
-          </p>
-        </div>
-      </div>
+      {/* Dynamic Payment Banner — shown only when relevant */}
+      {renderPaymentBanner()}
 
       {loading ? (
         <div className="space-y-3">
@@ -266,8 +311,11 @@ export default function ParentReportsView() {
                       </p>
                     )}
                     {report.isLocked && (
-                      <p className="text-xs text-red-400 mt-0.5">
-                        Payment required to unlock this report card
+                      <p className="text-xs mt-0.5">
+                        {report.reportCardPaid && !report.schoolFeesPaid
+                          ? <span className="text-blue-400">School fees payment pending</span>
+                          : <span className="text-red-400">Payment required to unlock</span>
+                        }
                       </p>
                     )}
                   </div>
@@ -276,13 +324,19 @@ export default function ParentReportsView() {
                 {/* Actions */}
                 <div className="flex items-center gap-2 shrink-0">
                   {report.isLocked ? (
-                    <button
-                      onClick={() => handlePayNow(report)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
-                    >
-                      <CreditCard className="w-3.5 h-3.5" />
-                      Pay ₦{REPORT_CARD_FEE.toLocaleString()}
-                    </button>
+                    report.reportCardPaid && !report.schoolFeesPaid ? (
+                      <span className="text-xs text-blue-500 font-medium px-3 py-2">
+                        Awaiting school fees
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handlePayNow(report)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
+                      >
+                        <CreditCard className="w-3.5 h-3.5" />
+                        Pay ₦{REPORT_CARD_FEE.toLocaleString()}
+                      </button>
+                    )
                   ) : (
                     <button
                       onClick={() => viewReport(report._id)}

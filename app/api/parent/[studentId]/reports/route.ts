@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-// import { auth } from "@/lib/auth";
 import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/db";
 import "@/lib/registerModels";
 import ReportCardModel from "@/models/ReportCard";
+import PaymentRecordModel from "@/models/PaymentRecord";
 import UserModel from "@/models/User";
 import { PaymentStatus, ReportStatus, UserRole } from "@/types/enums";
 import type { ApiResponse } from "@/types";
@@ -25,19 +25,14 @@ export async function GET(
   try {
     await connectDB();
 
-    // Verify parent has access to this student
     const parent = await UserModel.findById(session.user.id).lean();
-    if (!parent) return NextResponse.json({ success: false, error: "Parent not found" }, { status: 404 });
+    if (!parent)
+      return NextResponse.json({ success: false, error: "Parent not found" }, { status: 404 });
 
-    // AFTER — same logic, just clearer typing
-const parentDoc = parent as { children?: Array<{ toString(): string }> };
-const hasAccess = parentDoc.children?.some(
-  (childId) => childId.toString() === studentId
-) ?? false;
-
-if (!hasAccess) {
-  return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
-}
+    const parentDoc = parent as { children?: Array<{ toString(): string }> };
+    const hasAccess = parentDoc.children?.some((c) => c.toString() === studentId) ?? false;
+    if (!hasAccess)
+      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
 
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("sessionId");
@@ -57,29 +52,69 @@ if (!hasAccess) {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Don't expose full details if not paid
-    const safeReports = reports.map((r) => {
-      const report = r as typeof r & { paymentStatus: string; subjects?: unknown[] };
-      if (report.paymentStatus !== PaymentStatus.PAID) {
-        return {
-          _id: report._id,
-          student: report.student,
-          className: (report as { className?: string }).className,
-          sessionName: (report as { sessionName?: string }).sessionName,
-          termName: (report as { termName?: string }).termName,
-          paymentStatus: report.paymentStatus,
-          status: (report as { status?: string }).status,
-          session: (report as { session?: unknown }).session,
-          term: (report as { term?: unknown }).term,
-          isLocked: true,
+    // For each report, check BOTH payment records from PaymentRecordModel
+    const safeReports = await Promise.all(
+      reports.map(async (r) => {
+        const report = r as typeof r & {
+          paymentStatus?: string;
+          subjects?: unknown[];
+          session: { _id: unknown };
+          term: { _id: unknown };
         };
-      }
-      return { ...r, isLocked: false };
-    });
+
+        const sessionObjId = (report.session as { _id: unknown })?._id;
+        const termObjId = (report.term as { _id: unknown })?._id;
+
+        // Check both payments in parallel
+        const [reportCardPayment, schoolFeesPayment] = await Promise.all([
+          PaymentRecordModel.findOne({
+            student: studentId,
+            session: sessionObjId,
+            term: termObjId,
+            type: "report_card",
+            status: PaymentStatus.PAID,
+          }).lean(),
+          PaymentRecordModel.findOne({
+            student: studentId,
+            session: sessionObjId,
+            term: termObjId,
+            type: "school_fees",
+            status: PaymentStatus.PAID,
+          }).lean(),
+        ]);
+
+        const reportCardPaid = !!reportCardPayment;
+        const schoolFeesPaid = !!schoolFeesPayment;
+        const isLocked = !reportCardPaid || !schoolFeesPaid; // both must be paid
+
+        if (isLocked) {
+          // Return limited data — don't expose scores/subjects
+          return {
+            _id: report._id,
+            student: report.student,
+            session: report.session,
+            term: report.term,
+            status: report.status,
+            paymentStatus: report.paymentStatus,
+            isLocked: true,
+            reportCardPaid,
+            schoolFeesPaid,
+          };
+        }
+
+        // Fully unlocked — return everything
+        return {
+          ...r,
+          isLocked: false,
+          reportCardPaid: true,
+          schoolFeesPaid: true,
+        };
+      })
+    );
 
     return NextResponse.json({ success: true, data: safeReports });
   } catch (error) {
-    
+    console.error("Parent reports error:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

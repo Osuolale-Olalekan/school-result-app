@@ -8,10 +8,15 @@ import { AuditAction, PaymentStatus, UserRole } from "@/types/enums";
 import { createAuditLog } from "@/lib/audit";
 import type { ApiResponse } from "@/types";
 
-export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<object[]>>> {
+export async function GET(
+  request: NextRequest,
+): Promise<NextResponse<ApiResponse<object[]>>> {
   const session = await getSession();
   if (!session?.user || session.user.activeRole !== UserRole.ADMIN) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
   try {
@@ -37,20 +42,43 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
     // Auto-create payment records for approved report cards
     const approvedReports = await ReportCardModel.find(reportQuery).lean();
-
     for (const report of approvedReports) {
       const r = report as { student: unknown; session: unknown; term: unknown };
+
+      // Create school_fees record
       await PaymentRecordModel.findOneAndUpdate(
-        { student: r.student, session: r.session, term: r.term },
+        {
+          student: r.student,
+          session: r.session,
+          term: r.term,
+          type: "school_fees",
+        },
         {
           $setOnInsert: {
             student: r.student,
             session: r.session,
             term: r.term,
+            type: "school_fees",
             status: PaymentStatus.UNPAID,
           },
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
+      );
+
+      // for (const report of approvedReports) {
+      //   const r = report as { student: unknown; session: unknown; term: unknown };
+      await PaymentRecordModel.findOneAndUpdate(
+        { student: r.student, session: r.session, term: r.term, type: "report_card" },
+        {
+          $setOnInsert: {
+            student: r.student,
+            session: r.session,
+            term: r.term,
+            type: "report_card",
+            status: PaymentStatus.UNPAID,
+          },
+        },
+        { upsert: true, new: true },
       );
     }
 
@@ -78,7 +106,9 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     // Filter by class if provided (after populate)
     const filtered = classId
       ? payments.filter((p) => {
-          const student = p.student as { currentClass?: { _id: { toString(): string } } };
+          const student = p.student as {
+            currentClass?: { _id: { toString(): string } };
+          };
           return student?.currentClass?._id?.toString() === classId;
         })
       : payments;
@@ -86,19 +116,27 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     return NextResponse.json({ success: true, data: filtered });
   } catch (error) {
     // console.error("Get payments error:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<object>>> {
+export async function POST(
+  request: NextRequest,
+): Promise<NextResponse<ApiResponse<object>>> {
   const session = await getSession();
   if (!session?.user || session.user.activeRole !== UserRole.ADMIN) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
   try {
     await connectDB();
-    const body = await request.json() as {
+    const body = (await request.json()) as {
       studentId: string;
       sessionId: string;
       termId: string;
@@ -109,7 +147,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     };
 
     const payment = await PaymentRecordModel.findOneAndUpdate(
-      { student: body.studentId, session: body.sessionId, term: body.termId, type: body.type },
+      {
+        student: body.studentId,
+        session: body.sessionId,
+        term: body.termId,
+        type: body.type,
+      },
       {
         status: body.status,
         amount: body.amount,
@@ -117,19 +160,31 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         markedBy: session.user.id,
         markedAt: new Date(),
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     // Also update the report card payment status
-    await ReportCardModel.findOneAndUpdate(
-      { student: body.studentId, session: body.sessionId, term: body.termId },
-      {
-        paymentStatus: body.status,
-        ...(body.status === PaymentStatus.PAID
-          ? { paidAt: new Date(), markedPaidBy: session.user.id }
-          : {}),
-      }
-    );
+    // await ReportCardModel.findOneAndUpdate(
+    //   { student: body.studentId, session: body.sessionId, term: body.termId },
+    //   {
+    //     paymentStatus: body.status,
+    //     ...(body.status === PaymentStatus.PAID
+    //       ? { paidAt: new Date(), markedPaidBy: session.user.id }
+    //       : {}),
+    //   }
+    // );
+    // Only update ReportCard paymentStatus when type is report_card
+    if (body.type === "report_card") {
+      await ReportCardModel.findOneAndUpdate(
+        { student: body.studentId, session: body.sessionId, term: body.termId },
+        {
+          paymentStatus: body.status,
+          ...(body.status === PaymentStatus.PAID
+            ? { paidAt: new Date(), markedPaidBy: session.user.id }
+            : {}),
+        },
+      );
+    }
 
     await createAuditLog({
       actorId: session.user.id,
@@ -141,11 +196,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       description: `Marked payment as ${body.status} for student ${body.studentId}`,
     });
 
-    return NextResponse.json({ success: true, data: payment, message: "Payment updated" });
+    return NextResponse.json({
+      success: true,
+      data: payment,
+      message: "Payment updated",
+    });
   } catch (error) {
-    
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
-
-

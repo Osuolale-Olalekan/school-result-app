@@ -6,6 +6,7 @@ export async function initializePaystackPayment(data: {
   email: string;
   amount: number; // in kobo (multiply naira by 100)
   reference: string;
+  callback_url?: string;
   metadata?: Record<string, unknown>;
 }): Promise<{ authorization_url: string; access_code: string; reference: string }> {
   const res = await fetch(`${BASE_URL}/transaction/initialize`, {
@@ -18,6 +19,7 @@ export async function initializePaystackPayment(data: {
       email: data.email,
       amount: data.amount,
       reference: data.reference,
+      callback_url: data.callback_url,
       metadata: data.metadata,
     }),
   });

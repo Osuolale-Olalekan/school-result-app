@@ -40,6 +40,11 @@ const PaymentRecordSchema = new Schema<IPaymentRecordDocument>(
     markedBy: { type: Schema.Types.ObjectId, ref: "User" },
     markedAt: { type: Date },
     note: { type: String },
+
+    paystackReference: { type: String },
+    paystackAccessCode: { type: String },
+    paidAt: { type: Date },
+    paymentMethod: { type: String, enum: ["manual", "paystack"] },
   },
   { timestamps: true },
 );

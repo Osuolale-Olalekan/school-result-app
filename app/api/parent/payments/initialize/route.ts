@@ -36,8 +36,8 @@ export async function POST(
     // Verify parent has access to this student
     const parent = (await UserModel.findById(session.user.id).lean()) as {
       email: string;
+      surname: string;
       firstName: string;
-      lastName: string;
       children?: Array<{ toString(): string }>;
     } | null;
 
@@ -80,6 +80,7 @@ export async function POST(
       email: parent.email,
       amount: amount * 100, // convert to kobo
       reference,
+      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/parent/reports?studentId=${studentId}`,
       metadata: {
         studentId,
         sessionId,
