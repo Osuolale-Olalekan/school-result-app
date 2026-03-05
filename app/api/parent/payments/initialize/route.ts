@@ -82,6 +82,9 @@ export async function POST(
 
     const reference = generatePaymentReference(studentId, termId);
 
+    console.log("Full SK:", process.env.PAYSTACK_SECRET_KEY);
+    console.log("Email being used:", parent.email);
+
     // Initialize with Paystack
     const paystackData = await initializePaystackPayment({
       email: parent.email,
