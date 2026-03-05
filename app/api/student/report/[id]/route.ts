@@ -3,7 +3,7 @@ import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/db";
 import "@/lib/registerModels";
 import ReportCardModel from "@/models/ReportCard";
-import UserModel from "@/models/User";
+import PaymentRecordModel from "@/models/PaymentRecord";
 import SchoolSettingsModel from "@/models/SchoolSettings";
 import { PaymentStatus, ReportStatus, UserRole } from "@/types/enums";
 import type { ApiResponse } from "@/types";
@@ -18,7 +18,7 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<object>>> {
   const { id } = await params;
   const session = await getSession();
-  if (!session?.user || session.user.activeRole !== UserRole.PARENT) {
+  if (!session?.user || session.user.activeRole !== UserRole.STUDENT) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -31,38 +31,56 @@ export async function GET(
       .populate("class", "name section")
       .lean();
 
-    if (!report) return NextResponse.json({ success: false, error: "Report not found" }, { status: 404 });
+    if (!report) {
+      return NextResponse.json({ success: false, error: "Report not found" }, { status: 404 });
+    }
 
     const typedReport = report as typeof report & {
       student: { toString(): string };
       status: ReportStatus;
-      paymentStatus: PaymentStatus;
+      session: { _id: unknown };
+      term: { _id: unknown };
     };
 
+    // Must be approved
     if (typedReport.status !== ReportStatus.APPROVED) {
       return NextResponse.json({ success: false, error: "Report not available" }, { status: 403 });
     }
 
-    const parent = await UserModel.findById(session.user.id).lean();
-    if (!parent) return NextResponse.json({ success: false, error: "Parent not found" }, { status: 404 });
-
-    const parentDoc = parent as { children?: Array<{ toString(): string }> };
-    const hasAccess = parentDoc.children?.some(
-      (childId) => childId.toString() === typedReport.student.toString()
-    );
-
-    if (!hasAccess) {
+    // Must belong to the logged-in student
+    if (typedReport.student.toString() !== session.user.id) {
       return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
     }
 
-    if (typedReport.paymentStatus !== PaymentStatus.PAID) {
+    const sessionObjId = (typedReport.session as { _id: unknown })?._id;
+    const termObjId = (typedReport.term as { _id: unknown })?._id;
+
+    // Check both payments
+    const [reportCardPayment, schoolFeesPayment] = await Promise.all([
+      PaymentRecordModel.findOne({
+        student: session.user.id,
+        session: sessionObjId,
+        term: termObjId,
+        type: "report_card",
+        status: PaymentStatus.PAID,
+      }).lean(),
+      PaymentRecordModel.findOne({
+        student: session.user.id,
+        session: sessionObjId,
+        term: termObjId,
+        type: "school_fees",
+        status: PaymentStatus.PAID,
+      }).lean(),
+    ]);
+
+    if (!reportCardPayment || !schoolFeesPayment) {
       return NextResponse.json(
         { success: false, error: "Payment required to view this report card" },
         { status: 402 }
       );
     }
 
-    // Fetch principal signature from school settings
+    // Fetch principal signature
     const schoolSettings = await SchoolSettingsModel.findOne().lean() as { principalSignature?: string } | null;
 
     return NextResponse.json({
@@ -72,9 +90,8 @@ export async function GET(
         principalSignature: schoolSettings?.principalSignature ?? null,
       },
     });
-
   } catch (error) {
-    console.error("Get report error:", error);
+    console.error("Student report detail error:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

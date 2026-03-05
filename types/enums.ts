@@ -41,6 +41,7 @@ export enum TermStatus {
 }
 
 export enum ClassLevel {
+  // PRIMARY_1 = "Primary 1",
   PRIMARY_2 = "Primary 2",
   PRIMARY_3 = "Primary 3",
   PRIMARY_4 = "Primary 4",
@@ -50,6 +51,7 @@ export enum ClassLevel {
   JSS_3 = "JSS 3",
   SSS_1 = "SSS 1",
   SSS_2 = "SSS 2",
+  // SSS_3 = "SSS 3",
 }
 
 export enum Department {

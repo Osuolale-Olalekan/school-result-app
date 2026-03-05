@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Users, Award, Shield, ChevronRight,
   Star, CheckCircle, Menu, X, Globe, TrendingUp, Bell, FileText,
-  ArrowRight, Sparkles, Phone, Mail, MapPin, BookOpen
+  ArrowRight, Phone, Mail, MapPin, BookOpen, Quote, ChevronLeft
 } from "lucide-react";
 
 const SCHOOL_LOGO = "https://res.cloudinary.com/dvgfumpoj/image/upload/v1771669318/school_logos_bm6n2y.png";
@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { label: "About", href: "#about" },
   { label: "Features", href: "#features" },
   { label: "Programs", href: "#programs" },
+  { label: "Testimonials", href: "#testimonials" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -82,15 +83,95 @@ const PROGRAMS = [
   },
 ];
 
+const TESTIMONIALS = [
+  {
+    name: "Mrs. Funmilayo Adeyemi",
+    role: "Parent of JSS 2 Student",
+    initials: "FA",
+    color: "#f97316",
+    stars: 5,
+    text: "The parent portal has completely transformed how I stay involved in my daughter's education. I can check her results, download reports, and get notified immediately. God's Way Schools is truly ahead of its time.",
+  },
+  {
+    name: "Mr. Oluwaseun Bakare",
+    role: "Parent of Primary 4 & SSS 1 Students",
+    initials: "OB",
+    color: "#0ea5e9",
+    stars: 5,
+    text: "I have two children in this school and the digital report card system makes everything so easy. No more waiting for end-of-term visits. The teachers are excellent and the management is highly professional.",
+  },
+  {
+    name: "Solomon",
+    role: "SSS 2 Graduate, 2023",
+    initials: "OS",
+    color: "#7dd3fc",
+    stars: 5,
+    text: "God's Way gave me the foundation I needed to excel in my WAEC exams. The teachers genuinely cared about our success. I finished with distinctions in 7 subjects and I'm now at university — grateful forever.",
+  },
+  {
+    name: "Engr. Taiwo Olamide",
+    role: "Parent & Community Leader",
+    initials: "MA",
+    color: "#f97316",
+    stars: 5,
+    text: "What sets God's Way apart is the combination of moral values with academic excellence. My son has grown not just intellectually but in character. This school truly lives up to its motto.",
+  },
+  {
+    name: "Mrs. Grace",
+    role: "Parent of Three Students",
+    initials: "GN",
+    color: "#0ea5e9",
+    stars: 5,
+    text: "All three of my children attend God's Way and I couldn't be prouder. The school portal keeps me updated at all times. The staff is responsive and the environment is safe and nurturing.",
+  },
+  // {
+  //   name: "Engr. Taiwo Olamide",
+  //   role: "Old Student & Alumni President",
+  //   initials: "TO",
+  //   color: "#7dd3fc",
+  //   stars: 5,
+  //   text: "I am a proud product of God's Way Model Schools. Two decades later, the institution has only grown stronger. The digital transformation they've undergone is remarkable — truly a school for the future.",
+  // },
+];
+
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const startInterval = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setActiveTestimonial((prev) => (prev + 1) % TESTIMONIALS.length);
+    }, 5000);
+  };
+
+  useEffect(() => {
+    startInterval();
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, []);
+
+  function goToNext() {
+    setActiveTestimonial((prev) => (prev + 1) % TESTIMONIALS.length);
+    startInterval();
+  }
+
+  function goToPrev() {
+    setActiveTestimonial((prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
+    startInterval();
+  }
+
+  function goTo(i: number) {
+    setActiveTestimonial(i);
+    startInterval();
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -120,7 +201,6 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center"
                 style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)" }}>
@@ -133,8 +213,7 @@ export default function LandingPage() {
               </div>
             </Link>
 
-            {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-6 lg:gap-8">
               {NAV_LINKS.map((link) => (
                 <a key={link.label} href={link.href}
                   className="text-sm font-semibold relative group transition-colors"
@@ -149,58 +228,35 @@ export default function LandingPage() {
               ))}
             </div>
 
-            {/* CTA */}
             <div className="hidden md:flex items-center gap-3">
-              {/* <Link href="/sign-in"
-                className="px-4 py-2 text-sm font-medium transition-colors"
-                style={{ color: "rgba(245,240,232,0.7)" }}
-              >
-                Sign In
-              </Link> */}
               <Link href="/sign-in"
                 className="px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:-translate-y-0.5"
-                style={{
-                  background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                  color: "#fff",
-                  boxShadow: "0 4px 20px rgba(249,115,22,0.35)",
-                }}
+                style={{ background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)", color: "#fff", boxShadow: "0 4px 20px rgba(249,115,22,0.35)" }}
               >
                 Portal Access
               </Link>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button className="md:hidden p-2 rounded-lg transition-colors"
-              style={{ color: "#f5f0e8" }}
-              onClick={() => setMenuOpen(!menuOpen)}>
+            <button className="md:hidden p-2 rounded-lg transition-colors" style={{ color: "#f5f0e8" }} onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
         <AnimatePresence>
           {menuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
               style={{ background: "rgba(8,22,50,0.99)", borderTop: "1px solid rgba(14,165,233,0.15)" }}
             >
               <div className="px-4 py-4 space-y-2">
                 {NAV_LINKS.map((link) => (
-                  <a key={link.label} href={link.href}
-                    className="block py-3 px-3 rounded-lg font-medium transition-all"
-                    style={{ color: "rgba(245,240,232,0.75)" }}
-                    onClick={() => setMenuOpen(false)}
-                  >
+                  <a key={link.label} href={link.href} className="block py-3 px-3 rounded-lg font-medium transition-all"
+                    style={{ color: "rgba(245,240,232,0.75)" }} onClick={() => setMenuOpen(false)}>
                     {link.label}
                   </a>
                 ))}
-                <Link href="/sign-in"
-                  className="block py-3 px-4 rounded-xl text-white font-bold text-center mt-2"
-                  style={{ background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)" }}
-                >
+                <Link href="/sign-in" className="block py-3 px-4 rounded-xl text-white font-bold text-center mt-2"
+                  style={{ background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)" }}>
                   Portal Access
                 </Link>
               </div>
@@ -211,200 +267,96 @@ export default function LandingPage() {
 
       {/* ── Hero ───────────────────────────────────────────────────── */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
-
-        {/* Rich navy gradient background */}
-        <div className="absolute inset-0"
-          style={{ background: "linear-gradient(150deg, #071428 0%, #0a1d3b 40%, #0c2348 70%, #0a1d3b 100%)" }} />
-
-        {/* Horizontal rule accent — school-like */}
-        <div className="absolute top-0 left-0 right-0 h-1"
-          style={{ background: "linear-gradient(90deg, #f97316 0%, #0ea5e9 50%, #f97316 100%)" }} />
-
-        {/* Sky blue atmospheric glows — softer, more institutional */}
-        <div className="absolute top-1/4 left-[-10%] `w-[600px]` `h-[600px]` rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 65%)", filter: "blur(80px)" }} />
-        <div className="absolute bottom-0 right-[-5%] `w-[500px]` `h-[500px]` rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 60%)", filter: "blur(100px)" }} />
-
-        {/* Subtle ruled-paper lines — very school-like touch */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(150deg, #071428 0%, #0a1d3b 40%, #0c2348 70%, #0a1d3b 100%)" }} />
+        <div className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, #f97316 0%, #0ea5e9 50%, #f97316 100%)" }} />
+        <div className="absolute top-1/4 rounded-full pointer-events-none" style={{ left: "-10%", width: 600, height: 600, background: "radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 65%)", filter: "blur(80px)" }} />
+        <div className="absolute bottom-0 rounded-full pointer-events-none" style={{ right: "-5%", width: 500, height: 500, background: "radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 60%)", filter: "blur(100px)" }} />
         <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.03 }}>
           {Array.from({ length: 20 }).map((_, i) => (
-            <div key={i} className="absolute left-0 right-0 h-px"
-              style={{ top: `${5 + i * 5}%`, background: "#7ab8d4" }} />
+            <div key={i} className="absolute left-0 right-0 h-px" style={{ top: `${5 + i * 5}%`, background: "#7ab8d4" }} />
           ))}
         </div>
-
-        {/* Large watermark logo — bigger as requested */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 2.5, ease: "easeOut" }}
-          >
-            <img
-              src={SCHOOL_LOGO}
-              alt=""
-              aria-hidden="true"
-              className="object-contain"
-              style={{
-                width: "680px",
-                height: "680px",
-                opacity: 0.07,
-                filter: "blur(0.5px) sepia(20%)",
-              }}
-            />
+          <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 2.5, ease: "easeOut" }}>
+            <img src={SCHOOL_LOGO} alt="" aria-hidden="true" className="object-contain"
+              style={{ width: "680px", height: "680px", opacity: 0.07, filter: "blur(0.5px) sepia(20%)" }} />
           </motion.div>
         </div>
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-28 pb-20">
           <div className="flex flex-col items-center text-center">
-
-            {/* School badge pill */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
               className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm mb-8 font-semibold"
-              style={{
-                border: "1px solid rgba(14,165,233,0.4)",
-                background: "rgba(14,165,233,0.1)",
-                color: "#7ab8d4",
-                backdropFilter: "blur(8px)",
-              }}
+              style={{ border: "1px solid rgba(14,165,233,0.4)", background: "rgba(14,165,233,0.1)", color: "#7ab8d4", backdropFilter: "blur(8px)" }}
             >
-              {/* <Sparkles className="w-4 h-4" /> */}
-             <span style={{ fontSize: 11, letterSpacing: "0.18em", fontWeight: 600, color: "var(--gold)", textTransform: "uppercase" }}>
+              <span style={{ fontSize: 11, letterSpacing: "0.18em", fontWeight: 600, textTransform: "uppercase" }}>
                 Sowing the Seed of Merit and Excellence
               </span>
             </motion.div>
 
-            {/* Logo */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.9, delay: 0.1, ease: "easeOut" }}
-              className="mb-9"
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9, delay: 0.1, ease: "easeOut" }} className="mb-9">
               <div className="relative mx-auto w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48">
-                <div className="absolute inset-0 rounded-full blur-2xl scale-125"
-                  style={{ background: "radial-gradient(circle, rgba(14,165,233,0.25) 0%, transparent 70%)" }} />
+                <div className="absolute inset-0 rounded-full blur-2xl scale-125" style={{ background: "radial-gradient(circle, rgba(14,165,233,0.25) 0%, transparent 70%)" }} />
                 <div className="relative w-full h-full rounded-full flex items-center justify-center overflow-hidden"
-                  style={{
-                    border: "2px solid rgba(245,240,232,0.2)",
-                    background: "rgba(255,255,255,0.07)",
-                    backdropFilter: "blur(12px)",
-                    boxShadow: "0 8px 40px rgba(14,165,233,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-                  }}>
-                  <img src={SCHOOL_LOGO} alt="God's Way Model Schools Logo"
-                    className="w-[100%] h-[100%] object-contain" style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))" }} />
+                  style={{ border: "2px solid rgba(245,240,232,0.2)", background: "rgba(255,255,255,0.07)", backdropFilter: "blur(12px)", boxShadow: "0 8px 40px rgba(14,165,233,0.2), inset 0 1px 0 rgba(255,255,255,0.1)" }}>
+                  <img src={SCHOOL_LOGO} alt="God's Way Model Schools Logo" className="w-[100%] h-[100%] object-contain" style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))" }} />
                 </div>
-                {/* Orange + sky ring accent */}
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
                   className="absolute rounded-full"
-                  style={{
-                    inset: "-7px",
-                    background: "conic-gradient(from 0deg, transparent 55%, rgba(249,115,22,0.6) 70%, rgba(14,165,233,0.5) 85%, transparent 100%)",
-                  }}
-                />
+                  style={{ inset: "-7px", background: "conic-gradient(from 0deg, transparent 55%, rgba(249,115,22,0.6) 70%, rgba(14,165,233,0.5) 85%, transparent 100%)" }} />
               </div>
             </motion.div>
 
-            {/* Heading */}
-            <motion.h1
-              className="font-bold mb-3 leading-[1.05] tracking-tight"
+            <motion.h1 className="font-bold mb-3 leading-[1.05] tracking-tight"
               style={{ fontSize: "clamp(2.5rem, 7vw, 5.5rem)", color: "#f5f0e8" }}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }}
             >
               God&apos;s Way{" "}
-              <span style={{
-                background: "linear-gradient(135deg, #0ea5e9 0%, #7dd3fc 50%, #0ea5e9 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}>
+              <span style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #7dd3fc 50%, #0ea5e9 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                 Model
               </span>
             </motion.h1>
-            <motion.h1
-              className="font-bold mb-6 leading-[1.05] tracking-tight"
+            <motion.h1 className="font-bold mb-6 leading-[1.05] tracking-tight"
               style={{ fontSize: "clamp(2.5rem, 7vw, 5.5rem)", color: "rgba(245,240,232,0.85)" }}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.28 }}
+              initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.28 }}
             >
               Groups of Schools
             </motion.h1>
 
-            <motion.p
-              className="text-base sm:text-lg lg:text-xl max-w-2xl mb-10 leading-relaxed"
-              style={{ color: "rgba(245,240,232,0.5)" }}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.38 }}
+            <motion.p className="text-base sm:text-lg lg:text-xl max-w-2xl mb-10 leading-relaxed" style={{ color: "rgba(245,240,232,0.5)" }}
+              initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.38 }}
             >
-              A world-class educational institution nurturing the leaders of tomorrow through
-              academic excellence, moral values, and spiritual growth.
+              A world-class educational institution nurturing the leaders of tomorrow through academic excellence, moral values, and spiritual growth.
             </motion.p>
 
-            {/* CTAs */}
-            <motion.div
-              className="flex flex-col sm:flex-row items-center gap-4 mb-16"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.48 }}
+            <motion.div className="flex flex-col sm:flex-row items-center gap-4 mb-16"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.48 }}
             >
               <Link href="/sign-in"
                 className="group flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base text-white transition-all hover:-translate-y-1 w-full sm:w-auto justify-center"
-                style={{
-                  background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                  boxShadow: "0 6px 30px rgba(249,115,22,0.4)",
-                }}
+                style={{ background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)", boxShadow: "0 6px 30px rgba(249,115,22,0.4)" }}
                 onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 10px 40px rgba(249,115,22,0.55)")}
                 onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 6px 30px rgba(249,115,22,0.4)")}
               >
-                Access Student Portal
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                Access Student Portal <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
               <a href="#about"
                 className="flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base transition-all hover:-translate-y-0.5 w-full sm:w-auto justify-center"
-                style={{
-                  border: "1.5px solid rgba(14,165,233,0.35)",
-                  color: "#7ab8d4",
-                  background: "rgba(14,165,233,0.07)",
-                  backdropFilter: "blur(8px)",
-                }}
+                style={{ border: "1.5px solid rgba(14,165,233,0.35)", color: "#7ab8d4", background: "rgba(14,165,233,0.07)", backdropFilter: "blur(8px)" }}
               >
-                Discover More
-                <ChevronRight className="w-4 h-4" />
+                Discover More <ChevronRight className="w-4 h-4" />
               </a>
             </motion.div>
 
-            {/* Stats */}
-            <motion.div
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full max-w-3xl"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.58 }}
+            <motion.div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 w-full max-w-3xl"
+              initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.58 }}
             >
               {STATS.map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.65 + i * 0.1 }}
+                <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.65 + i * 0.1 }}
                   className="rounded-2xl p-4 sm:p-5 text-center transition-all"
-                  style={{
-                    border: "1px solid rgba(14,165,233,0.2)",
-                    background: "rgba(14,165,233,0.06)",
-                    backdropFilter: "blur(8px)",
-                  }}
+                  style={{ border: "1px solid rgba(14,165,233,0.2)", background: "rgba(14,165,233,0.06)", backdropFilter: "blur(8px)" }}
                 >
-                  <div className="text-2xl sm:text-3xl font-bold mb-1"
-                    style={{ color: "#f97316" }}>{stat.value}</div>
+                  <div className="text-2xl sm:text-3xl font-bold mb-1" style={{ color: "#f97316" }}>{stat.value}</div>
                   <div className="text-xs leading-snug" style={{ color: "rgba(245,240,232,0.45)" }}>{stat.label}</div>
                 </motion.div>
               ))}
@@ -412,47 +364,29 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-          style={{ background: "linear-gradient(to top, #0a1d3b, transparent)" }} />
+        <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none" style={{ background: "linear-gradient(to top, #0a1d3b, transparent)" }} />
       </section>
 
       {/* ── About ──────────────────────────────────────────────────── */}
       <section id="about" className="py-24 px-4 relative" style={{ background: "#0a1d3b" }}>
-        <div className="absolute top-0 left-0 right-0 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(14,165,233,0.4), transparent)" }} />
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(14,165,233,0.4), transparent)" }} />
         <div className="max-w-6xl mx-auto">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+          <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}
             className="grid lg:grid-cols-2 gap-16 items-center"
           >
             <motion.div variants={itemVariants}>
-              <span className="text-sm font-bold tracking-widest uppercase mb-4 block"
-                style={{ color: "#f97316" }}>About Us</span>
-              <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight tracking-tight"
-                style={{ color: "#f5f0e8" }}>
-                Building Tomorrow&apos;s{" "}
-                <span style={{ color: "#0ea5e9" }}>Leaders</span> Today
+              <span className="text-sm font-bold tracking-widest uppercase mb-4 block" style={{ color: "#f97316" }}>About Us</span>
+              <h2 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight tracking-tight" style={{ color: "#f5f0e8" }}>
+                Building Tomorrow&apos;s <span style={{ color: "#0ea5e9" }}>Leaders</span> Today
               </h2>
               <p className="text-lg leading-relaxed mb-6" style={{ color: "rgba(245,240,232,0.6)" }}>
-                God&apos;s Way Model Groups of Schools has been a beacon of educational excellence, providing
-                a holistic education that develops the mind, character, and spirit of every student.
+                God&apos;s Way Model Groups of Schools has been a beacon of educational excellence, providing a holistic education that develops the mind, character, and spirit of every student.
               </p>
               <p className="leading-relaxed mb-8" style={{ color: "rgba(245,240,232,0.38)" }}>
-                From Primary to Senior Secondary, our students benefit from experienced educators,
-                modern facilities, and a proven curriculum that prepares them for national examinations
-                and beyond.
+                From Primary to Senior Secondary, our students benefit from experienced educators, modern facilities, and a proven curriculum that prepares them for national examinations and beyond.
               </p>
               <div className="space-y-3">
-                {[
-                  "Qualified and dedicated teaching staff",
-                  "Individual student performance tracking",
-                  "Modern digital management system",
-                  "Strong parent-school communication",
-                ].map((point) => (
+                {["Qualified and dedicated teaching staff", "Individual student performance tracking", "Modern digital management system", "Strong parent-school communication"].map((point) => (
                   <div key={point} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: "#f97316" }} />
                     <span style={{ color: "rgba(245,240,232,0.65)" }}>{point}</span>
@@ -469,20 +403,10 @@ export default function LandingPage() {
                   { icon: Users, title: "Community", desc: "A family of students, staff & parents" },
                   { icon: Star, title: "Values", desc: "Faith, integrity and moral excellence" },
                 ].map((item) => (
-                  <div key={item.title}
-                    className="rounded-2xl p-5 transition-all group cursor-default"
-                    style={{
-                      background: "rgba(14,165,233,0.06)",
-                      border: "1px solid rgba(14,165,233,0.18)",
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLElement).style.border = "1px solid rgba(249,115,22,0.4)";
-                      (e.currentTarget as HTMLElement).style.background = "rgba(249,115,22,0.07)";
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLElement).style.border = "1px solid rgba(14,165,233,0.18)";
-                      (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.06)";
-                    }}
+                  <div key={item.title} className="rounded-2xl p-5 transition-all group cursor-default"
+                    style={{ background: "rgba(14,165,233,0.06)", border: "1px solid rgba(14,165,233,0.18)" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.border = "1px solid rgba(249,115,22,0.4)"; (e.currentTarget as HTMLElement).style.background = "rgba(249,115,22,0.07)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.border = "1px solid rgba(14,165,233,0.18)"; (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.06)"; }}
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
                       style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(14,165,233,0.25)" }}>
@@ -499,65 +423,31 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ───────────────────────────────────────────────── */}
-      <section id="features" className="py-24 px-4 relative"
-        style={{ background: "linear-gradient(180deg, #0a1d3b 0%, #091829 50%, #0a1d3b 100%)" }}>
-        <div className="absolute top-0 left-0 right-0 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(245,240,232,0.08), transparent)" }} />
+      <section id="features" className="py-24 px-4 relative" style={{ background: "linear-gradient(180deg, #0a1d3b 0%, #091829 50%, #0a1d3b 100%)" }}>
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(245,240,232,0.08), transparent)" }} />
         <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <span className="text-sm font-bold tracking-widest uppercase mb-4 block" style={{ color: "#f97316" }}>
-              Platform Features
-            </span>
-            <h2 className="text-4xl lg:text-5xl font-bold mb-4 tracking-tight" style={{ color: "#f5f0e8" }}>
-              Everything You Need, In One Place
-            </h2>
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="text-center mb-16">
+            <span className="text-sm font-bold tracking-widest uppercase mb-4 block" style={{ color: "#f97316" }}>Platform Features</span>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-4 tracking-tight" style={{ color: "#f5f0e8" }}>Everything You Need, In One Place</h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: "rgba(245,240,232,0.45)" }}>
-              Our enterprise school management platform empowers administrators, teachers, and parents
-              with powerful tools designed for modern education.
+              Our enterprise school management platform empowers administrators, teachers, and parents with powerful tools designed for modern education.
             </p>
           </motion.div>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
-          >
-            {FEATURES.map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                variants={itemVariants}
+          <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {FEATURES.map((feature) => (
+              <motion.div key={feature.title} variants={itemVariants}
                 className="group relative rounded-2xl p-6 transition-all duration-300 overflow-hidden cursor-default"
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(14,165,233,0.15)",
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.border = "1px solid rgba(14,165,233,0.45)";
-                  (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.07)";
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.border = "1px solid rgba(14,165,233,0.15)";
-                  (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
-                }}
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(14,165,233,0.15)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.border = "1px solid rgba(14,165,233,0.45)"; (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.07)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.border = "1px solid rgba(14,165,233,0.15)"; (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)"; }}
               >
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(14,165,233,0.2) 0%, rgba(14,165,233,0.08) 100%)",
-                    border: "1px solid rgba(14,165,233,0.3)",
-                  }}>
+                  style={{ background: "linear-gradient(135deg, rgba(14,165,233,0.2) 0%, rgba(14,165,233,0.08) 100%)", border: "1px solid rgba(14,165,233,0.3)" }}>
                   <feature.icon className="w-6 h-6" style={{ color: "#0ea5e9" }} />
                 </div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: "#f5f0e8" }}>{feature.title}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: "rgba(245,240,232,0.45)" }}>{feature.description}</p>
-                {/* Orange bottom accent on hover */}
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                   style={{ background: "linear-gradient(90deg, transparent, #f97316, transparent)" }} />
               </motion.div>
@@ -568,46 +458,21 @@ export default function LandingPage() {
 
       {/* ── Programs ───────────────────────────────────────────────── */}
       <section id="programs" className="py-24 px-4 relative" style={{ background: "#0a1d3b" }}>
-        <div className="absolute top-0 left-0 right-0 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(14,165,233,0.2), transparent)" }} />
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(14,165,233,0.2), transparent)" }} />
         <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="text-sm font-bold tracking-widest uppercase mb-4 block" style={{ color: "#f97316" }}>
-              Academic Programs
-            </span>
-            <h2 className="text-4xl lg:text-5xl font-bold mb-4 tracking-tight" style={{ color: "#f5f0e8" }}>
-              From Nursery to Senior Secondary
-            </h2>
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+            <span className="text-sm font-bold tracking-widest uppercase mb-4 block" style={{ color: "#f97316" }}>Academic Programs</span>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-4 tracking-tight" style={{ color: "#f5f0e8" }}>From Nursery to Senior Secondary</h2>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-5">
             {PROGRAMS.map((program, i) => (
-              <motion.div
-                key={program.level}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.12 }}
+              <motion.div key={program.level} initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.12 }}
                 className="relative group rounded-2xl p-8 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: `1px solid ${program.accent}30`,
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.border = `1px solid ${program.accent}60`;
-                  (e.currentTarget as HTMLElement).style.background = `${program.accent}08`;
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.border = `1px solid ${program.accent}30`;
-                  (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)";
-                }}
+                style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${program.accent}30` }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.border = `1px solid ${program.accent}60`; (e.currentTarget as HTMLElement).style.background = `${program.accent}08`; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.border = `1px solid ${program.accent}30`; (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.03)"; }}
               >
-                {/* Top accent bar */}
                 <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
                   style={{ background: `linear-gradient(90deg, transparent, ${program.accent}, transparent)`, opacity: 0.6 }} />
                 <div className="text-4xl mb-4">{program.icon}</div>
@@ -615,13 +480,8 @@ export default function LandingPage() {
                 <p className="text-sm mb-6 leading-relaxed" style={{ color: "rgba(245,240,232,0.50)" }}>{program.description}</p>
                 <div className="flex flex-wrap gap-2">
                   {program.classes.map((cls) => (
-                    <span key={cls}
-                      className="px-3 py-1.5 rounded-full text-xs font-semibold"
-                      style={{
-                        background: `${program.accent}15`,
-                        border: `1px solid ${program.accent}35`,
-                        color: program.accent,
-                      }}>
+                    <span key={cls} className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                      style={{ background: `${program.accent}15`, border: `1px solid ${program.accent}35`, color: program.accent }}>
                       {cls}
                     </span>
                   ))}
@@ -632,48 +492,196 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Testimonials ───────────────────────────────────────────── */}
+      <section id="testimonials" className="py-24 px-4 relative overflow-hidden"
+        style={{ background: "linear-gradient(180deg, #0a1d3b 0%, #091829 60%, #0a1d3b 100%)" }}>
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(249,115,22,0.35), transparent)" }} />
+
+        {/* Background glows */}
+        <div className="absolute pointer-events-none rounded-full" style={{ top: "15%", left: "-8%", width: 500, height: 500, background: "radial-gradient(circle, rgba(14,165,233,0.07) 0%, transparent 65%)", filter: "blur(70px)" }} />
+        <div className="absolute pointer-events-none rounded-full" style={{ bottom: "10%", right: "-8%", width: 500, height: 500, background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 65%)", filter: "blur(70px)" }} />
+
+        <div className="max-w-5xl mx-auto relative">
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-14">
+            <span className="text-sm font-bold tracking-widest uppercase mb-4 block" style={{ color: "#f97316" }}>Testimonials</span>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-4 tracking-tight" style={{ color: "#f5f0e8" }}>
+              Voices of Our <span style={{ color: "#0ea5e9" }}>Community</span>
+            </h2>
+            <p className="text-lg max-w-xl mx-auto" style={{ color: "rgba(245,240,232,0.45)" }}>
+              Hear from parents, students, and alumni who have experienced the God&apos;s Way difference firsthand.
+            </p>
+          </motion.div>
+
+          {/* Main carousel card */}
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }}>
+            <div className="relative rounded-3xl overflow-hidden mb-6"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(14,165,233,0.18)" }}>
+
+              {/* Auto-progress bar */}
+              <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: "rgba(255,255,255,0.06)", zIndex: 10 }}>
+                <motion.div
+                  key={`progress-${activeTestimonial}`}
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 5, ease: "linear" }}
+                  style={{ height: "100%", background: "linear-gradient(90deg, #f97316, #0ea5e9)" }}
+                />
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTestimonial}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="p-8 sm:p-10 lg:p-12"
+                >
+                  <div className="flex flex-col sm:flex-row gap-8 items-start">
+                    {/* Left: quote content */}
+                    <div className="flex-1">
+                      {/* Quote icon */}
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-5"
+                        style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.3)" }}>
+                        <Quote className="w-5 h-5" style={{ color: "#f97316" }} />
+                      </div>
+
+                      {/* Stars */}
+                      <div className="flex gap-1 mb-5">
+                        {Array.from({ length: TESTIMONIALS[activeTestimonial].stars }).map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-current" style={{ color: "#f97316" }} />
+                        ))}
+                      </div>
+
+                      {/* Quote text */}
+                      <p className="text-lg sm:text-xl leading-relaxed mb-8" style={{ color: "rgba(245,240,232,0.85)", fontStyle: "italic" }}>
+                        &ldquo;{TESTIMONIALS[activeTestimonial].text}&rdquo;
+                      </p>
+
+                      {/* Author */}
+                      <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                          style={{ background: `linear-gradient(135deg, ${TESTIMONIALS[activeTestimonial].color} 0%, ${TESTIMONIALS[activeTestimonial].color}88 100%)`, boxShadow: `0 4px 16px ${TESTIMONIALS[activeTestimonial].color}40` }}>
+                          {TESTIMONIALS[activeTestimonial].initials}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm" style={{ color: "#f5f0e8" }}>{TESTIMONIALS[activeTestimonial].name}</p>
+                          <p className="text-xs mt-0.5" style={{ color: "rgba(245,240,232,0.45)" }}>{TESTIMONIALS[activeTestimonial].role}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: decorative counter */}
+                    <div className="hidden sm:flex flex-col items-center justify-center gap-2 self-center">
+                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                        style={{ background: "rgba(14,165,233,0.06)", border: "1px solid rgba(14,165,233,0.15)" }}>
+                        <span className="font-bold text-2xl" style={{ color: "rgba(14,165,233,0.4)" }}>
+                          {String(activeTestimonial + 1).padStart(2, "0")}
+                        </span>
+                      </div>
+                      <span className="text-xs" style={{ color: "rgba(245,240,232,0.2)" }}>of {String(TESTIMONIALS.length).padStart(2, "0")}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center justify-between mb-6">
+              {/* Dot indicators */}
+              <div className="flex items-center gap-2">
+                {TESTIMONIALS.map((_, i) => (
+                  <button key={i} onClick={() => goTo(i)}
+                    style={{
+                      width: i === activeTestimonial ? 28 : 8,
+                      height: 8,
+                      borderRadius: 4,
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      background: i === activeTestimonial
+                        ? "linear-gradient(90deg, #f97316, #0ea5e9)"
+                        : "rgba(245,240,232,0.15)",
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Arrow buttons */}
+              <div className="flex items-center gap-2">
+                <button onClick={goToPrev}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+                  style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.2)", color: "#7ab8d4", cursor: "pointer" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.18)"; (e.currentTarget as HTMLElement).style.transform = "translateX(-2px)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.08)"; (e.currentTarget as HTMLElement).style.transform = "translateX(0)"; }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button onClick={goToNext}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+                  style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.3)", color: "#f97316", cursor: "pointer" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(249,115,22,0.22)"; (e.currentTarget as HTMLElement).style.transform = "translateX(2px)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(249,115,22,0.12)"; (e.currentTarget as HTMLElement).style.transform = "translateX(0)"; }}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Thumbnail strip */}
+            {/* <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {TESTIMONIALS.map((t, i) => (
+                <button key={t.name} onClick={() => goTo(i)}
+                  className="rounded-xl p-3 text-left transition-all duration-300"
+                  style={{
+                    background: i === activeTestimonial ? "rgba(249,115,22,0.09)" : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${i === activeTestimonial ? "rgba(249,115,22,0.35)" : "rgba(255,255,255,0.07)"}`,
+                    transform: i === activeTestimonial ? "translateY(-2px)" : "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold mb-2"
+                    style={{ background: `linear-gradient(135deg, ${t.color} 0%, ${t.color}88 100%)` }}>
+                    {t.initials}
+                  </div>
+                  <p className="text-xs font-semibold leading-tight truncate"
+                    style={{ color: i === activeTestimonial ? "#f5f0e8" : "rgba(245,240,232,0.4)" }}>
+                    {t.name.split(" ")[0]}
+                  </p>
+                </button>
+              ))}
+            </div> */}
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── CTA ────────────────────────────────────────────────────── */}
       <section className="py-24 px-4 relative overflow-hidden"
         style={{ background: "linear-gradient(135deg, #0c2348 0%, #0a1d3b 50%, #0d1f40 100%)" }}>
-        <div className="absolute top-0 left-0 right-0 h-1"
-          style={{ background: "linear-gradient(90deg, #f97316, #0ea5e9, #f97316)" }} />
-        <div className="absolute bottom-0 right-[-5%] w-[400px] h-[400px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 65%)", filter: "blur(60px)" }} />
-        {/* Watermark */}
+        <div className="absolute top-0 left-0 right-0 h-1" style={{ background: "linear-gradient(90deg, #f97316, #0ea5e9, #f97316)" }} />
+        <div className="absolute bottom-0 right-0 rounded-full pointer-events-none"
+          style={{ width: 400, height: 400, background: "radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 65%)", filter: "blur(60px)", transform: "translate(5%, 0)" }} />
         <div className="absolute inset-0 flex items-center justify-end overflow-hidden pointer-events-none">
-          <img src={SCHOOL_LOGO} alt="" aria-hidden="true"
-            className="object-contain grayscale"
+          <img src={SCHOOL_LOGO} alt="" aria-hidden="true" className="object-contain grayscale"
             style={{ width: "360px", height: "360px", opacity: 0.05, marginRight: "-40px" }} />
         </div>
         <div className="relative max-w-3xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8 overflow-hidden"
               style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)" }}>
               <img src={SCHOOL_LOGO} alt="School Logo" className="w-36 h-36 object-contain" />
             </div>
-            <h2 className="text-4xl lg:text-5xl font-bold mb-4 tracking-tight" style={{ color: "#f5f0e8" }}>
-              Ready to Get Started?
-            </h2>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-4 tracking-tight" style={{ color: "#f5f0e8" }}>Ready to Get Started?</h2>
             <p className="text-lg mb-10 max-w-xl mx-auto" style={{ color: "rgba(245,240,232,0.50)" }}>
-              Access the school management portal to view results, manage classes, and stay connected
-              with your child&apos;s academic progress.
+              Access the school management portal to view results, manage classes, and stay connected with your child&apos;s academic progress.
             </p>
             <Link href="/sign-in"
               className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl text-white font-bold text-lg transition-all hover:-translate-y-0.5"
-              style={{
-                background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                boxShadow: "0 8px 40px rgba(249,115,22,0.4)",
-              }}
+              style={{ background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)", boxShadow: "0 8px 40px rgba(249,115,22,0.4)" }}
               onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 12px 50px rgba(249,115,22,0.55)")}
               onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 8px 40px rgba(249,115,22,0.4)")}
             >
-              Sign In to Portal
-              <ArrowRight className="w-5 h-5" />
+              Sign In to Portal <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
         </div>
@@ -681,44 +689,25 @@ export default function LandingPage() {
 
       {/* ── Contact ────────────────────────────────────────────────── */}
       <section id="contact" className="py-24 px-4 relative" style={{ background: "#0a1d3b" }}>
-        <div className="absolute top-0 left-0 right-0 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(14,165,233,0.3), transparent)" }} />
+        <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(14,165,233,0.3), transparent)" }} />
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-2" style={{ color: "#f5f0e8" }}>Get In Touch</h2>
             <p style={{ color: "rgba(245,240,232,0.4)" }}>We&apos;d love to hear from you</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { icon: Phone, label: "Phone", value: "08069825847, 08067110930", href: "tel:+2348069825847, +2348067110930" },
+              { icon: Phone, label: "Phone", value: "08069825847, 08067110930", href: "tel:+2348069825847" },
               { icon: Mail, label: "Email", value: "godswaygroupofschools@gmail.com", href: "mailto:godswaygroupofschools@gmail.com" },
-              { icon: MapPin, label: "Address", value: "No 12 Siyanbola Street, Osogbo, Osun-State" },
+              { icon: MapPin, label: "Address", value: "No 12 Siyanbola Street, Osogbo, Osun-State", href: "#" },
             ].map((contact) => (
-              <motion.a
-                key={contact.label}
-                href={contact.href}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+              <motion.a key={contact.label} href={contact.href}
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                 className="group flex flex-col items-center text-center p-6 rounded-2xl transition-all"
-                style={{
-                  background: "rgba(14,165,233,0.05)",
-                  border: "1px solid rgba(14,165,233,0.2)",
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.border = "1px solid rgba(249,115,22,0.4)";
-                  (e.currentTarget as HTMLElement).style.background = "rgba(249,115,22,0.06)";
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.border = "1px solid rgba(14,165,233,0.2)";
-                  (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.05)";
-                }}
+                style={{ background: "rgba(14,165,233,0.05)", border: "1px solid rgba(14,165,233,0.2)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.border = "1px solid rgba(249,115,22,0.4)"; (e.currentTarget as HTMLElement).style.background = "rgba(249,115,22,0.06)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.border = "1px solid rgba(14,165,233,0.2)"; (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.05)"; }}
               >
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
                   style={{ background: "rgba(14,165,233,0.12)", border: "1px solid rgba(14,165,233,0.25)" }}>
@@ -744,18 +733,16 @@ export default function LandingPage() {
               God&apos;s Way Model Groups of Schools
             </span>
           </div>
-          {/* Color legend — small school brand strip */}
           <div className="hidden md:flex items-center gap-1">
             <div className="w-3 h-3 rounded-full" style={{ background: "#0ea5e9" }} />
             <div className="w-3 h-3 rounded-full" style={{ background: "#f97316" }} />
             <div className="w-3 h-3 rounded-full" style={{ background: "#f5f0e8" }} />
           </div>
           <p className="text-sm" style={{ color: "rgba(245,240,232,0.25)" }}>
-            &copy; {new Date().getFullYear()} All rights reserved. Merit & Excellence
+            &copy; {new Date().getFullYear()} All rights reserved. Merit &amp; Excellence
           </p>
         </div>
       </footer>
-
     </div>
   );
 }

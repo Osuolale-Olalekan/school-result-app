@@ -27,6 +27,7 @@ import CreateUserModal from "@/components/admin/CreateUserModal";
 import EditUserModal from "./EditUserModal";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import CreateAdminModal from "./CreateAdminModal";
+import UserProfileModal from "./UserProfileModal";
 
 const ROLE_TABS = [
   { label: "All", value: "" },
@@ -77,6 +78,7 @@ export default function UsersManagement() {
   const [deleteUser, setDeleteUser] = useState<ExtendedUser | null>(null);
 
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -295,7 +297,11 @@ export default function UsersManagement() {
                                 className="w-full h-full rounded-lg object-cover"
                               />
                             ) : (
-                              getInitials(user.surname, user.firstName, user.otherName)
+                              getInitials(
+                                user.surname,
+                                user.firstName,
+                                user.otherName,
+                              )
                             )}
                           </div>
                           <div className="min-w-0">
@@ -364,6 +370,16 @@ export default function UsersManagement() {
                                 <UserX className="w-4 h-4" /> Deactivate
                               </button>
                             )}
+
+                            <button
+                              onClick={() => {
+                                setViewingUserId(user._id);
+                                setActionMenu(null);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2"
+                            >
+                              <Eye className="w-4 h-4" /> View Profile
+                            </button>
 
                             <button
                               onClick={() => {
@@ -463,6 +479,20 @@ export default function UsersManagement() {
           }}
         />
       )}
+
+      {viewingUserId && (
+  <UserProfileModal
+    userId={viewingUserId}
+    onClose={() => setViewingUserId(null)}
+    onEdit={() => {
+      const user = users.find(u => u._id === viewingUserId);
+      if (user) {
+        setEditUser(user);
+        setViewingUserId(null);
+      }
+    }}
+  />
+)}
     </div>
   );
 }

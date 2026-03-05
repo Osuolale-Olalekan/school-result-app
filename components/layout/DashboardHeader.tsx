@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Bell, User, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Bell, ChevronDown } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { UserRole, UserStatus } from "@/types/enums";
 import { getInitials, formatDateTime, truncate } from "@/lib/utils";
@@ -14,7 +14,6 @@ interface SessionUser {
   surname: string;
   firstName: string;
   otherName: string;
-  // role: UserRole;
   roles: UserRole[];
   activeRole: UserRole;
   status: UserStatus;
@@ -45,9 +44,20 @@ export default function DashboardHeader({ user }: Props) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prevUnreadRef = useRef<number>(0);
+  const initialLoad = useRef<boolean>(true);
 
+  // Initialize audio
+  useEffect(() => {
+    audioRef.current = new Audio("/sounds/notification.mp3");
+    audioRef.current.volume = 0.6;
+  }, []);
+
+  // Click outside to close dropdowns
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -61,30 +71,7 @@ export default function DashboardHeader({ user }: Props) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-
-  //   const fetchNotifications = useCallback(async () => {
-  //   try {
-  //     const res = await fetch("/api/notifications?unread=true&limit=6");
-  //     const json = await res.json() as {
-  //       success: boolean;
-  //       data?: INotification[];
-  //       pagination?: { total: number };
-  //     };
-  //     if (json.success && json.data) {
-  //       setNotifications(json.data);
-  //       setUnreadCount(json.pagination?.total ?? 0);
-  //     }
-  //   } catch {
-  //     // Silently fail - non-critical
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   fetchNotifications();
-  //   const interval = setInterval(fetchNotifications, 30000);
-  //   return () => clearInterval(interval);
-  // }, [fetchNotifications]);
-
+  // Fetch notifications + play sound on new ones
   useEffect(() => {
     let cancelled = false;
 
@@ -96,12 +83,24 @@ export default function DashboardHeader({ user }: Props) {
           data?: INotification[];
           pagination?: { total: number };
         };
+
         if (!cancelled && json.success && json.data) {
+          const newCount = json.pagination?.total ?? 0;
+
+          // Play sound only when count increases AFTER first load
+          if (!initialLoad.current && newCount > prevUnreadRef.current) {
+            audioRef.current?.play().catch(() => {
+              // Browser blocked autoplay — silently ignore
+            });
+          }
+
+          prevUnreadRef.current = newCount;
+          initialLoad.current = false;
           setNotifications(json.data);
-          setUnreadCount(json.pagination?.total ?? 0);
+          setUnreadCount(newCount);
         }
       } catch {
-        // Silently fail - non-critical
+        // Silently fail — non-critical
       }
     }
 
@@ -111,7 +110,7 @@ export default function DashboardHeader({ user }: Props) {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []); // empty deps — runs once on mount
+  }, []);
 
   async function markAllRead() {
     await fetch("/api/notifications", {
@@ -121,6 +120,7 @@ export default function DashboardHeader({ user }: Props) {
     });
     setUnreadCount(0);
     setNotifications([]);
+    prevUnreadRef.current = 0;
   }
 
   const roleLabel =
@@ -128,7 +128,7 @@ export default function DashboardHeader({ user }: Props) {
 
   return (
     <header className="bg-white border-b border-gray-100 px-4 lg:px-6 h-14 flex items-center justify-between sticky top-0 z-30">
-      {/* Left: breadcrumb area (slot for pages to fill) */}
+      {/* Left */}
       <div className="flex items-center gap-2">
         <div className="text-sm text-gray-500">
           Welcome,{" "}
@@ -136,7 +136,7 @@ export default function DashboardHeader({ user }: Props) {
         </div>
       </div>
 
-      {/* Right: actions */}
+      {/* Right */}
       <div className="flex items-center gap-2">
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
@@ -210,6 +210,8 @@ export default function DashboardHeader({ user }: Props) {
                   src={user.image}
                   alt="avatar"
                   className="w-full h-full rounded-lg object-cover"
+                  width={28}
+                  height={28}
                 />
               ) : (
                 getInitials(user.surname, user.firstName, user.otherName)

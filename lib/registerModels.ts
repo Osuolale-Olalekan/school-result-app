@@ -9,3 +9,4 @@ import "@/models/AuditLog";
 import "@/models/ReportCard";
 import "@/models/Session";
 import "@/models/PaymentRecord"
+import "@/models/SchoolSettings"

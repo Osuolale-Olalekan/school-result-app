@@ -4,10 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  LayoutDashboard, Users, Calendar, BookOpen,
-  FileText, CreditCard, BarChart3, ClipboardList, Shield,
-  ChevronRight, Menu, X, UserCheck, TrendingUp,
-  LogOut, ChevronLeft, BookMarked, GraduationCap
+  LayoutDashboard,
+  Users,
+  Calendar,
+  BookOpen,
+  FileText,
+  CreditCard,
+  BarChart3,
+  ClipboardList,
+  Shield,
+  ChevronRight,
+  Menu,
+  X,
+  UserCheck,
+  TrendingUp,
+  LogOut,
+  ChevronLeft,
+  BookMarked,
+  GraduationCap,
+  Settings,
+  User,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { UserRole } from "@/types/enums";
@@ -24,43 +40,57 @@ interface NavItem {
 }
 
 const ADMIN_NAV: NavItem[] = [
-  { label: "Dashboard",        href: "/dashboard",              icon: LayoutDashboard },
-  { label: "Users",            href: "/admin/users",            icon: Users },
-  { label: "Sessions",         href: "/admin/sessions",         icon: Calendar },
-  { label: "Classes",          href: "/admin/classes",          icon: BookOpen },
-  { label: "Subjects",         href: "/admin/subjects",         icon: BookMarked },
-  { label: "Class Assignments",href: "/admin/class-assignments",icon: UserCheck },
-  { label: "Reports",          href: "/admin/reports",          icon: FileText },
-  { label: "Payments",         href: "/admin/payments",         icon: CreditCard },
-  { label: "Analytics",        href: "/admin/analytics",        icon: BarChart3 },
-  { label: "Promotions",       href: "/admin/promote",          icon: TrendingUp },
-  { label: "Audit Logs",       href: "/admin/audit-logs",       icon: ClipboardList },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Sessions", href: "/admin/sessions", icon: Calendar },
+  { label: "Classes", href: "/admin/classes", icon: BookOpen },
+  { label: "Subjects", href: "/admin/subjects", icon: BookMarked },
+  {
+    label: "Class Assignments",
+    href: "/admin/class-assignments",
+    icon: UserCheck,
+  },
+  { label: "Reports", href: "/admin/reports", icon: FileText },
+  { label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { label: "Promotions", href: "/admin/promote", icon: TrendingUp },
+  { label: "Audit Logs", href: "/admin/audit-logs", icon: ClipboardList },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: "My Profile", href: "/admin/profile", icon: User },
 ];
 
 const TEACHER_NAV: NavItem[] = [
-  { label: "Dashboard",        href: "/dashboard",       icon: LayoutDashboard },
-  { label: "My Classes",       href: "/teacher/classes", icon: BookOpen },
-  { label: "Results & Reports",href: "/teacher/results", icon: FileText },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "My Classes", href: "/teacher/classes", icon: BookOpen },
+  { label: "Results & Reports", href: "/teacher/results", icon: FileText },
+  { label: "My Profile", href: "/teacher/profile", icon: User }, // ← add
 ];
 
 const PARENT_NAV: NavItem[] = [
-  { label: "Dashboard",   href: "/dashboard",       icon: LayoutDashboard },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "My Children", href: "/parent/children", icon: GraduationCap },
-  { label: "Report Cards",href: "/parent/reports",  icon: FileText },
+  { label: "Report Cards", href: "/parent/reports", icon: FileText },
+  { label: "My Profile", href: "/parent/profile", icon: User }, // ← add
 ];
 
 const STUDENT_NAV: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard",      icon: LayoutDashboard },
-  { label: "My Reports",href: "/student/reports",icon: FileText },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "My Reports", href: "/student/reports", icon: FileText },
+  { label: "My Profile", href: "/student/profile", icon: User }, // ← add
 ];
 
 function getNavItems(role: UserRole): NavItem[] {
   switch (role) {
-    case UserRole.ADMIN:   return ADMIN_NAV;
-    case UserRole.TEACHER: return TEACHER_NAV;
-    case UserRole.PARENT:  return PARENT_NAV;
-    case UserRole.STUDENT: return STUDENT_NAV;
-    default: return [];
+    case UserRole.ADMIN:
+      return ADMIN_NAV;
+    case UserRole.TEACHER:
+      return TEACHER_NAV;
+    case UserRole.PARENT:
+      return PARENT_NAV;
+    case UserRole.STUDENT:
+      return STUDENT_NAV;
+    default:
+      return [];
   }
 }
 
@@ -68,13 +98,25 @@ function getNavItems(role: UserRole): NavItem[] {
 function getRoleBadgeStyle(role: UserRole): React.CSSProperties {
   switch (role) {
     case UserRole.ADMIN:
-      return { background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)", color: "#fff" };
+      return {
+        background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+        color: "#fff",
+      };
     case UserRole.TEACHER:
-      return { background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)", color: "#fff" };
+      return {
+        background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+        color: "#fff",
+      };
     case UserRole.PARENT:
-      return { background: "linear-gradient(135deg, #7ab8d4 0%, #0ea5e9 100%)", color: "#fff" };
+      return {
+        background: "linear-gradient(135deg, #7ab8d4 0%, #0ea5e9 100%)",
+        color: "#fff",
+      };
     case UserRole.STUDENT:
-      return { background: "linear-gradient(135deg, #0ea5e9 0%, #7ab8d4 100%)", color: "#fff" };
+      return {
+        background: "linear-gradient(135deg, #0ea5e9 0%, #7ab8d4 100%)",
+        color: "#fff",
+      };
     default:
       return { background: "rgba(255,255,255,0.1)", color: "#f5f0e8" };
   }
@@ -84,13 +126,29 @@ function getRoleBadgeStyle(role: UserRole): React.CSSProperties {
 function getActiveStyle(role: UserRole): React.CSSProperties {
   switch (role) {
     case UserRole.ADMIN:
-      return { background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)", color: "#fff", boxShadow: "0 2px 12px rgba(249,115,22,0.30)" };
+      return {
+        background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+        color: "#fff",
+        boxShadow: "0 2px 12px rgba(249,115,22,0.30)",
+      };
     case UserRole.TEACHER:
-      return { background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)", color: "#fff", boxShadow: "0 2px 12px rgba(14,165,233,0.30)" };
+      return {
+        background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+        color: "#fff",
+        boxShadow: "0 2px 12px rgba(14,165,233,0.30)",
+      };
     case UserRole.PARENT:
-      return { background: "linear-gradient(135deg, #0ea5e9 0%, #7ab8d4 100%)", color: "#fff", boxShadow: "0 2px 12px rgba(14,165,233,0.25)" };
+      return {
+        background: "linear-gradient(135deg, #0ea5e9 0%, #7ab8d4 100%)",
+        color: "#fff",
+        boxShadow: "0 2px 12px rgba(14,165,233,0.25)",
+      };
     case UserRole.STUDENT:
-      return { background: "linear-gradient(135deg, #7ab8d4 0%, #0ea5e9 100%)", color: "#fff", boxShadow: "0 2px 12px rgba(14,165,233,0.25)" };
+      return {
+        background: "linear-gradient(135deg, #7ab8d4 0%, #0ea5e9 100%)",
+        color: "#fff",
+        boxShadow: "0 2px 12px rgba(14,165,233,0.25)",
+      };
     default:
       return { background: "rgba(255,255,255,0.1)", color: "#f5f0e8" };
   }
@@ -101,43 +159,67 @@ interface Props {
 }
 
 export default function DashboardSidebar({ role }: Props) {
-  const pathname    = usePathname();
-  const [collapsed, setCollapsed]   = useState(false);
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navItems = getNavItems(role);
 
   const SidebarContent = (
-    <div className="flex flex-col h-full" style={{ background: "linear-gradient(180deg, #071428 0%, #0a1d3b 100%)" }}>
-
+    <div
+      className="flex flex-col h-full"
+      style={{
+        background: "linear-gradient(180deg, #071428 0%, #0a1d3b 100%)",
+      }}
+    >
       {/* ── Logo ──────────────────────────────────────────────────── */}
       <div
-        className={cn("flex items-center gap-3 p-4", collapsed && "justify-center")}
+        className={cn(
+          "flex items-center gap-3 p-4",
+          collapsed && "justify-center",
+        )}
         style={{ borderBottom: "1px solid rgba(14,165,233,0.12)" }}
       >
         {/* School logo with spinning conic ring */}
-        <div className="relative flex-shrink-0" style={{ width: "36px", height: "36px" }}>
+        <div
+          className="relative flex-shrink-0"
+          style={{ width: "36px", height: "36px" }}
+        >
           <div
             className="absolute rounded-full"
             style={{
               inset: "-3px",
-              background: "conic-gradient(from 0deg, transparent 50%, rgba(249,115,22,0.7) 68%, rgba(14,165,233,0.6) 84%, transparent 100%)",
+              background:
+                "conic-gradient(from 0deg, transparent 50%, rgba(249,115,22,0.7) 68%, rgba(14,165,233,0.6) 84%, transparent 100%)",
               animation: "gwSpin 16s linear infinite",
             }}
           />
           <div
             className="relative w-full h-full rounded-full overflow-hidden flex items-center justify-center"
-            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(245,240,232,0.15)" }}
+            style={{
+              background: "rgba(255,255,255,0.07)",
+              border: "1px solid rgba(245,240,232,0.15)",
+            }}
           >
-            <img src={SCHOOL_LOGO} alt="God's Way Schools" className="w-full h-full object-contain" />
+            <img
+              src={SCHOOL_LOGO}
+              alt="God's Way Schools"
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
 
         {!collapsed && (
           <div className="min-w-0">
-            <p className="text-xs font-bold leading-tight truncate" style={{ color: "#f5f0e8" }}>
+            <p
+              className="text-xs font-bold leading-tight truncate"
+              style={{ color: "#f5f0e8" }}
+            >
               God&apos;s Way
             </p>
-            <p className="text-[10px] leading-tight truncate" style={{ color: "#7ab8d4" }}>
+            <p
+              className="text-[10px] leading-tight truncate"
+              style={{ color: "#7ab8d4" }}
+            >
               Management Portal
             </p>
           </div>
@@ -171,7 +253,7 @@ export default function DashboardSidebar({ role }: Props) {
               href={item.href}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group",
-                collapsed && "justify-center px-2"
+                collapsed && "justify-center px-2",
               )}
               style={
                 isActive
@@ -181,13 +263,16 @@ export default function DashboardSidebar({ role }: Props) {
               onMouseEnter={(e) => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.color = "#f5f0e8";
-                  (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.08)";
+                  (e.currentTarget as HTMLElement).style.background =
+                    "rgba(14,165,233,0.08)";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.color = "rgba(245,240,232,0.45)";
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                  (e.currentTarget as HTMLElement).style.color =
+                    "rgba(245,240,232,0.45)";
+                  (e.currentTarget as HTMLElement).style.background =
+                    "transparent";
                 }
               }}
               title={collapsed ? item.label : undefined}
@@ -199,8 +284,10 @@ export default function DashboardSidebar({ role }: Props) {
                   <span className="flex-1 font-medium">{item.label}</span>
                   {isActive && <ChevronRight className="w-3 h-3 opacity-60" />}
                   {item.badge && item.badge > 0 && (
-                    <span className="ml-auto text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
-                      style={{ background: "#f97316" }}>
+                    <span
+                      className="ml-auto text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                      style={{ background: "#f97316" }}
+                    >
                       {item.badge}
                     </span>
                   )}
@@ -212,20 +299,25 @@ export default function DashboardSidebar({ role }: Props) {
       </nav>
 
       {/* ── Sign out ──────────────────────────────────────────────── */}
-      <div className="p-2" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+      <div
+        className="p-2"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+      >
         <button
           onClick={() => signOut({ callbackUrl: "/sign-in" })}
           className={cn(
             "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
-            collapsed && "justify-center"
+            collapsed && "justify-center",
           )}
           style={{ color: "rgba(245,240,232,0.35)" }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.color = "#f87171";
-            (e.currentTarget as HTMLElement).style.background = "rgba(248,113,113,0.08)";
+            (e.currentTarget as HTMLElement).style.background =
+              "rgba(248,113,113,0.08)";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "rgba(245,240,232,0.35)";
+            (e.currentTarget as HTMLElement).style.color =
+              "rgba(245,240,232,0.35)";
             (e.currentTarget as HTMLElement).style.background = "transparent";
           }}
         >
@@ -242,7 +334,7 @@ export default function DashboardSidebar({ role }: Props) {
       <aside
         className={cn(
           "hidden lg:flex flex-col border-r transition-all duration-300 relative",
-          collapsed ? "w-16" : "w-60"
+          collapsed ? "w-16" : "w-60",
         )}
         style={{ borderColor: "rgba(14,165,233,0.12)" }}
       >
@@ -258,11 +350,15 @@ export default function DashboardSidebar({ role }: Props) {
             color: "rgba(245,240,232,0.40)",
           }}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#f5f0e8")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(245,240,232,0.40)")}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color = "rgba(245,240,232,0.40)")
+          }
         >
-          {collapsed
-            ? <ChevronRight className="w-3 h-3" />
-            : <ChevronLeft className="w-3 h-3" />}
+          {collapsed ? (
+            <ChevronRight className="w-3 h-3" />
+          ) : (
+            <ChevronLeft className="w-3 h-3" />
+          )}
         </button>
       </aside>
 
@@ -283,7 +379,10 @@ export default function DashboardSidebar({ role }: Props) {
         <>
           <div
             className="lg:hidden fixed inset-0 z-40"
-            style={{ background: "rgba(7,20,40,0.75)", backdropFilter: "blur(4px)" }}
+            style={{
+              background: "rgba(7,20,40,0.75)",
+              backdropFilter: "blur(4px)",
+            }}
             onClick={() => setMobileOpen(false)}
           />
           <aside

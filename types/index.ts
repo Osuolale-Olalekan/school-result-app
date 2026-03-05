@@ -186,6 +186,7 @@ export interface IReportCard extends BaseDocument {
   grade: string;
   teacherComment?: string;
   principalComment?: string;
+  principalSignature?: string;
   status: ReportStatus;
   declineReason?: string;
   submittedBy: string; // ITeacher _id

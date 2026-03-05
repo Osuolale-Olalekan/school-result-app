@@ -2,6 +2,7 @@ import { ClassLevel, Department, TermName } from "@/types/enums";
 
 // Ordered class progression
 export const CLASS_PROGRESSION: Record<string, string | null> = {
+  // [ClassLevel.PRIMARY_1]: ClassLevel.PRIMARY_2,
   [ClassLevel.PRIMARY_2]: ClassLevel.PRIMARY_3,
   [ClassLevel.PRIMARY_3]: ClassLevel.PRIMARY_4,
   [ClassLevel.PRIMARY_4]: ClassLevel.PRIMARY_5,
@@ -11,9 +12,12 @@ export const CLASS_PROGRESSION: Record<string, string | null> = {
   [ClassLevel.JSS_3]: "SSS_1_DEPT_REQUIRED", // Requires department assignment
   [ClassLevel.SSS_1]: ClassLevel.SSS_2,
   [ClassLevel.SSS_2]: null, // Graduates
+  // [ClassLevel.SSS_2]: ClassLevel.SSS_3,  // ← change from null to SSS_3
+  // [ClassLevel.SSS_3]: null,              // ← add — graduates here
 };
 
 export const CLASS_SECTION: Record<string, "primary" | "jss" | "sss"> = {
+  // [ClassLevel.PRIMARY_1]: "primary",  // ← add
   [ClassLevel.PRIMARY_2]: "primary",
   [ClassLevel.PRIMARY_3]: "primary",
   [ClassLevel.PRIMARY_4]: "primary",
@@ -23,9 +27,11 @@ export const CLASS_SECTION: Record<string, "primary" | "jss" | "sss"> = {
   [ClassLevel.JSS_3]: "jss",
   [ClassLevel.SSS_1]: "sss",
   [ClassLevel.SSS_2]: "sss",
+  // [ClassLevel.SSS_3]: "sss",  // ← add
 };
 
 export const CLASS_ORDER: Record<string, number> = {
+  // [ClassLevel.PRIMARY_1]: 0,  // ← add
   [ClassLevel.PRIMARY_2]: 1,
   [ClassLevel.PRIMARY_3]: 2,
   [ClassLevel.PRIMARY_4]: 3,
@@ -35,6 +41,7 @@ export const CLASS_ORDER: Record<string, number> = {
   [ClassLevel.JSS_3]: 7,
   [ClassLevel.SSS_1]: 8,
   [ClassLevel.SSS_2]: 9,
+  // [ClassLevel.SSS_3]: 10,  // ← add
 };
 
 export interface TermScore {

@@ -298,7 +298,7 @@ export async function PATCH(
 
     // Notify admin
     const admins = await UserModel.find({
-      role: UserRole.ADMIN,
+      roles: UserRole.ADMIN,
       status: "active",
     }).lean();
     for (const admin of admins) {

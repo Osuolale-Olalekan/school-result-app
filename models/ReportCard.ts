@@ -68,6 +68,7 @@ export interface IReportCardDocument extends Document {
   qrCode?: string;
   createdAt: Date;
   updatedAt: Date;
+  principalSignature?:string;
 }
 
 const SubjectScoreSchema = new Schema<ISubjectScoreDocument>(
@@ -129,6 +130,7 @@ const ReportCardSchema = new Schema<IReportCardDocument>(
     grade: { type: String, required: true },
     teacherComment: { type: String },
     principalComment: { type: String },
+    principalSignature: { type: String },
     status: { type: String, enum: Object.values(ReportStatus), default: ReportStatus.DRAFT },
     declineReason: { type: String },
     submittedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },

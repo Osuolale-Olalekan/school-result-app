@@ -2247,6 +2247,7 @@ interface ReportCardProps {
     sessionName: string;
     termName: TermName;
     className: string;
+    principalSignature?: string | null;
   };
   showActions?: boolean;
 }
@@ -3282,6 +3283,7 @@ export default function ReportCardComponent({
                     }}
                   >
                     Your child has successfully completed SSS 2. Well done!
+                    {/* Your child has successfully completed SSS 3. Well done! */}
                   </p>
                 </div>
               </div>
@@ -3440,15 +3442,32 @@ export default function ReportCardComponent({
               Report ID: {report._id} · Scan QR code to verify authenticity
             </p>
           </div>
+
+          {/* Signature — single block */}
           <div style={{ textAlign: "right" }}>
-            <div
-              style={{
-                width: 110,
-                height: 1,
-                background: "rgba(255,255,255,0.2)",
-                marginBottom: 4,
-              }}
-            />
+            {report.principalSignature ? (
+              <img
+                src={report.principalSignature}
+                alt="Principal Signature"
+                style={{
+                  height: 44,
+                  objectFit: "contain",
+                  marginBottom: 4,
+                  display: "block",
+                  marginLeft: "auto",
+                  filter: "brightness(0) invert(1)",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 110,
+                  height: 1,
+                  background: "rgba(255,255,255,0.2)",
+                  marginBottom: 4,
+                }}
+              />
+            )}
             <p
               style={{
                 fontSize: 9.5,

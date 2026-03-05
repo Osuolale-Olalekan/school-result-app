@@ -16,6 +16,7 @@ import {
 } from "@/types/enums";
 import { createAuditLog } from "@/lib/audit";
 import type { ApiResponse } from "@/types";
+import ClassAssignmentModel from "@/models/ClassAssignment";
 
 async function requireAdmin() {
   const session = await getServerSession(authConfig);
@@ -45,10 +46,11 @@ export async function GET(
       .select("-password")
       .populate("currentClass", "name section department")
       .populate("parents", "surname firstName otherName email phone")
-      .populate(
-        "children",
-        "surname firstName otherName admissionNumber currentClass",
-      )
+      .populate({
+        path: "children",
+        select: "surname firstName otherName admissionNumber profilePhoto gender studentStatus currentClass",
+        populate: { path: "currentClass", select: "name section" },
+      })
       .lean();
 
     if (!user)
@@ -57,7 +59,30 @@ export async function GET(
         { status: 404 },
       );
 
-    return NextResponse.json({ success: true, data: user });
+    // Fetch class assignments if teacher
+    let classAssignments: Array<{ className: string; section?: string; session: string }> = [];
+    const typedUser = user as { roles?: string[] };
+    if (typedUser.roles?.includes("teacher")) {
+      const assignments = await ClassAssignmentModel.find({
+        teacher: id,
+        isActive: true,
+      })
+        .populate("class", "name section")
+        .populate("session", "name")
+        .lean();
+
+      classAssignments = assignments.map((a) => ({
+        className: (a.class as unknown as { name: string; section?: string })?.name ?? "Unknown",
+        section: (a.class as unknown as { name: string; section?: string })?.section,
+        session: (a.session as unknown as { name: string })?.name ?? "Unknown",
+      }));
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: { ...user, classAssignments },
+    });
+
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Internal server error" },
@@ -415,3 +440,5 @@ export async function DELETE(
     );
   }
 }
+
+
