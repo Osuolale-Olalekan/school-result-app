@@ -15,6 +15,8 @@ import type { ApiResponse } from "@/types";
 export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<ApiResponse<object>>> {
+  console.log("🔥 PAYMENT ROUTE HIT"); // ← very first line
+  console.log("SK:", process.env.PAYSTACK_SECRET_KEY?.substring(0, 15));
   const session = await getSession();
   if (!session?.user || session.user.activeRole !== UserRole.PARENT) {
     return NextResponse.json(
