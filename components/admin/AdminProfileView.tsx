@@ -62,7 +62,7 @@ export default function AdminProfileView() {
               )}
             </div>
             <div className="pb-1">
-              <h2 className="text-xl font-bold text-gray-900">{fullName}</h2>
+              <h2 className="text-xl font-bold text-white py-2">{fullName}</h2>
               <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
                 Administrator
               </span>

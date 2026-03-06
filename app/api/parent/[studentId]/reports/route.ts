@@ -14,12 +14,15 @@ interface RouteParams {
 
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteParams,
 ): Promise<NextResponse<ApiResponse<object[]>>> {
   const { studentId } = await params;
   const session = await getSession();
   if (!session?.user || session.user.activeRole !== UserRole.PARENT) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
   try {
@@ -27,12 +30,19 @@ export async function GET(
 
     const parent = await UserModel.findById(session.user.id).lean();
     if (!parent)
-      return NextResponse.json({ success: false, error: "Parent not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Parent not found" },
+        { status: 404 },
+      );
 
     const parentDoc = parent as { children?: Array<{ toString(): string }> };
-    const hasAccess = parentDoc.children?.some((c) => c.toString() === studentId) ?? false;
+    const hasAccess =
+      parentDoc.children?.some((c) => c.toString() === studentId) ?? false;
     if (!hasAccess)
-      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Access denied" },
+        { status: 403 },
+      );
 
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("sessionId");
@@ -60,6 +70,7 @@ export async function GET(
           subjects?: unknown[];
           session: { _id: unknown };
           term: { _id: unknown };
+          class: { _id: unknown; name?: string };
         };
 
         const sessionObjId = (report.session as { _id: unknown })?._id;
@@ -94,6 +105,9 @@ export async function GET(
             student: report.student,
             session: report.session,
             term: report.term,
+            termName: (report.term as { name?: string })?.name, // ✅ add this
+            sessionName: (report.session as { name?: string })?.name, // ✅ add this
+            className: (report.class as { name?: string })?.name, // ✅ add this
             status: report.status,
             paymentStatus: report.paymentStatus,
             isLocked: true,
@@ -105,16 +119,22 @@ export async function GET(
         // Fully unlocked — return everything
         return {
           ...r,
+          termName: (report.term as { name?: string })?.name, // ✅ add this
+          sessionName: (report.session as { name?: string })?.name, // ✅ add this
+          className: (report.class as { name?: string })?.name, // ✅ add this
           isLocked: false,
           reportCardPaid: true,
           schoolFeesPaid: true,
         };
-      })
+      }),
     );
 
     return NextResponse.json({ success: true, data: safeReports });
   } catch (error) {
     console.error("Parent reports error:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

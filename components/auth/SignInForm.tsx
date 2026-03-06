@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Eye, EyeOff, Loader2, Shield, BookOpen, Users } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 
 const staffSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -31,9 +32,9 @@ const TABS = [
 ];
 
 const ROLE_HINTS = [
-  { role: "Admin",   icon: Shield,   color: "#f97316" },
+  { role: "Admin", icon: Shield, color: "#f97316" },
   { role: "Teacher", icon: BookOpen, color: "#0ea5e9" },
-  { role: "Student", icon: Users,    color: "#7ab8d4" },
+  { role: "Student", icon: Users, color: "#7ab8d4" },
 ];
 
 // Shared Tailwind input classes — themed to match landing page
@@ -44,12 +45,19 @@ const INPUT_CLS =
 
 export default function SignInForm() {
   const router = useRouter();
-  const [activeTab, setActiveTab]       = useState<LoginTab>("staff");
+  const [activeTab, setActiveTab] = useState<LoginTab>("staff");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading]       = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const staffForm  = useForm<StaffFormData>({ resolver: zodResolver(staffSchema) });
-  const parentForm = useForm<ParentFormData>({ resolver: zodResolver(parentSchema) });
+  const staffForm = useForm<StaffFormData>({
+    resolver: zodResolver(staffSchema),
+  });
+  const parentForm = useForm<ParentFormData>({
+    resolver: zodResolver(parentSchema),
+  });
+
+  const searchParams = useSearchParams();
+  const authError = searchParams.get("error");
 
   async function handleStaffSubmit(data: StaffFormData) {
     setIsLoading(true);
@@ -60,7 +68,10 @@ export default function SignInForm() {
         loginType: "staff",
         redirect: false,
       });
-      if (result?.error) { toast.error("Invalid email or password. Please try again."); return; }
+      if (result?.error) {
+        toast.error("Invalid email or password. Please try again.");
+        return;
+      }
       toast.success("Welcome back!");
       router.push("/dashboard");
       router.refresh();
@@ -80,7 +91,10 @@ export default function SignInForm() {
         loginType: "parent",
         redirect: false,
       });
-      if (result?.error) { toast.error("Invalid admission number or password."); return; }
+      if (result?.error) {
+        toast.error("Invalid admission number or password.");
+        return;
+      }
       toast.success("Welcome back!");
       router.push("/parent/children");
       router.refresh();
@@ -94,10 +108,12 @@ export default function SignInForm() {
   return (
     /* Wrapper: no fixed height, no overflow hidden — let the parent panel scroll */
     <div className="w-full">
-
       {/* Heading */}
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-1.5" style={{ color: "#f5f0e8", letterSpacing: "-0.02em" }}>
+        <h1
+          className="text-2xl sm:text-3xl font-bold mb-1.5"
+          style={{ color: "#f5f0e8", letterSpacing: "-0.02em" }}
+        >
           Welcome Back
         </h1>
         <p className="text-sm" style={{ color: "rgba(245,240,232,0.42)" }}>
@@ -108,17 +124,39 @@ export default function SignInForm() {
       {/* Role hints */}
       <div className="flex items-center gap-4 flex-wrap mb-5">
         {ROLE_HINTS.map((hint) => (
-          <div key={hint.role} className="flex items-center gap-1.5 text-xs" style={{ color: "rgba(245,240,232,0.38)" }}>
+          <div
+            key={hint.role}
+            className="flex items-center gap-1.5 text-xs"
+            style={{ color: "rgba(245,240,232,0.38)" }}
+          >
             <hint.icon className="w-3.5 h-3.5" style={{ color: hint.color }} />
             <span>{hint.role}</span>
           </div>
         ))}
       </div>
 
+      {/* Account Suspended Banner */}
+      {authError === "AccountSuspended" && (
+        <div
+          className="p-3 rounded-xl text-xs leading-relaxed mb-5"
+          style={{
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.25)",
+            color: "#f87171",
+          }}
+        >
+          Your account has been suspended or deactivated. Please contact the
+          school admin for assistance.
+        </div>
+      )}
+
       {/* Tab switcher */}
       <div
         className="flex gap-1 p-1 rounded-xl mb-6"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(14,165,233,0.15)" }}
+        style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(14,165,233,0.15)",
+        }}
       >
         {TABS.map((tab) => (
           <button
@@ -129,7 +167,8 @@ export default function SignInForm() {
             style={
               activeTab === tab.id
                 ? {
-                    background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                    background:
+                      "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                     color: "#fff",
                     boxShadow: "0 2px 12px rgba(249,115,22,0.35)",
                   }
@@ -157,7 +196,10 @@ export default function SignInForm() {
             >
               {/* Email */}
               <div>
-                <label className="block text-sm mb-2" style={{ color: "rgba(245,240,232,0.55)" }}>
+                <label
+                  className="block text-sm mb-2"
+                  style={{ color: "rgba(245,240,232,0.55)" }}
+                >
                   Email Address
                 </label>
                 <input
@@ -168,13 +210,18 @@ export default function SignInForm() {
                   className={INPUT_CLS}
                 />
                 {staffForm.formState.errors.email && (
-                  <p className="text-red-400 text-xs mt-1.5">{staffForm.formState.errors.email.message}</p>
+                  <p className="text-red-400 text-xs mt-1.5">
+                    {staffForm.formState.errors.email.message}
+                  </p>
                 )}
               </div>
 
               {/* Password */}
               <div>
-                <label className="block text-sm mb-2" style={{ color: "rgba(245,240,232,0.55)" }}>
+                <label
+                  className="block text-sm mb-2"
+                  style={{ color: "rgba(245,240,232,0.55)" }}
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -191,17 +238,27 @@ export default function SignInForm() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
                     style={{ color: "rgba(245,240,232,0.30)" }}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
                 {staffForm.formState.errors.password && (
-                  <p className="text-red-400 text-xs mt-1.5">{staffForm.formState.errors.password.message}</p>
+                  <p className="text-red-400 text-xs mt-1.5">
+                    {staffForm.formState.errors.password.message}
+                  </p>
                 )}
               </div>
 
               {/* Forgot */}
               <div className="flex justify-end">
-                <Link href="/forgot-password" className="text-sm transition-colors" style={{ color: "#0ea5e9" }}>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm transition-colors"
+                  style={{ color: "#0ea5e9" }}
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -212,16 +269,21 @@ export default function SignInForm() {
                 disabled={isLoading}
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                  background:
+                    "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                   boxShadow: "0 4px 20px rgba(249,115,22,0.35)",
                 }}
               >
-                {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing In...</> : "Sign In"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Signing In...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
               </button>
             </motion.form>
-
           ) : (
-
             <motion.form
               key="parent"
               initial={{ opacity: 0 }}
@@ -234,15 +296,23 @@ export default function SignInForm() {
               {/* Info banner */}
               <div
                 className="p-3 rounded-xl text-xs leading-relaxed"
-                style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.22)", color: "#7ab8d4" }}
+                style={{
+                  background: "rgba(14,165,233,0.08)",
+                  border: "1px solid rgba(14,165,233,0.22)",
+                  color: "#7ab8d4",
+                }}
               >
-                <strong>Parent Login:</strong> Enter your child&apos;s admission number to access their
-                reports. Contact the admin for your login credentials.
+                <strong>Parent Login:</strong> Enter your child&apos;s admission
+                number to access their reports. Contact the admin for your login
+                credentials.
               </div>
 
               {/* Admission number */}
               <div>
-                <label className="block text-sm mb-2" style={{ color: "rgba(245,240,232,0.55)" }}>
+                <label
+                  className="block text-sm mb-2"
+                  style={{ color: "rgba(245,240,232,0.55)" }}
+                >
                   Student Admission Number
                 </label>
                 <input
@@ -252,13 +322,18 @@ export default function SignInForm() {
                   className={`${INPUT_CLS} uppercase`}
                 />
                 {parentForm.formState.errors.admissionNumber && (
-                  <p className="text-red-400 text-xs mt-1.5">{parentForm.formState.errors.admissionNumber.message}</p>
+                  <p className="text-red-400 text-xs mt-1.5">
+                    {parentForm.formState.errors.admissionNumber.message}
+                  </p>
                 )}
               </div>
 
               {/* Password */}
               <div>
-                <label className="block text-sm mb-2" style={{ color: "rgba(245,240,232,0.55)" }}>
+                <label
+                  className="block text-sm mb-2"
+                  style={{ color: "rgba(245,240,232,0.55)" }}
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -274,17 +349,27 @@ export default function SignInForm() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
                     style={{ color: "rgba(245,240,232,0.30)" }}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
                 {parentForm.formState.errors.password && (
-                  <p className="text-red-400 text-xs mt-1.5">{parentForm.formState.errors.password.message}</p>
+                  <p className="text-red-400 text-xs mt-1.5">
+                    {parentForm.formState.errors.password.message}
+                  </p>
                 )}
               </div>
 
               {/* Forgot */}
               <div className="flex justify-end">
-                <Link href="/forgot-password" className="text-sm transition-colors" style={{ color: "#0ea5e9" }}>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm transition-colors"
+                  style={{ color: "#0ea5e9" }}
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -295,11 +380,18 @@ export default function SignInForm() {
                 disabled={isLoading}
                 className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                  background:
+                    "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
                   boxShadow: "0 4px 20px rgba(249,115,22,0.35)",
                 }}
               >
-                {isLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Signing In...</> : "Access Reports"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Signing In...
+                  </>
+                ) : (
+                  "Access Reports"
+                )}
               </button>
             </motion.form>
           )}

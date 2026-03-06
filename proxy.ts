@@ -12,7 +12,6 @@ const STUDENT_ROUTES = ["/student"];
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  
 
   // Allow public routes and API routes
   if (
@@ -26,8 +25,6 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-
   // Redirect unauthenticated users
   if (!token) {
     const signInUrl = new URL("/sign-in", req.url);
@@ -35,7 +32,24 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  // const role = token.role as UserRole;
+  // ── Check if user is still active in DB ──────────────────────────
+  // Only runs on page navigations, not API calls (those are excluded above)
+  try {
+    const baseUrl = req.nextUrl.origin;
+    const res = await fetch(`${baseUrl}/api/auth/check-status`, {
+      headers: { cookie: req.headers.get("cookie") ?? "" },
+    });
+    if (res.status === 403) {
+      // User suspended or deleted — clear session and redirect
+      const signInUrl = new URL("/sign-in", req.url);
+      signInUrl.searchParams.set("error", "AccountSuspended");
+      return NextResponse.redirect(signInUrl);
+    }
+  } catch {
+    // If check fails (e.g. network error), allow through — don't lock out users
+  }
+  // ─────────────────────────────────────────────────────────────────
+
   const activeRole = token.activeRole as UserRole;
 
   // Role-based access control
@@ -61,7 +75,6 @@ export async function proxy(req: NextRequest) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|icons|manifest.json).*)"],
 };
-
 
 // import { auth } from "@/lib/auth";
 // import { NextResponse } from "next/server";
