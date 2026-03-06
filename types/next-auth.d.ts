@@ -35,10 +35,10 @@ declare module "next-auth/jwt" {
     id: string;
     // role: UserRole;
     roles: UserRole[];
-    activeRole: UserRole;
+    activeRole?: UserRole;
     surname: string;
     firstName: string;
     otherName: string;
-    status: UserStatus;
+    status?: UserStatus;
   }
 }

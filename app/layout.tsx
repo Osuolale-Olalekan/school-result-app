@@ -132,14 +132,28 @@ export default function RootLayout({
             dangerouslySetInnerHTML={{
               __html: `
       var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-      (function(){
-        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-        s1.async=true;
-        s1.src='https://embed.tawk.to/69a40450a8b9521c367287f5/1jikb1mv3';
-        s1.charset='UTF-8';
-        s1.setAttribute('crossorigin','*');
-        s0.parentNode.insertBefore(s1,s0);
-      })();
+Tawk_API.customStyle = {
+  visibility: {
+    desktop: {
+      position: 'br',
+      xOffset: 0,
+      yOffset: 80
+    },
+    mobile: {
+      position: 'br',
+      xOffset: 0,
+      yOffset: 80
+    }
+  }
+};
+(function(){
+  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+  s1.async=true;
+  s1.src='https://embed.tawk.to/69a40450a8b9521c367287f5/1jikb1mv3';
+  s1.charset='UTF-8';
+  s1.setAttribute('crossorigin','*');
+  s0.parentNode.insertBefore(s1,s0);
+})();
     `,
             }}
           />

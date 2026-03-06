@@ -15,8 +15,7 @@ import type { ApiResponse } from "@/types";
 export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<ApiResponse<object>>> {
-  console.log("🔥 PAYMENT ROUTE HIT"); // ← very first line
-  console.log("SK:", process.env.PAYSTACK_SECRET_KEY?.substring(0, 15));
+  
   const session = await getSession();
   if (!session?.user || session.user.activeRole !== UserRole.PARENT) {
     return NextResponse.json(
@@ -27,11 +26,7 @@ export async function POST(
 
   try {
     await connectDB();
-    console.log(
-      "SK starts with:",
-      process.env.PAYSTACK_SECRET_KEY?.substring(0, 15),
-    );
-    console.log("SK length:", process.env.PAYSTACK_SECRET_KEY?.length);
+   ;
 
     const { studentId, sessionId, termId, amount } = (await request.json()) as {
       studentId: string;
@@ -82,8 +77,7 @@ export async function POST(
 
     const reference = generatePaymentReference(studentId, termId);
 
-    console.log("Full SK:", process.env.PAYSTACK_SECRET_KEY);
-    console.log("Email being used:", parent.email);
+    
 
     // Initialize with Paystack
     const paystackData = await initializePaystackPayment({

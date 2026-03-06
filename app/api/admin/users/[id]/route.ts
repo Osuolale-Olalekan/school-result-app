@@ -17,6 +17,7 @@ import {
 import { createAuditLog } from "@/lib/audit";
 import type { ApiResponse } from "@/types";
 import ClassAssignmentModel from "@/models/ClassAssignment";
+import { sanitizePhone } from "@/lib/utils";
 
 async function requireAdmin() {
   const session = await getServerSession(authConfig);
@@ -157,9 +158,7 @@ export async function PATCH(
   console.log("user.roles:", user.roles);
   console.log("UserRole.PARENT value:", UserRole.PARENT);
   console.log("includes check:", user.roles.includes(UserRole.PARENT));
-  console.log("updateData:", JSON.stringify(updateData));
-  console.log("USER FETCHED:", JSON.stringify(user, null, 2));
-  console.log("BODY RECEIVED:", JSON.stringify(body, null, 2));
+  
 
       // ── 1. Basic allowed fields ──────────────────────────────────
       const allowedFields = [
@@ -190,6 +189,10 @@ export async function PATCH(
             updateData[field];
         }
       }
+      // Then override just phone after the loop
+if (updateData.phone) {
+  (user as unknown as Record<string, unknown>).phone = sanitizePhone(updateData.phone);
+}
 
       // ── 2. Admission number (students only, uniqueness check) ────
       if (updateData.admissionNumber) {

@@ -23,6 +23,7 @@ import { createNotification } from "@/lib/notifications";
 import { NotificationType } from "@/types/enums";
 import { generateAdmissionNumber, generateEmployeeId } from "@/lib/utils";
 import type { ApiResponse } from "@/types";
+import { sanitizeString, sanitizeEmail, sanitizePhone, sanitizeOptional } from "@/lib/utils";
 
 async function requireAdmin() {
   const session = await getServerSession(authConfig);
@@ -162,7 +163,7 @@ export async function POST(
         otherName: (body.otherName as string).trim(),
         email: (body.email as string).toLowerCase().trim(),
         password: hashedPassword,
-        phone: body.phone,
+        phone:        sanitizePhone(body.phone),
         // role: UserRole.STUDENT,
         roles: [UserRole.STUDENT],
         activeRole: UserRole.STUDENT,
@@ -172,9 +173,9 @@ export async function POST(
         admissionDate: body.admissionDate ?? new Date(),
         dateOfBirth: body.dateOfBirth,
         gender: body.gender,
-        address: body.address,
-        guardianName: body.guardianName,
-        guardianPhone: body.guardianPhone,
+        address:      sanitizeOptional(body.address),
+        guardianName: sanitizeOptional(body.guardianName),
+        guardianPhone: body.guardianPhone ? sanitizePhone(body.guardianPhone) : undefined,
         currentClass: body.currentClass,
         department: body.department ?? Department.NONE,
         studentStatus: StudentStatus.ACTIVE,
@@ -202,15 +203,15 @@ export async function POST(
         otherName: (body.otherName as string).trim(),
         email: (body.email as string).toLowerCase().trim(),
         password: hashedPassword,
-        phone: body.phone,
+        phone:           sanitizePhone(body.phone),
         // role: UserRole.TEACHER,
         roles: [UserRole.TEACHER],
         activeRole: UserRole.TEACHER,
         status: UserStatus.ACTIVE,
         profilePhoto: body.profilePhoto,
         employeeId,
-        qualification: body.qualification,
-        specialization: body.specialization,
+        qualification:   sanitizeOptional(body.qualification),
+  specialization:  sanitizeOptional(body.specialization),
         dateOfEmployment: body.dateOfEmployment ?? new Date(),
       })) as unknown as {
         _id: unknown;
@@ -228,7 +229,7 @@ export async function POST(
         otherName: (body.otherName as string).trim(),
         email: (body.email as string).toLowerCase().trim(),
         password: hashedPassword,
-        phone: body.phone,
+        phone:           sanitizePhone(body.phone),
         // role: UserRole.PARENT,
         roles: [UserRole.PARENT],
         activeRole: UserRole.PARENT,

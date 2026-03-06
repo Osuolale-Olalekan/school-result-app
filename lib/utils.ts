@@ -72,3 +72,27 @@ export function isPassMark(percentage: number): boolean {
 export function truncate(str: string, length: number): string {
   return str.length > length ? str.slice(0, length) + "..." : str;
 }
+
+
+// ── Sanitization ──────────────────────────────────────────────────────────────
+
+export function sanitizeString(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.trim();
+}
+
+export function sanitizeEmail(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.trim().toLowerCase();
+}
+
+export function sanitizePhone(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.trim().replace(/[^\d+\-\s()]/g, "");
+}
+
+export function sanitizeOptional(value: unknown): string | undefined {
+  if (!value || typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
+}
