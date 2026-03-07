@@ -544,59 +544,60 @@ export default function DashboardHeader({ user }: Props) {
               </button>
 
               {/* Mobile Notifications Dropdown */}
-              {showNotifications && (
-                <div
-                  className="absolute right-0 top-11 w-[calc(100vw-2rem)] max-w-sm rounded-2xl overflow-hidden z-50"
-                  style={{
-                    background: "rgba(8,22,50,0.98)",
-                    border: "1px solid rgba(14,165,233,0.2)",
-                    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-                    backdropFilter: "blur(20px)",
-                  }}
-                >
-                  <div
-                    className="flex items-center justify-between px-4 py-3"
-                    style={{ borderBottom: "1px solid rgba(14,165,233,0.12)" }}
-                  >
-                    <span className="font-semibold text-sm" style={{ color: "#f5f0e8" }}>Notifications</span>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={markAllRead}
-                        className="text-xs font-medium"
-                        style={{ color: "#0ea5e9" }}
-                      >
-                        Mark all read
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-72 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="py-8 text-center">
-                        <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(122,184,212,0.3)" }} />
-                        <p className="text-sm" style={{ color: "rgba(245,240,232,0.4)" }}>No new notifications</p>
-                      </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <div
-                          key={n._id}
-                          className="px-4 py-3"
-                          style={{ borderBottom: "1px solid rgba(14,165,233,0.07)" }}
-                        >
-                          <p className="text-sm font-semibold mb-0.5" style={{ color: "#f5f0e8" }}>
-                            {truncate(n.title, 40)}
-                          </p>
-                          <p className="text-xs mb-1" style={{ color: "rgba(245,240,232,0.5)" }}>
-                            {truncate(n.message, 65)}
-                          </p>
-                          <p className="text-[10px]" style={{ color: "rgba(122,184,212,0.5)" }}>
-                            {formatDateTime(n.createdAt)}
-                          </p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
+              {/* Mobile Notifications Dropdown */}
+{showNotifications && (
+  <div
+    className="fixed top-[57px] left-2 right-2 rounded-2xl overflow-hidden z-50"
+    style={{
+      background: "rgba(8,22,50,0.98)",
+      border: "1px solid rgba(14,165,233,0.2)",
+      boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+      backdropFilter: "blur(20px)",
+    }}
+  >
+    <div
+      className="flex items-center justify-between px-4 py-3"
+      style={{ borderBottom: "1px solid rgba(14,165,233,0.12)" }}
+    >
+      <span className="font-semibold text-sm" style={{ color: "#f5f0e8" }}>Notifications</span>
+      {unreadCount > 0 && (
+        <button
+          onClick={markAllRead}
+          className="text-xs font-medium"
+          style={{ color: "#0ea5e9" }}
+        >
+          Mark all read
+        </button>
+      )}
+    </div>
+    <div className="max-h-72 overflow-y-auto">
+      {notifications.length === 0 ? (
+        <div className="py-8 text-center">
+          <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(122,184,212,0.3)" }} />
+          <p className="text-sm" style={{ color: "rgba(245,240,232,0.4)" }}>No new notifications</p>
+        </div>
+      ) : (
+        notifications.map((n) => (
+          <div
+            key={n._id}
+            className="px-4 py-3"
+            style={{ borderBottom: "1px solid rgba(14,165,233,0.07)" }}
+          >
+            <p className="text-sm font-semibold mb-0.5" style={{ color: "#f5f0e8" }}>
+              {truncate(n.title, 40)}
+            </p>
+            <p className="text-xs mb-1" style={{ color: "rgba(245,240,232,0.5)" }}>
+              {truncate(n.message, 65)}
+            </p>
+            <p className="text-[10px]" style={{ color: "rgba(122,184,212,0.5)" }}>
+              {formatDateTime(n.createdAt)}
+            </p>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+)}
             </div>
 
             {/* Avatar / User menu */}

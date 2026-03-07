@@ -8,6 +8,46 @@ import { UserRole } from "@/types/enums";
 import { useState } from "react";
 import { Department } from "@/types/enums";
 
+const nigeriaStates = [
+  { state: "Abia", lgas: ["Aba North","Aba South","Arochukwu","Bende","Ikawuno","Ikwuano","Isiala-Ngwa North","Isiala-Ngwa South","Isuikwuato","Umu Nneochi","Obi Ngwa","Obioma Ngwa","Ohafia","Ohaozara","Osisioma","Ugwunagbo","Ukwa West","Ukwa East","Umuahia North","Umuahia South"] },
+  { state: "Adamawa", lgas: ["Demsa","Fufore","Ganye","Girei","Gombi","Guyuk","Hong","Jada","Lamurde","Madagali","Maiha","Mayo-Belwa","Michika","Mubi-North","Mubi-South","Numan","Shelleng","Song","Toungo","Yola North","Yola South"] },
+  { state: "Akwa Ibom", lgas: ["Abak","Eastern-Obolo","Eket","Esit-Eket","Essien-Udim","Etim-Ekpo","Etinan","Ibeno","Ibesikpo-Asutan","Ibiono-Ibom","Ika","Ikono","Ikot-Abasi","Ikot-Ekpene","Ini","Itu","Mbo","Mkpat-Enin","Nsit-Atai","Nsit-Ibom","Nsit-Ubium","Obot-Akara","Okobo","Onna","Oron","Oruk Anam","Udung-Uko","Ukanafun","Urue-Offong/Oruko","Uruan","Uyo"] },
+  { state: "Anambra", lgas: ["Aguata","Anambra East","Anambra West","Anaocha","Awka North","Awka South","Ayamelum","Dunukofia","Ekwusigo","Idemili-North","Idemili-South","Ihiala","Njikoka","Nnewi-North","Nnewi-South","Ogbaru","Onitsha-North","Onitsha-South","Orumba-North","Orumba-South"] },
+  { state: "Bauchi", lgas: ["Alkaleri","Bauchi","Bogoro","Damban","Darazo","Dass","Gamawa","Ganjuwa","Giade","Itas/Gadau","Jama'Are","Katagum","Kirfi","Misau","Ningi","Shira","Tafawa-Balewa","Toro","Warji","Zaki"] },
+  { state: "Bayelsa", lgas: ["Brass","Ekeremor","Kolokuma/Opokuma","Nembe","Ogbia","Sagbama","Southern-Ijaw","Yenagoa"] },
+  { state: "Benue", lgas: ["Ado","Agatu","Apa","Buruku","Gboko","Guma","Gwer-East","Gwer-West","Katsina-Ala","Konshisha","Kwande","Logo","Makurdi","Ogbadibo","Ohimini","Oju","Okpokwu","Otukpo","Tarka","Ukum","Ushongo","Vandeikya"] },
+  { state: "Borno", lgas: ["Abadam","Askira-Uba","Bama","Bayo","Biu","Chibok","Damboa","Dikwa","Gubio","Guzamala","Gwoza","Hawul","Jere","Kaga","Kala/Balge","Konduga","Kukawa","Kwaya-Kusar","Mafa","Magumeri","Maiduguri","Marte","Mobbar","Monguno","Ngala","Nganzai","Shani"] },
+  { state: "Cross River", lgas: ["Abi","Akamkpa","Akpabuyo","Bakassi","Bekwarra","Biase","Boki","Calabar-Municipal","Calabar-South","Etung","Ikom","Obanliku","Obubra","Obudu","Odukpani","Ogoja","Yakurr","Yala"] },
+  { state: "Delta", lgas: ["Aniocha North","Aniocha-South","Bomadi","Burutu","Ethiope-East","Ethiope-West","Ika-North-East","Ika-South","Isoko-North","Isoko-South","Ndokwa-East","Ndokwa-West","Okpe","Oshimili-North","Oshimili-South","Patani","Sapele","Udu","Ughelli-North","Ughelli-South","Ukwuani","Uvwie","Warri South-West","Warri North","Warri South"] },
+  { state: "Ebonyi", lgas: ["Abakaliki","Afikpo-North","Afikpo South (Edda)","Ebonyi","Ezza-North","Ezza-South","Ikwo","Ishielu","Ivo","Izzi","Ohaukwu","Onicha"] },
+  { state: "Edo", lgas: ["Akoko Edo","Egor","Esan-Central","Esan-North-East","Esan-South-East","Esan-West","Etsako-Central","Etsako-East","Etsako-West","Igueben","Ikpoba-Okha","Oredo","Orhionmwon","Ovia-North-East","Ovia-South-West","Owan East","Owan-West","Uhunmwonde"] },
+  { state: "Ekiti", lgas: ["Ado-Ekiti","Efon","Ekiti-East","Ekiti-South-West","Ekiti-West","Emure","Gbonyin","Ido-Osi","Ijero","Ikere","Ikole","Ilejemeje","Irepodun/Ifelodun","Ise-Orun","Moba","Oye"] },
+  { state: "Enugu", lgas: ["Aninri","Awgu","Enugu-East","Enugu-North","Enugu-South","Ezeagu","Igbo-Etiti","Igbo-Eze-North","Igbo-Eze-South","Isi-Uzo","Nkanu-East","Nkanu-West","Nsukka","Oji-River","Udenu","Udi","Uzo-Uwani"] },
+  { state: "Federal Capital Territory", lgas: ["Abuja","Kwali","Kuje","Gwagwalada","Bwari","Abaji"] },
+  { state: "Gombe", lgas: ["Akko","Balanga","Billiri","Dukku","Funakaye","Gombe","Kaltungo","Kwami","Nafada","Shongom","Yamaltu/Deba"] },
+  { state: "Imo", lgas: ["Aboh-Mbaise","Ahiazu-Mbaise","Ehime-Mbano","Ezinihitte","Ideato-North","Ideato-South","Ihitte/Uboma","Ikeduru","Isiala-Mbano","Isu","Mbaitoli","Ngor-Okpala","Njaba","Nkwerre","Nwangele","Obowo","Oguta","Ohaji-Egbema","Okigwe","Onuimo","Orlu","Orsu","Oru-East","Oru-West","Owerri-Municipal","Owerri-North","Owerri-West"] },
+  { state: "Jigawa", lgas: ["Auyo","Babura","Biriniwa","Birnin-Kudu","Buji","Dutse","Gagarawa","Garki","Gumel","Guri","Gwaram","Gwiwa","Hadejia","Jahun","Kafin-Hausa","Kaugama","Kazaure","Kiri kasama","Maigatari","Malam Madori","Miga","Ringim","Roni","Sule-Tankarkar","Taura","Yankwashi"] },
+  { state: "Kaduna", lgas: ["Birnin-Gwari","Chikun","Giwa","Igabi","Ikara","Jaba","Jema'A","Kachia","Kaduna-North","Kaduna-South","Kagarko","Kajuru","Kaura","Kauru","Kubau","Kudan","Lere","Makarfi","Sabon-Gari","Sanga","Soba","Zangon-Kataf","Zaria"] },
+  { state: "Kano", lgas: ["Ajingi","Albasu","Bagwai","Bebeji","Bichi","Bunkure","Dala","Dambatta","Dawakin-Kudu","Dawakin-Tofa","Doguwa","Fagge","Gabasawa","Garko","Garun-Mallam","Gaya","Gezawa","Gwale","Gwarzo","Kabo","Kano-Municipal","Karaye","Kibiya","Kiru","Kumbotso","Kunchi","Kura","Madobi","Makoda","Minjibir","Nasarawa","Rano","Rimin-Gado","Rogo","Shanono","Sumaila","Takai","Tarauni","Tofa","Tsanyawa","Tudun-Wada","Ungogo","Warawa","Wudil"] },
+  { state: "Katsina", lgas: ["Bakori","Batagarawa","Batsari","Baure","Bindawa","Charanchi","Dan-Musa","Dandume","Danja","Daura","Dutsi","Dutsin-Ma","Faskari","Funtua","Ingawa","Jibia","Kafur","Kaita","Kankara","Kankia","Katsina","Kurfi","Kusada","Mai-Adua","Malumfashi","Mani","Mashi","Matazu","Musawa","Rimi","Sabuwa","Safana","Sandamu","Zango"] },
+  { state: "Kebbi", lgas: ["Aleiro","Arewa-Dandi","Argungu","Augie","Bagudo","Birnin-Kebbi","Bunza","Dandi","Fakai","Gwandu","Jega","Kalgo","Koko-Besse","Maiyama","Ngaski","Sakaba","Shanga","Suru","Wasagu/Danko","Yauri","Zuru"] },
+  { state: "Kogi", lgas: ["Adavi","Ajaokuta","Ankpa","Dekina","Ibaji","Idah","Igalamela-Odolu","Ijumu","Kabba/Bunu","Kogi","Lokoja","Mopa-Muro","Ofu","Ogori/Magongo","Okehi","Okene","Olamaboro","Omala","Oyi","Yagba-East","Yagba-West"] },
+  { state: "Kwara", lgas: ["Asa","Baruten","Edu","Ekiti (Araromi/Opin)","Ilorin-East","Ilorin-South","Ilorin-West","Isin","Kaiama","Moro","Offa","Oke-Ero","Oyun","Pategi"] },
+  { state: "Lagos", lgas: ["Agege","Ajeromi-Ifelodun","Alimosho","Amuwo-Odofin","Apapa","Badagry","Epe","Eti-Osa","Ibeju-Lekki","Ifako-Ijaiye","Ikeja","Ikorodu","Kosofe","Lagos-Island","Lagos-Mainland","Mushin","Ojo","Oshodi-Isolo","Shomolu","Surulere","Yewa-South"] },
+  { state: "Nasarawa", lgas: ["Akwanga","Awe","Doma","Karu","Keana","Keffi","Kokona","Lafia","Nasarawa","Nasarawa-Eggon","Obi","Wamba","Toto"] },
+  { state: "Niger", lgas: ["Agaie","Agwara","Bida","Borgu","Bosso","Chanchaga","Edati","Gbako","Gurara","Katcha","Kontagora","Lapai","Lavun","Magama","Mariga","Mashegu","Mokwa","Moya","Paikoro","Rafi","Rijau","Shiroro","Suleja","Tafa","Wushishi"] },
+  { state: "Ogun", lgas: ["Abeokuta-North","Abeokuta-South","Ado-Odo/Ota","Ewekoro","Ifo","Ijebu-East","Ijebu-North","Ijebu-North-East","Ijebu-Ode","Ikenne","Imeko-Afon","Ipokia","Obafemi-Owode","Odeda","Odogbolu","Ogun-Waterside","Remo-North","Shagamu","Yewa North"] },
+  { state: "Ondo", lgas: ["Akoko North-East","Akoko North-West","Akoko South-West","Akoko South-East","Akure-North","Akure-South","Ese-Odo","Idanre","Ifedore","Ilaje","Ile-Oluji-Okeigbo","Irele","Odigbo","Okitipupa","Ondo West","Ondo-East","Ose","Owo"] },
+  { state: "Osun", lgas: ["Atakumosa West","Atakumosa East","Ayedaade","Ayedire","Boluwaduro","Boripe","Ede South","Ede North","Egbedore","Ejigbo","Ife North","Ife South","Ife-Central","Ife-East","Ifelodun","Ila","Ilesa-East","Ilesa-West","Irepodun","Irewole","Isokan","Iwo","Obokun","Odo-Otin","Ola Oluwa","Olorunda","Oriade","Orolu","Osogbo"] },
+  { state: "Oyo", lgas: ["Afijio","Akinyele","Atiba","Atisbo","Egbeda","Ibadan North","Ibadan North-East","Ibadan North-West","Ibadan South-East","Ibadan South-West","Ibarapa-Central","Ibarapa-East","Ibarapa-North","Ido","Ifedayo","Irepo","Iseyin","Itesiwaju","Iwajowa","Kajola","Lagelu","Ogo-Oluwa","Ogbomosho-North","Ogbomosho-South","Olorunsogo","Oluyole","Ona-Ara","Orelope","Ori-Ire","Oyo-West","Oyo-East","Saki-East","Saki-West","Surulere"] },
+  { state: "Plateau", lgas: ["Barkin-Ladi","Bassa","Bokkos","Jos-East","Jos-North","Jos-South","Kanam","Kanke","Langtang-North","Langtang-South","Mangu","Mikang","Pankshin","Qua'an Pan","Riyom","Shendam","Wase"] },
+  { state: "Rivers", lgas: ["Abua/Odual","Ahoada-East","Ahoada-West","Akuku Toru","Andoni","Asari-Toru","Bonny","Degema","Eleme","Emuoha","Etche","Gokana","Ikwerre","Khana","Obio/Akpor","Ogba-Egbema-Ndoni","Ogu/Bolo","Okrika","Omuma","Opobo/Nkoro","Oyigbo","Port-Harcourt","Tai"] },
+  { state: "Sokoto", lgas: ["Binji","Bodinga","Dange-Shuni","Gada","Goronyo","Gudu","Gwadabawa","Illela","Kebbe","Kware","Rabah","Sabon Birni","Shagari","Silame","Sokoto-North","Sokoto-South","Tambuwal","Tangaza","Tureta","Wamako","Wurno","Yabo"] },
+  { state: "Taraba", lgas: ["Ardo-Kola","Bali","Donga","Gashaka","Gassol","Ibi","Jalingo","Karim-Lamido","Kurmi","Lau","Sardauna","Takum","Ussa","Wukari","Yorro","Zing"] },
+  { state: "Yobe", lgas: ["Bade","Bursari","Damaturu","Fika","Fune","Geidam","Gujba","Gulani","Jakusko","Karasuwa","Machina","Nangere","Nguru","Potiskum","Tarmuwa","Yunusari","Yusufari"] },
+  { state: "Zamfara", lgas: ["Anka","Bakura","Birnin Magaji/Kiyaw","Bukkuyum","Bungudu","Gummi","Gusau","Isa","Kaura-Namoda","Kiyawa","Maradun","Maru","Shinkafi","Talata-Mafara","Tsafe","Zurmi"] },
+];
+
 const baseSchema = z.object({
   surname: z.string().min(2, "Required"),
   firstName: z.string().min(2, "Required"),
@@ -19,7 +59,7 @@ const baseSchema = z.object({
 
 const studentSchema = baseSchema.extend({
   role: z.literal(UserRole.STUDENT),
-  admissionNumber: z.string().optional(), // can be auto-generated if not provided
+  admissionNumber: z.string().optional(),
   dateOfBirth: z
     .string()
     .min(1, "Date of birth is required")
@@ -27,35 +67,27 @@ const studentSchema = baseSchema.extend({
       (val) => {
         const date = new Date(val);
         const today = new Date();
-
-        // Must be a valid date
         if (isNaN(date.getTime())) return false;
-
-        // No dates before 1900
         if (date.getFullYear() < 1900) return false;
-
-        // No future dates
         if (date > today) return false;
-
-        // Must be at least 5 years old
         const minAgeDate = new Date(
           today.getFullYear() - 5,
           today.getMonth(),
           today.getDate(),
         );
         if (date > minAgeDate) return false;
-
         return true;
       },
-      {
-        message: "Student must be at least 5 years old and date must be valid",
-      },
+      { message: "Student must be at least 5 years old and date must be valid" },
     ),
   gender: z.enum(["male", "female"]),
   currentClass: z.string().min(1, "Class is required"),
   address: z.string().optional(),
   guardianName: z.string().optional(),
   guardianPhone: z.string().optional(),
+  religion: z.string().min(2, "Religion is required"),
+  stateOfOrigin: z.string().min(2, "State of Origin is required"),
+  localGovernment: z.string().min(2, "Local Government Area is required"),
 });
 
 const teacherSchema = baseSchema.extend({
@@ -79,6 +111,9 @@ type FormData = z.infer<typeof baseSchema> & {
   address?: string;
   guardianName?: string;
   guardianPhone?: string;
+  religion?: string;
+  stateOfOrigin?: string;
+  localGovernment?: string;
   qualification?: string;
   specialization?: string;
   occupation?: string;
@@ -128,18 +163,19 @@ export default function UserForm({
   const typedErrors = errors as Record<string, { message?: string }>;
 
   const [manualAdmission, setManualAdmission] = useState(false);
-  const [selectedClassName, setSelectedClassName] = useState(""); // ← add this
-  const [department, setDepartment] = useState<Department>(Department.NONE); // ← add this
+  const [selectedClassName, setSelectedClassName] = useState("");
+  const [department, setDepartment] = useState<Department>(Department.NONE);
+  const [selectedState, setSelectedState] = useState("");
 
   const isSSS = selectedClassName.startsWith("SSS");
+
+  const availableLgas =
+    nigeriaStates.find((s) => s.state === selectedState)?.lgas ?? [];
 
   return (
     <form
       onSubmit={handleSubmit((data) => {
-        // Validate department for SSS students
-        if (isSSS && department === Department.NONE) {
-          return; // don't submit — error message already shown above
-        }
+        if (isSSS && department === Department.NONE) return;
         onSubmit({ ...(data as Record<string, unknown>), department });
       })}
       className="space-y-4"
@@ -154,9 +190,7 @@ export default function UserForm({
             className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
           />
           {typedErrors.surname && (
-            <p className="text-red-500 text-xs mt-1">
-              {typedErrors.surname.message}
-            </p>
+            <p className="text-red-500 text-xs mt-1">{typedErrors.surname.message}</p>
           )}
         </div>
         <div>
@@ -168,9 +202,7 @@ export default function UserForm({
             className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
           />
           {typedErrors.firstName && (
-            <p className="text-red-500 text-xs mt-1">
-              {typedErrors.firstName.message}
-            </p>
+            <p className="text-red-500 text-xs mt-1">{typedErrors.firstName.message}</p>
           )}
         </div>
         <div>
@@ -181,11 +213,6 @@ export default function UserForm({
             {...register("otherName")}
             className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
           />
-          {typedErrors.otherName && (
-            <p className="text-red-500 text-xs mt-1">
-              {typedErrors.otherName.message}
-            </p>
-          )}
         </div>
       </div>
 
@@ -199,9 +226,7 @@ export default function UserForm({
           className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
         />
         {typedErrors.email && (
-          <p className="text-red-500 text-xs mt-1">
-            {typedErrors.email.message}
-          </p>
+          <p className="text-red-500 text-xs mt-1">{typedErrors.email.message}</p>
         )}
       </div>
 
@@ -218,7 +243,7 @@ export default function UserForm({
       {/* Student-specific fields */}
       {selectedRole === UserRole.STUDENT && (
         <>
-          {/* Admission Number — add this block first */}
+          {/* Admission Number */}
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-sm font-medium text-gray-700">
@@ -229,9 +254,7 @@ export default function UserForm({
                 onClick={() => setManualAdmission(!manualAdmission)}
                 className="text-xs text-blue-600 hover:underline"
               >
-                {manualAdmission
-                  ? "Auto-generate instead"
-                  : "Enter manually instead"}
+                {manualAdmission ? "Auto-generate instead" : "Enter manually instead"}
               </button>
             </div>
             {manualAdmission ? (
@@ -240,13 +263,10 @@ export default function UserForm({
                   {...register("admissionNumber")}
                   placeholder="e.g. GWS/22/0234"
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f] uppercase"
-                  onChange={(e) =>
-                    (e.target.value = e.target.value.toUpperCase())
-                  }
+                  onChange={(e) => (e.target.value = e.target.value.toUpperCase())}
                 />
                 <p className="text-xs text-gray-400 mt-1">
-                  Must be unique — enter the student&apos;s existing admission
-                  number
+                  Must be unique — enter the student&apos;s existing admission number
                 </p>
               </>
             ) : (
@@ -258,6 +278,7 @@ export default function UserForm({
             )}
           </div>
 
+          {/* Class */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Assign to Class *
@@ -265,7 +286,7 @@ export default function UserForm({
             <select
               {...register("currentClass")}
               onChange={(e) => {
-                register("currentClass").onChange(e); // keep react-hook-form working
+                register("currentClass").onChange(e);
                 const selected = classes.find((c) => c._id === e.target.value);
                 setSelectedClassName(selected?.name ?? "");
               }}
@@ -278,10 +299,13 @@ export default function UserForm({
                 </option>
               ))}
             </select>
+            {typedErrors.currentClass && (
+              <p className="text-red-500 text-xs mt-1">{typedErrors.currentClass.message}</p>
+            )}
 
             {/* Department — required for SSS classes */}
             {isSSS && (
-              <div>
+              <div className="mt-3">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Department <span className="text-red-500">*</span>
                 </label>
@@ -302,13 +326,9 @@ export default function UserForm({
                 )}
               </div>
             )}
-
-            {typedErrors.currentClass && (
-              <p className="text-red-500 text-xs mt-1">
-                {typedErrors.currentClass.message}
-              </p>
-            )}
           </div>
+
+          {/* Date of Birth & Gender */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -330,9 +350,7 @@ export default function UserForm({
                 }`}
               />
               {typedErrors.dateOfBirth && (
-                <p className="text-red-500 text-xs mt-1">
-                  {typedErrors.dateOfBirth.message}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{typedErrors.dateOfBirth.message}</p>
               )}
             </div>
             <div>
@@ -348,12 +366,81 @@ export default function UserForm({
                 <option value="female">Female</option>
               </select>
               {typedErrors.gender && (
-                <p className="text-red-500 text-xs mt-1">
-                  {typedErrors.gender.message}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{typedErrors.gender.message}</p>
               )}
             </div>
           </div>
+
+          {/* Religion */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Religion *
+            </label>
+            <select
+              {...register("religion")}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+            >
+              <option value="">Select...</option>
+              <option value="christianity">Christianity</option>
+              <option value="islam">Islam</option>
+              <option value="traditional">Traditional</option>
+              <option value="other">Other</option>
+            </select>
+            {typedErrors.religion && (
+              <p className="text-red-500 text-xs mt-1">{typedErrors.religion.message}</p>
+            )}
+          </div>
+
+          {/* State of Origin */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              State of Origin *
+            </label>
+            <select
+              {...register("stateOfOrigin")}
+              onChange={(e) => {
+                register("stateOfOrigin").onChange(e);
+                setSelectedState(e.target.value);
+              }}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+            >
+              <option value="">Select state...</option>
+              {nigeriaStates.map((s) => (
+                <option key={s.state} value={s.state}>
+                  {s.state}
+                </option>
+              ))}
+            </select>
+            {typedErrors.stateOfOrigin && (
+              <p className="text-red-500 text-xs mt-1">{typedErrors.stateOfOrigin.message}</p>
+            )}
+          </div>
+
+          {/* Local Government Area */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Local Government Area *
+            </label>
+            <select
+              {...register("localGovernment")}
+              disabled={!selectedState}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              <option value="">
+                {selectedState ? "Select LGA..." : "Select a state first"}
+              </option>
+              {availableLgas.map((lga) => (
+                <option key={lga} value={lga}>
+                  {lga}
+                </option>
+              ))}
+            </select>
+            {typedErrors.localGovernment && (
+              <p className="text-red-500 text-xs mt-1">{typedErrors.localGovernment.message}</p>
+            )}
+          </div>
+
+          {/* Guardian & Address */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Guardian Name

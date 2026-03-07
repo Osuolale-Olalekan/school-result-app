@@ -5,6 +5,46 @@ import { X, Loader2, Camera, User, Save } from "lucide-react";
 import { UserRole } from "@/types/enums";
 import { toast } from "sonner";
 
+const nigeriaStates = [
+  { state: "Abia", lgas: ["Aba North","Aba South","Arochukwu","Bende","Ikawuno","Ikwuano","Isiala-Ngwa North","Isiala-Ngwa South","Isuikwuato","Umu Nneochi","Obi Ngwa","Obioma Ngwa","Ohafia","Ohaozara","Osisioma","Ugwunagbo","Ukwa West","Ukwa East","Umuahia North","Umuahia South"] },
+  { state: "Adamawa", lgas: ["Demsa","Fufore","Ganye","Girei","Gombi","Guyuk","Hong","Jada","Lamurde","Madagali","Maiha","Mayo-Belwa","Michika","Mubi-North","Mubi-South","Numan","Shelleng","Song","Toungo","Yola North","Yola South"] },
+  { state: "Akwa Ibom", lgas: ["Abak","Eastern-Obolo","Eket","Esit-Eket","Essien-Udim","Etim-Ekpo","Etinan","Ibeno","Ibesikpo-Asutan","Ibiono-Ibom","Ika","Ikono","Ikot-Abasi","Ikot-Ekpene","Ini","Itu","Mbo","Mkpat-Enin","Nsit-Atai","Nsit-Ibom","Nsit-Ubium","Obot-Akara","Okobo","Onna","Oron","Oruk Anam","Udung-Uko","Ukanafun","Urue-Offong/Oruko","Uruan","Uyo"] },
+  { state: "Anambra", lgas: ["Aguata","Anambra East","Anambra West","Anaocha","Awka North","Awka South","Ayamelum","Dunukofia","Ekwusigo","Idemili-North","Idemili-South","Ihiala","Njikoka","Nnewi-North","Nnewi-South","Ogbaru","Onitsha-North","Onitsha-South","Orumba-North","Orumba-South"] },
+  { state: "Bauchi", lgas: ["Alkaleri","Bauchi","Bogoro","Damban","Darazo","Dass","Gamawa","Ganjuwa","Giade","Itas/Gadau","Jama'Are","Katagum","Kirfi","Misau","Ningi","Shira","Tafawa-Balewa","Toro","Warji","Zaki"] },
+  { state: "Bayelsa", lgas: ["Brass","Ekeremor","Kolokuma/Opokuma","Nembe","Ogbia","Sagbama","Southern-Ijaw","Yenagoa"] },
+  { state: "Benue", lgas: ["Ado","Agatu","Apa","Buruku","Gboko","Guma","Gwer-East","Gwer-West","Katsina-Ala","Konshisha","Kwande","Logo","Makurdi","Ogbadibo","Ohimini","Oju","Okpokwu","Otukpo","Tarka","Ukum","Ushongo","Vandeikya"] },
+  { state: "Borno", lgas: ["Abadam","Askira-Uba","Bama","Bayo","Biu","Chibok","Damboa","Dikwa","Gubio","Guzamala","Gwoza","Hawul","Jere","Kaga","Kala/Balge","Konduga","Kukawa","Kwaya-Kusar","Mafa","Magumeri","Maiduguri","Marte","Mobbar","Monguno","Ngala","Nganzai","Shani"] },
+  { state: "Cross River", lgas: ["Abi","Akamkpa","Akpabuyo","Bakassi","Bekwarra","Biase","Boki","Calabar-Municipal","Calabar-South","Etung","Ikom","Obanliku","Obubra","Obudu","Odukpani","Ogoja","Yakurr","Yala"] },
+  { state: "Delta", lgas: ["Aniocha North","Aniocha-South","Bomadi","Burutu","Ethiope-East","Ethiope-West","Ika-North-East","Ika-South","Isoko-North","Isoko-South","Ndokwa-East","Ndokwa-West","Okpe","Oshimili-North","Oshimili-South","Patani","Sapele","Udu","Ughelli-North","Ughelli-South","Ukwuani","Uvwie","Warri South-West","Warri North","Warri South"] },
+  { state: "Ebonyi", lgas: ["Abakaliki","Afikpo-North","Afikpo South (Edda)","Ebonyi","Ezza-North","Ezza-South","Ikwo","Ishielu","Ivo","Izzi","Ohaukwu","Onicha"] },
+  { state: "Edo", lgas: ["Akoko Edo","Egor","Esan-Central","Esan-North-East","Esan-South-East","Esan-West","Etsako-Central","Etsako-East","Etsako-West","Igueben","Ikpoba-Okha","Oredo","Orhionmwon","Ovia-North-East","Ovia-South-West","Owan East","Owan-West","Uhunmwonde"] },
+  { state: "Ekiti", lgas: ["Ado-Ekiti","Efon","Ekiti-East","Ekiti-South-West","Ekiti-West","Emure","Gbonyin","Ido-Osi","Ijero","Ikere","Ikole","Ilejemeje","Irepodun/Ifelodun","Ise-Orun","Moba","Oye"] },
+  { state: "Enugu", lgas: ["Aninri","Awgu","Enugu-East","Enugu-North","Enugu-South","Ezeagu","Igbo-Etiti","Igbo-Eze-North","Igbo-Eze-South","Isi-Uzo","Nkanu-East","Nkanu-West","Nsukka","Oji-River","Udenu","Udi","Uzo-Uwani"] },
+  { state: "Federal Capital Territory", lgas: ["Abuja","Kwali","Kuje","Gwagwalada","Bwari","Abaji"] },
+  { state: "Gombe", lgas: ["Akko","Balanga","Billiri","Dukku","Funakaye","Gombe","Kaltungo","Kwami","Nafada","Shongom","Yamaltu/Deba"] },
+  { state: "Imo", lgas: ["Aboh-Mbaise","Ahiazu-Mbaise","Ehime-Mbano","Ezinihitte","Ideato-North","Ideato-South","Ihitte/Uboma","Ikeduru","Isiala-Mbano","Isu","Mbaitoli","Ngor-Okpala","Njaba","Nkwerre","Nwangele","Obowo","Oguta","Ohaji-Egbema","Okigwe","Onuimo","Orlu","Orsu","Oru-East","Oru-West","Owerri-Municipal","Owerri-North","Owerri-West"] },
+  { state: "Jigawa", lgas: ["Auyo","Babura","Biriniwa","Birnin-Kudu","Buji","Dutse","Gagarawa","Garki","Gumel","Guri","Gwaram","Gwiwa","Hadejia","Jahun","Kafin-Hausa","Kaugama","Kazaure","Kiri kasama","Maigatari","Malam Madori","Miga","Ringim","Roni","Sule-Tankarkar","Taura","Yankwashi"] },
+  { state: "Kaduna", lgas: ["Birnin-Gwari","Chikun","Giwa","Igabi","Ikara","Jaba","Jema'A","Kachia","Kaduna-North","Kaduna-South","Kagarko","Kajuru","Kaura","Kauru","Kubau","Kudan","Lere","Makarfi","Sabon-Gari","Sanga","Soba","Zangon-Kataf","Zaria"] },
+  { state: "Kano", lgas: ["Ajingi","Albasu","Bagwai","Bebeji","Bichi","Bunkure","Dala","Dambatta","Dawakin-Kudu","Dawakin-Tofa","Doguwa","Fagge","Gabasawa","Garko","Garun-Mallam","Gaya","Gezawa","Gwale","Gwarzo","Kabo","Kano-Municipal","Karaye","Kibiya","Kiru","Kumbotso","Kunchi","Kura","Madobi","Makoda","Minjibir","Nasarawa","Rano","Rimin-Gado","Rogo","Shanono","Sumaila","Takai","Tarauni","Tofa","Tsanyawa","Tudun-Wada","Ungogo","Warawa","Wudil"] },
+  { state: "Katsina", lgas: ["Bakori","Batagarawa","Batsari","Baure","Bindawa","Charanchi","Dan-Musa","Dandume","Danja","Daura","Dutsi","Dutsin-Ma","Faskari","Funtua","Ingawa","Jibia","Kafur","Kaita","Kankara","Kankia","Katsina","Kurfi","Kusada","Mai-Adua","Malumfashi","Mani","Mashi","Matazu","Musawa","Rimi","Sabuwa","Safana","Sandamu","Zango"] },
+  { state: "Kebbi", lgas: ["Aleiro","Arewa-Dandi","Argungu","Augie","Bagudo","Birnin-Kebbi","Bunza","Dandi","Fakai","Gwandu","Jega","Kalgo","Koko-Besse","Maiyama","Ngaski","Sakaba","Shanga","Suru","Wasagu/Danko","Yauri","Zuru"] },
+  { state: "Kogi", lgas: ["Adavi","Ajaokuta","Ankpa","Dekina","Ibaji","Idah","Igalamela-Odolu","Ijumu","Kabba/Bunu","Kogi","Lokoja","Mopa-Muro","Ofu","Ogori/Magongo","Okehi","Okene","Olamaboro","Omala","Oyi","Yagba-East","Yagba-West"] },
+  { state: "Kwara", lgas: ["Asa","Baruten","Edu","Ekiti (Araromi/Opin)","Ilorin-East","Ilorin-South","Ilorin-West","Isin","Kaiama","Moro","Offa","Oke-Ero","Oyun","Pategi"] },
+  { state: "Lagos", lgas: ["Agege","Ajeromi-Ifelodun","Alimosho","Amuwo-Odofin","Apapa","Badagry","Epe","Eti-Osa","Ibeju-Lekki","Ifako-Ijaiye","Ikeja","Ikorodu","Kosofe","Lagos-Island","Lagos-Mainland","Mushin","Ojo","Oshodi-Isolo","Shomolu","Surulere","Yewa-South"] },
+  { state: "Nasarawa", lgas: ["Akwanga","Awe","Doma","Karu","Keana","Keffi","Kokona","Lafia","Nasarawa","Nasarawa-Eggon","Obi","Wamba","Toto"] },
+  { state: "Niger", lgas: ["Agaie","Agwara","Bida","Borgu","Bosso","Chanchaga","Edati","Gbako","Gurara","Katcha","Kontagora","Lapai","Lavun","Magama","Mariga","Mashegu","Mokwa","Moya","Paikoro","Rafi","Rijau","Shiroro","Suleja","Tafa","Wushishi"] },
+  { state: "Ogun", lgas: ["Abeokuta-North","Abeokuta-South","Ado-Odo/Ota","Ewekoro","Ifo","Ijebu-East","Ijebu-North","Ijebu-North-East","Ijebu-Ode","Ikenne","Imeko-Afon","Ipokia","Obafemi-Owode","Odeda","Odogbolu","Ogun-Waterside","Remo-North","Shagamu","Yewa North"] },
+  { state: "Ondo", lgas: ["Akoko North-East","Akoko North-West","Akoko South-West","Akoko South-East","Akure-North","Akure-South","Ese-Odo","Idanre","Ifedore","Ilaje","Ile-Oluji-Okeigbo","Irele","Odigbo","Okitipupa","Ondo West","Ondo-East","Ose","Owo"] },
+  { state: "Osun", lgas: ["Atakumosa West","Atakumosa East","Ayedaade","Ayedire","Boluwaduro","Boripe","Ede South","Ede North","Egbedore","Ejigbo","Ife North","Ife South","Ife-Central","Ife-East","Ifelodun","Ila","Ilesa-East","Ilesa-West","Irepodun","Irewole","Isokan","Iwo","Obokun","Odo-Otin","Ola Oluwa","Olorunda","Oriade","Orolu","Osogbo"] },
+  { state: "Oyo", lgas: ["Afijio","Akinyele","Atiba","Atisbo","Egbeda","Ibadan North","Ibadan North-East","Ibadan North-West","Ibadan South-East","Ibadan South-West","Ibarapa-Central","Ibarapa-East","Ibarapa-North","Ido","Ifedayo","Irepo","Iseyin","Itesiwaju","Iwajowa","Kajola","Lagelu","Ogo-Oluwa","Ogbomosho-North","Ogbomosho-South","Olorunsogo","Oluyole","Ona-Ara","Orelope","Ori-Ire","Oyo-West","Oyo-East","Saki-East","Saki-West","Surulere"] },
+  { state: "Plateau", lgas: ["Barkin-Ladi","Bassa","Bokkos","Jos-East","Jos-North","Jos-South","Kanam","Kanke","Langtang-North","Langtang-South","Mangu","Mikang","Pankshin","Qua'an Pan","Riyom","Shendam","Wase"] },
+  { state: "Rivers", lgas: ["Abua/Odual","Ahoada-East","Ahoada-West","Akuku Toru","Andoni","Asari-Toru","Bonny","Degema","Eleme","Emuoha","Etche","Gokana","Ikwerre","Khana","Obio/Akpor","Ogba-Egbema-Ndoni","Ogu/Bolo","Okrika","Omuma","Opobo/Nkoro","Oyigbo","Port-Harcourt","Tai"] },
+  { state: "Sokoto", lgas: ["Binji","Bodinga","Dange-Shuni","Gada","Goronyo","Gudu","Gwadabawa","Illela","Kebbe","Kware","Rabah","Sabon Birni","Shagari","Silame","Sokoto-North","Sokoto-South","Tambuwal","Tangaza","Tureta","Wamako","Wurno","Yabo"] },
+  { state: "Taraba", lgas: ["Ardo-Kola","Bali","Donga","Gashaka","Gassol","Ibi","Jalingo","Karim-Lamido","Kurmi","Lau","Sardauna","Takum","Ussa","Wukari","Yorro","Zing"] },
+  { state: "Yobe", lgas: ["Bade","Bursari","Damaturu","Fika","Fune","Geidam","Gujba","Gulani","Jakusko","Karasuwa","Machina","Nangere","Nguru","Potiskum","Tarmuwa","Yunusari","Yusufari"] },
+  { state: "Zamfara", lgas: ["Anka","Bakura","Birnin Magaji/Kiyaw","Bukkuyum","Bungudu","Gummi","Gusau","Isa","Kaura-Namoda","Kiyawa","Maradun","Maru","Shinkafi","Talata-Mafara","Tsafe","Zurmi"] },
+];
+
 interface ExtendedUser {
   _id: string;
   surname: string;
@@ -12,7 +52,6 @@ interface ExtendedUser {
   otherName: string;
   email: string;
   phone?: string;
-  // role: UserRole;
   roles: UserRole[];
   activeRole: UserRole;
   profilePhoto?: string;
@@ -23,6 +62,9 @@ interface ExtendedUser {
   address?: string;
   guardianName?: string;
   guardianPhone?: string;
+  religion?: string;
+  stateOfOrigin?: string;
+  localGovernment?: string;
   // Teacher fields
   qualification?: string;
   specialization?: string;
@@ -52,8 +94,8 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isAlsoParent, setIsAlsoParent] = useState(
-  user.roles?.includes(UserRole.PARENT) ?? false
-);
+    user.roles?.includes(UserRole.PARENT) ?? false
+  );
 
   const [form, setForm] = useState({
     surname: user.surname ?? "",
@@ -63,6 +105,9 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
     address: user.address ?? "",
     guardianName: user.guardianName ?? "",
     guardianPhone: user.guardianPhone ?? "",
+    religion: user.religion ?? "",
+    stateOfOrigin: user.stateOfOrigin ?? "",
+    localGovernment: user.localGovernment ?? "",
     qualification: user.qualification ?? "",
     specialization: user.specialization ?? "",
     occupation: user.occupation ?? "",
@@ -74,6 +119,10 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
       : user.currentClass ?? "",
   });
 
+  // Drive the LGA list from the form's stateOfOrigin (pre-populated on load)
+  const availableLgas =
+    nigeriaStates.find((s) => s.state === form.stateOfOrigin)?.lgas ?? [];
+
   useEffect(() => {
     fetch("/api/admin/classes")
       .then((r) => r.json())
@@ -81,15 +130,14 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
         if (j.success && j.data) setClasses(j.data);
       });
 
-    // Fetch students for parent linking (both parents AND teachers)
-  if (primaryRole === UserRole.PARENT || primaryRole === UserRole.TEACHER) {
-    fetch("/api/admin/users?role=student&limit=100")
-      .then((r) => r.json())
-      .then((j: { success: boolean; data?: Array<{ _id: string; surname: string; firstName: string; otherName: string }> }) => {
-        if (j.success && j.data) setStudents(j.data);
-      });
-  }
-}, [primaryRole]);
+    if (primaryRole === UserRole.PARENT || primaryRole === UserRole.TEACHER) {
+      fetch("/api/admin/users?role=student&limit=100")
+        .then((r) => r.json())
+        .then((j: { success: boolean; data?: Array<{ _id: string; surname: string; firstName: string; otherName: string }> }) => {
+          if (j.success && j.data) setStudents(j.data);
+        });
+    }
+  }, [primaryRole]);
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -132,16 +180,15 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
         payload.children = selectedChildren;
       }
 
-      // Handle teacher being assigned parent role
-    if (primaryRole === UserRole.TEACHER) {
-      if (isAlsoParent) {
-        payload.roles = [UserRole.TEACHER, UserRole.PARENT];
-        payload.children = selectedChildren;
-      } else {
-        payload.roles = [UserRole.TEACHER];
+      if (primaryRole === UserRole.TEACHER) {
+        if (isAlsoParent) {
+          payload.roles = [UserRole.TEACHER, UserRole.PARENT];
+          payload.children = selectedChildren;
+        } else {
+          payload.roles = [UserRole.TEACHER];
+        }
       }
-    }
-   
+
       const res = await fetch(`/api/admin/users/${user._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -159,7 +206,15 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+
+    // When state changes, clear the LGA so stale value doesn't persist
+    if (name === "stateOfOrigin") {
+      setForm((prev) => ({ ...prev, stateOfOrigin: value, localGovernment: "" }));
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]";
@@ -172,7 +227,9 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Edit User</h2>
-            <p className="text-xs text-gray-400 mt-0.5">{user.surname} {user.firstName} {user.otherName} · {primaryRole}</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {user.surname} {user.firstName} {user.otherName} · {primaryRole}
+            </p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
             <X className="w-5 h-5" />
@@ -216,13 +273,10 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
               <label className={labelClass}>First Name *</label>
               <input name="firstName" value={form.firstName} onChange={handleChange} required className={inputClass} />
             </div>
-
             <div>
               <label className={labelClass}>Other Name</label>
               <input name="otherName" value={form.otherName} onChange={handleChange} className={inputClass} />
             </div>
-
-            
           </div>
 
           <div>
@@ -252,10 +306,17 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
                   ))}
                 </select>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Date of Birth</label>
-                  <input name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={handleChange} className={inputClass} />
+                  <input
+                    name="dateOfBirth"
+                    type="date"
+                    value={form.dateOfBirth}
+                    onChange={handleChange}
+                    className={inputClass}
+                  />
                 </div>
                 <div>
                   <label className={labelClass}>Gender</label>
@@ -266,6 +327,49 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
                   </select>
                 </div>
               </div>
+
+              {/* Religion */}
+              <div>
+                <label className={labelClass}>Religion</label>
+                <select name="religion" value={form.religion} onChange={handleChange} className={inputClass}>
+                  <option value="">Select...</option>
+                  <option value="christianity">Christianity</option>
+                  <option value="islam">Islam</option>
+                  <option value="traditional">Traditional</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              {/* State of Origin */}
+              <div>
+                <label className={labelClass}>State of Origin</label>
+                <select name="stateOfOrigin" value={form.stateOfOrigin} onChange={handleChange} className={inputClass}>
+                  <option value="">Select state...</option>
+                  {nigeriaStates.map((s) => (
+                    <option key={s.state} value={s.state}>{s.state}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Local Government Area — filtered by selected state */}
+              <div>
+                <label className={labelClass}>Local Government Area</label>
+                <select
+                  name="localGovernment"
+                  value={form.localGovernment}
+                  onChange={handleChange}
+                  disabled={!form.stateOfOrigin}
+                  className={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                >
+                  <option value="">
+                    {form.stateOfOrigin ? "Select LGA..." : "Select a state first"}
+                  </option>
+                  {availableLgas.map((lga) => (
+                    <option key={lga} value={lga}>{lga}</option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className={labelClass}>Guardian Name</label>
                 <input name="guardianName" value={form.guardianName} onChange={handleChange} className={inputClass} />
@@ -295,70 +399,53 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
             </>
           )}
 
-          {/* Show this section only for teachers */}
-{primaryRole === UserRole.TEACHER && (
-  <div className="border border-dashed border-gray-200 rounded-xl p-4 space-y-3">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-semibold text-gray-800">
-          Also a Parent?
-        </p>
-        <p className="text-xs text-gray-400">
-          Grant this teacher parent access to view their child&apos;s results
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={() => setIsAlsoParent(!isAlsoParent)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${
-          isAlsoParent ? "bg-blue-600" : "bg-gray-200"
-        }`}
-      >
-        <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-          isAlsoParent ? "translate-x-5" : "translate-x-0.5"
-        }`} />
-      </button>
-    </div>
-
-    {isAlsoParent && (
-      <div>
-        <label className={labelClass}>
-          Link Their Children
-        </label>
-        <div className="border border-gray-200 rounded-xl max-h-[180px] overflow-y-auto divide-y divide-gray-50">
-          {students.length === 0 ? (
-            <p className="text-xs text-gray-400 p-3">No students found</p>
-          ) : (
-            students.map((s) => {
-              const isSelected = selectedChildren.includes(s._id);
-              return (
-                <div
-                  key={s._id}
-                  onClick={() => toggleChild(s._id)}
-                  className={`flex items-center justify-between px-4 py-2.5 cursor-pointer transition-colors ${
-                    isSelected ? "bg-blue-50" : "hover:bg-gray-50"
-                  }`}
+          {/* Teacher — also a parent toggle */}
+          {primaryRole === UserRole.TEACHER && (
+            <div className="border border-dashed border-gray-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Also a Parent?</p>
+                  <p className="text-xs text-gray-400">Grant this teacher parent access to view their child&apos;s results</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAlsoParent(!isAlsoParent)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${isAlsoParent ? "bg-blue-600" : "bg-gray-200"}`}
                 >
-                  <span className="text-sm text-gray-700">
-                    {s.surname} {s.firstName} {s.otherName}
-                  </span>
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    isSelected ? "bg-blue-600 border-blue-600" : "border-gray-300"
-                  }`}>
-                    {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                  <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isAlsoParent ? "translate-x-5" : "translate-x-0.5"}`} />
+                </button>
+              </div>
+
+              {isAlsoParent && (
+                <div>
+                  <label className={labelClass}>Link Their Children</label>
+                  <div className="border border-gray-200 rounded-xl max-h-[180px] overflow-y-auto divide-y divide-gray-50">
+                    {students.length === 0 ? (
+                      <p className="text-xs text-gray-400 p-3">No students found</p>
+                    ) : (
+                      students.map((s) => {
+                        const isSelected = selectedChildren.includes(s._id);
+                        return (
+                          <div
+                            key={s._id}
+                            onClick={() => toggleChild(s._id)}
+                            className={`flex items-center justify-between px-4 py-2.5 cursor-pointer transition-colors ${isSelected ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                          >
+                            <span className="text-sm text-gray-700">
+                              {s.surname} {s.firstName} {s.otherName}
+                            </span>
+                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? "bg-blue-600 border-blue-600" : "border-gray-300"}`}>
+                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
-              );
-            })
+              )}
+            </div>
           )}
-        </div>
-      </div>
-    )}
-  </div>
-)}
-
-
-
 
           {/* Parent-specific fields */}
           {primaryRole === UserRole.PARENT && (
@@ -390,14 +477,10 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
                         <div
                           key={s._id}
                           onClick={() => toggleChild(s._id)}
-                          className={`flex items-center justify-between px-4 py-2.5 cursor-pointer transition-colors ${
-                            isSelected ? "bg-[#1e3a5f]/5" : "hover:bg-gray-50"
-                          }`}
+                          className={`flex items-center justify-between px-4 py-2.5 cursor-pointer transition-colors ${isSelected ? "bg-[#1e3a5f]/5" : "hover:bg-gray-50"}`}
                         >
                           <span className="text-sm text-gray-700">{s.surname} {s.firstName} {s.otherName}</span>
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                            isSelected ? "bg-[#1e3a5f] border-[#1e3a5f]" : "border-gray-300"
-                          }`}>
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "bg-[#1e3a5f] border-[#1e3a5f]" : "border-gray-300"}`}>
                             {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                           </div>
                         </div>
@@ -405,7 +488,9 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
                     })
                   )}
                 </div>
-                <p className="text-xs text-gray-400 mt-1">{selectedChildren.length} child{selectedChildren.length !== 1 ? "ren" : ""} selected</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {selectedChildren.length} child{selectedChildren.length !== 1 ? "ren" : ""} selected
+                </p>
               </div>
             </>
           )}
