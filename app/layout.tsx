@@ -126,7 +126,7 @@ export default function RootLayout({
             }}
           />
           {/* Tawk.to Live Chat Widget */}
-          <Script
+          {/* <Script
             id="tawk-to"
             strategy="afterInteractive"
             dangerouslySetInnerHTML={{
@@ -156,7 +156,7 @@ Tawk_API.customStyle = {
 })();
     `,
             }}
-          />
+          /> */}
           {/* End of Tawk.to Script */}
         </SessionProvider>
       </body>

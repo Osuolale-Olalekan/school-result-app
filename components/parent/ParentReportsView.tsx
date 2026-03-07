@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  FileText, Lock, Eye, CreditCard, CheckCircle,
+  FileText, Lock, Eye, CreditCard,
   X, Loader2, ExternalLink, ChevronDown,
 } from "lucide-react";
 import { PaymentStatus, TermName } from "@/types/enums";
@@ -46,8 +46,6 @@ export default function ParentReportsView() {
   const [loadingReport, setLoadingReport] = useState(false);
   const [paymentModal, setPaymentModal] = useState<PaymentModalState | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
-
-  // Filter state
   const [selectedSession, setSelectedSession] = useState<string>("");
   const [selectedTerm, setSelectedTerm] = useState<string>("");
 
@@ -66,7 +64,6 @@ export default function ParentReportsView() {
     if (studentId) fetchReports(studentId);
   }, [studentId, fetchReports]);
 
-  // Derive unique sessions from reports
   const sessions = useMemo(() => {
     const map = new Map<string, string>();
     reports.forEach(r => {
@@ -75,7 +72,6 @@ export default function ParentReportsView() {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [reports]);
 
-  // Derive terms available for the selected session
   const terms = useMemo(() => {
     if (!selectedSession) return [];
     const map = new Map<string, string>();
@@ -87,7 +83,6 @@ export default function ParentReportsView() {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [reports, selectedSession]);
 
-  // Filtered reports based on selection
   const filteredReports = useMemo(() => {
     return reports.filter(r => {
       if (selectedSession && r.session._id !== selectedSession) return false;
@@ -96,7 +91,6 @@ export default function ParentReportsView() {
     });
   }, [reports, selectedSession, selectedTerm]);
 
-  // Reset term when session changes
   useEffect(() => {
     setSelectedTerm("");
   }, [selectedSession]);
@@ -183,7 +177,6 @@ export default function ParentReportsView() {
     }
   }
 
-  // Stats derived from filtered reports
   const unlockedCount = filteredReports.filter(r => !r.isLocked).length;
   const lockedCount = filteredReports.filter(r => r.isLocked).length;
 
@@ -219,7 +212,7 @@ export default function ParentReportsView() {
     <div className="space-y-5">
       <div>
         <h1 className="font-display text-2xl font-bold text-gray-900">Report Cards</h1>
-        <p className="text-gray-500 text-sm">View and download your child`s academic report cards</p>
+        <p className="text-gray-500 text-sm">View and download your child&apos;s academic report cards</p>
       </div>
 
       {/* Filter Bar */}
@@ -270,7 +263,6 @@ export default function ParentReportsView() {
             )}
           </div>
 
-          {/* Summary counts */}
           {filteredReports.length > 0 && (
             <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
               <p className="text-xs text-gray-400">
@@ -301,14 +293,12 @@ export default function ParentReportsView() {
           ))}
         </div>
       ) : filteredReports.length === 0 && reports.length === 0 ? (
-        // No reports at all
         <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
           <FileText className="w-12 h-12 mx-auto mb-3 text-gray-200" />
           <p className="text-gray-500">No approved report cards yet</p>
           <p className="text-xs text-gray-400 mt-1">Report cards will appear here once approved by the school</p>
         </div>
       ) : filteredReports.length === 0 ? (
-        // No results for current filter
         <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
           <FileText className="w-12 h-12 mx-auto mb-3 text-gray-200" />
           <p className="text-gray-500">No reports found for this filter</p>
@@ -328,8 +318,9 @@ export default function ParentReportsView() {
                 report.isLocked ? "border-gray-100" : "border-emerald-100"
               }`}
             >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 min-w-0">
+              {/* On 320px: stack vertically. On larger: stay side by side */}
+              <div className="flex flex-col min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
                     report.isLocked ? "bg-gray-100" : "bg-emerald-100"
                   }`}>
@@ -342,7 +333,7 @@ export default function ParentReportsView() {
                     <p className="font-semibold text-gray-900 capitalize">
                       {report.termName} Term Report
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 truncate">
                       {report.className} · {report.sessionName ?? report.session?.name} Session
                     </p>
                     {!report.isLocked && report.percentage !== undefined && (
@@ -361,16 +352,17 @@ export default function ParentReportsView() {
                   </div>
                 </div>
 
-                <div className="shrink-0">
+                {/* Action — full width button on 320, normal on larger */}
+                <div className="shrink-0 min-[380px]:ml-auto">
                   {report.isLocked ? (
                     report.reportCardPaid && !report.schoolFeesPaid ? (
-                      <span className="text-xs text-blue-500 font-medium px-3 py-2">
+                      <span className="text-xs text-blue-500 font-medium">
                         Awaiting school fees
                       </span>
                     ) : (
                       <button
                         onClick={() => setPaymentModal({ report, step: "confirm" })}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
+                        className="w-full min-[380px]:w-auto flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
                       >
                         <CreditCard className="w-3.5 h-3.5" />
                         Pay ₦{REPORT_CARD_FEE.toLocaleString()}
@@ -380,9 +372,12 @@ export default function ParentReportsView() {
                     <button
                       onClick={() => viewReport(report._id)}
                       disabled={loadingReport}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1e3a5f] text-white text-xs font-semibold hover:bg-[#152847] transition-colors disabled:opacity-50"
+                      className="w-full min-[380px]:w-auto flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#1e3a5f] text-white text-xs font-semibold hover:bg-[#152847] transition-colors disabled:opacity-50"
                     >
-                      {loadingReport ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Eye className="w-3.5 h-3.5" />}
+                      {loadingReport
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Eye className="w-3.5 h-3.5" />
+                      }
                       View & Download
                     </button>
                   )}
@@ -395,11 +390,11 @@ export default function ParentReportsView() {
 
       {/* Payment Modal */}
       {paymentModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end min-[480px]:items-center justify-center p-0 min-[480px]:p-4">
+          <div className="bg-white rounded-t-2xl min-[480px]:rounded-2xl w-full min-[480px]:max-w-md shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 min-[480px]:p-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
                   <CreditCard className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
@@ -410,13 +405,16 @@ export default function ParentReportsView() {
                 </div>
               </div>
               {paymentModal.step === "confirm" && (
-                <button onClick={() => setPaymentModal(null)} className="p-2 rounded-lg text-gray-400 hover:bg-gray-100">
+                <button
+                  onClick={() => setPaymentModal(null)}
+                  className="p-2 rounded-lg text-gray-400 hover:bg-gray-100"
+                >
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
 
-            <div className="p-6">
+            <div className="p-4 min-[480px]:p-6">
               {paymentModal.step === "confirm" && (
                 <>
                   <div className="bg-gray-50 rounded-xl p-4 mb-5 space-y-2">

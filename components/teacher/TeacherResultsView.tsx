@@ -244,6 +244,19 @@ export default function TeacherResultsView() {
   async function saveResult(studentId: string) {
     const draft = drafts[studentId];
     if (!draft || !selectedAssignment || !selectedTerm) return;
+
+    // ── Attendance validation ──
+  if (!draft.attendance.schoolDaysOpen || draft.attendance.schoolDaysOpen === 0) {
+    toast.error("Please enter the number of school days open");
+    return;
+  }
+  if (!draft.attendance.daysPresent && draft.attendance.daysPresent !== 0) {
+    toast.error("Please enter days present");
+    return;
+  }
+
+
+
     setSaving(studentId);
     try {
       const res = await fetch("/api/teacher/results", {
@@ -300,6 +313,31 @@ export default function TeacherResultsView() {
       toast.error("No draft results to submit");
       return;
     }
+
+
+    // Check all drafts have attendance filled
+  const missingAttendance = draftedStudents.filter(
+    (s) =>
+      drafts[s._id]?.status === ReportStatus.DRAFT &&
+      (!drafts[s._id]?.attendance.schoolDaysOpen ||
+        drafts[s._id]?.attendance.schoolDaysOpen === 0),
+  );
+
+  if (missingAttendance.length > 0) {
+    toast.error(
+      `${missingAttendance.length} student(s) have missing attendance. Please fill in before submitting.`,
+    );
+    // Expand those students so teacher can see them
+    setExpandedStudents(
+      new Set(missingAttendance.map((s) => s._id)),
+    );
+    setDraftsCollapsed(false);
+    return;
+  }
+
+
+
+
     setSubmitting(true);
     try {
       const res = await fetch("/api/teacher/results", {
@@ -663,14 +701,16 @@ function StudentCard({
   const isLocked = isApproved; // only approved is fully locked
 
   const attendanceError =
-    draft && !isLocked
-      ? draft.attendance.daysPresent > draft.attendance.schoolDaysOpen
+  draft && !isLocked
+    ? !draft.attendance.schoolDaysOpen || draft.attendance.schoolDaysOpen === 0
+      ? "School days open is required"
+      : draft.attendance.daysPresent > draft.attendance.schoolDaysOpen
         ? "Days present cannot exceed school days open"
         : draft.attendance.daysPresent + draft.attendance.daysAbsent >
             draft.attendance.schoolDaysOpen
           ? "Present + absent cannot exceed school days open"
           : null
-      : null;
+    : null;
 
   const statusBadge = () => {
     if (!draft)
