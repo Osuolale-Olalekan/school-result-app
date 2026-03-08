@@ -317,7 +317,10 @@ export default function DashboardHeader({ user }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const prevUnreadRef = useRef<number>(0);
   const initialLoad = useRef<boolean>(true);
-
+const desktopNotifRef = useRef<HTMLDivElement>(null);
+const desktopUserRef = useRef<HTMLDivElement>(null);
+const mobileNotifRef = useRef<HTMLDivElement>(null);
+const mobileUserRef = useRef<HTMLDivElement>(null);
   const accentColor = getRoleAccentColor(user.activeRole);
   const roleLabel = user.activeRole.charAt(0).toUpperCase() + user.activeRole.slice(1);
 
@@ -328,11 +331,16 @@ export default function DashboardHeader({ user }: Props) {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node))
-        setShowNotifications(false);
-      if (userRef.current && !userRef.current.contains(e.target as Node))
-        setShowUserMenu(false);
-    }
+      if (
+    desktopNotifRef.current && !desktopNotifRef.current.contains(e.target as Node) &&
+    mobileNotifRef.current && !mobileNotifRef.current.contains(e.target as Node)
+  ) setShowNotifications(false);
+
+  if (
+    desktopUserRef.current && !desktopUserRef.current.contains(e.target as Node) &&
+    mobileUserRef.current && !mobileUserRef.current.contains(e.target as Node)
+  ) setShowUserMenu(false);
+}
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -387,7 +395,7 @@ export default function DashboardHeader({ user }: Props) {
 
         <div className="flex items-center gap-2">
           {/* Notifications */}
-          <div className="relative" ref={notifRef}>
+          <div className="relative" ref={desktopNotifRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="relative w-9 h-9 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors"
@@ -431,7 +439,7 @@ export default function DashboardHeader({ user }: Props) {
           </div>
 
           {/* User menu */}
-          <div className="relative" ref={userRef}>
+          <div className="relative" ref={desktopUserRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-50 transition-colors"
@@ -520,7 +528,7 @@ export default function DashboardHeader({ user }: Props) {
           <div className="flex items-center gap-2">
 
             {/* Notification Bell */}
-            <div className="relative" ref={notifRef}>
+            <div className="relative" ref={mobileNotifRef}>
               <button
                 onClick={() => { setShowNotifications(!showNotifications); setShowUserMenu(false); }}
                 className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
@@ -601,7 +609,7 @@ export default function DashboardHeader({ user }: Props) {
             </div>
 
             {/* Avatar / User menu */}
-            <div className="relative" ref={userRef}>
+            <div className="relative" ref={mobileUserRef}>
               <button
                 onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
                 className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-xl transition-all"

@@ -52,7 +52,7 @@ const ADMIN_NAV: NavItem[] = [
   },
   { label: "Reports", href: "/admin/reports", icon: FileText },
   { label: "Payments", href: "/admin/payments", icon: CreditCard },
-  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  // { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Promotions", href: "/admin/promote", icon: TrendingUp },
   { label: "Audit Logs", href: "/admin/audit-logs", icon: ClipboardList },
   { label: "Settings", href: "/admin/settings", icon: Settings },

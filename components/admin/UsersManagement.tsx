@@ -76,7 +76,6 @@ export default function UsersManagement() {
   const [actionMenu, setActionMenu] = useState<string | null>(null);
   const [editUser, setEditUser] = useState<ExtendedUser | null>(null);
   const [deleteUser, setDeleteUser] = useState<ExtendedUser | null>(null);
-
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
 
@@ -114,7 +113,6 @@ export default function UsersManagement() {
     userId: string,
     action: "activate" | "deactivate" | "suspend" | "delete",
   ) {
-    // For delete, show the modal instead of proceeding directly
     if (action === "delete") {
       const user = users.find((u) => u._id === userId);
       if (user) {
@@ -130,10 +128,7 @@ export default function UsersManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
-      const json = (await res.json()) as {
-        success: boolean;
-        message?: string;
-      };
+      const json = (await res.json()) as { success: boolean; message?: string };
       if (json.success) {
         toast.success(`User ${action}d successfully`);
         fetchUsers();
@@ -164,66 +159,50 @@ export default function UsersManagement() {
   }
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+    <div className="space-y-4" onClick={() => actionMenu && setActionMenu(null)}>
+
+      {/* ── Header buttons ── */}
+      <div className="flex items-center gap-2">
         <button
-          onClick={() => setShowCreateAdmin(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-amber-300 bg-amber-50 text-amber-700 text-sm font-semibold hover:bg-amber-100 transition-colors"
+          onClick={(e) => { e.stopPropagation(); setShowCreateAdmin(true); }}
+          className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-amber-300 bg-amber-50 text-amber-700 text-xs sm:text-sm font-semibold hover:bg-amber-100 transition-colors"
         >
-          <Shield className="w-4 h-4" />
-          Add Admin
+          <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="hidden xs:inline">Add Admin</span>
+          <span className="xs:hidden">Admin</span>
         </button>
         <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold hover:bg-[#152847] transition-colors"
+          onClick={(e) => { e.stopPropagation(); setShowCreate(true); }}
+          className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-[#1e3a5f] text-white text-xs sm:text-sm font-semibold hover:bg-[#152847] transition-colors"
         >
-          <Plus className="w-4 h-4" />
-          Add New User
+          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="hidden xs:inline">Add New User</span>
+          <span className="xs:hidden">Add User</span>
         </button>
       </div>
 
-      {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-gray-900">
-            Users Management
-          </h1>
-          <p className="text-gray-500 text-sm">{total} total users</p>
-        </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold hover:bg-[#152847] transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add New User
-        </button>
-      </div> */}
-
-      {/* Filters */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
+      {/* ── Filters ── */}
+      <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100">
+        <div className="flex flex-col gap-3">
+          {/* Search */}
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search by name or email..."
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
             />
           </div>
-          <div className="flex gap-1 p-1 bg-gray-50 rounded-xl border border-gray-200">
+
+          {/* Role tabs — scrollable on tiny screens */}
+          <div className="flex gap-1 p-1 bg-gray-50 rounded-xl border border-gray-200 overflow-x-auto">
             {ROLE_TABS.map((tab) => (
               <button
                 key={tab.value}
-                onClick={() => {
-                  setRoleFilter(tab.value);
-                  setPage(1);
-                }}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                onClick={() => { setRoleFilter(tab.value); setPage(1); }}
+                className={`flex-1 min-w-[60px] px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
                   roleFilter === tab.value
                     ? "bg-white shadow-sm text-gray-900"
                     : "text-gray-500 hover:text-gray-700"
@@ -236,27 +215,19 @@ export default function UsersManagement() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* ── Table (desktop) / Cards (mobile) ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+
+        {/* Desktop table — hidden below sm */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-50 bg-gray-50/50">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  User
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Role
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">
-                  ID / Admission
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">
-                  Joined
-                </th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">User</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">ID / Admission</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Joined</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -283,129 +254,53 @@ export default function UsersManagement() {
                   const primaryRole = user.roles?.[0] ?? user.role;
                   const RoleIcon = ROLE_ICONS[primaryRole] ?? Shield;
                   return (
-                    <tr
-                      key={user._id}
-                      className="hover:bg-gray-50/50 transition-colors"
-                    >
+                    <tr key={user._id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-[#1e3a5f]/10 flex items-center justify-center text-xs font-bold text-[#1e3a5f] flex-shrink-0">
                             {user.profilePhoto ? (
-                              <img
-                                src={user.profilePhoto}
-                                alt=""
-                                className="w-full h-full rounded-lg object-cover"
-                              />
+                              <img src={user.profilePhoto} alt="" className="w-full h-full rounded-lg object-cover" />
                             ) : (
-                              getInitials(
-                                user.surname,
-                                user.firstName,
-                                user.otherName,
-                              )
+                              getInitials(user.surname, user.firstName, user.otherName)
                             )}
                           </div>
                           <div className="min-w-0">
                             <p className="font-medium text-gray-900 truncate">
                               {user.surname} {user.firstName} {user.otherName}
                             </p>
-                            <p className="text-xs text-gray-400 truncate">
-                              {user.email}
-                            </p>
+                            <p className="text-xs text-gray-400 truncate">{user.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${ROLE_COLORS[primaryRole] ?? "bg-gray-100 text-gray-600"}`}
-                        >
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${ROLE_COLORS[primaryRole] ?? "bg-gray-100 text-gray-600"}`}>
                           <RoleIcon className="w-3 h-3" />
                           {primaryRole}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 hidden sm:table-cell">
+                      <td className="px-4 py-3.5 hidden md:table-cell">
                         <span className="text-xs text-gray-500 font-mono">
                           {user.admissionNumber ?? user.employeeId ?? "—"}
                         </span>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[user.status] ?? "bg-gray-100 text-gray-600"}`}
-                        >
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[user.status] ?? "bg-gray-100 text-gray-600"}`}>
                           {user.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 hidden md:table-cell text-xs text-gray-400">
+                      <td className="px-4 py-3.5 hidden lg:table-cell text-xs text-gray-400">
                         {formatDate(user.createdAt)}
                       </td>
                       <td className="px-4 py-3.5 text-right relative">
-                        <button
-                          onClick={() =>
-                            setActionMenu(
-                              actionMenu === user._id ? null : user._id,
-                            )
-                          }
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-                        {actionMenu === user._id && (
-                          <div className="absolute right-10 top-2 z-20 bg-white border border-gray-100 rounded-xl shadow-lg py-1 min-w-[160px]">
-                            {user.status !== UserStatus.ACTIVE && (
-                              <button
-                                onClick={() =>
-                                  handleAction(user._id, "activate")
-                                }
-                                className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
-                              >
-                                <UserCheck className="w-4 h-4" /> Activate
-                              </button>
-                            )}
-                            {user.status === UserStatus.ACTIVE && (
-                              <button
-                                onClick={() =>
-                                  handleAction(user._id, "deactivate")
-                                }
-                                className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2"
-                              >
-                                <UserX className="w-4 h-4" /> Deactivate
-                              </button>
-                            )}
-
-                            <button
-                              onClick={() => {
-                                setViewingUserId(user._id);
-                                setActionMenu(null);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2"
-                            >
-                              <Eye className="w-4 h-4" /> View Profile
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                setEditUser(user);
-                                setActionMenu(null);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
-                            >
-                              <Edit className="w-4 h-4" /> Edit
-                            </button>
-
-                            <button
-                              onClick={() => handleAction(user._id, "suspend")}
-                              className="w-full text-left px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2"
-                            >
-                              <AlertTriangle className="w-4 h-4" /> Suspend
-                            </button>
-                            <hr className="my-1 border-gray-50" />
-                            <button
-                              onClick={() => handleAction(user._id, "delete")}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                            >
-                              <Trash2 className="w-4 h-4" /> Delete
-                            </button>
-                          </div>
-                        )}
+                        <ActionMenuButton
+                          userId={user._id}
+                          user={user}
+                          actionMenu={actionMenu}
+                          setActionMenu={setActionMenu}
+                          handleAction={handleAction}
+                          setViewingUserId={setViewingUserId}
+                          setEditUser={setEditUser}
+                        />
                       </td>
                     </tr>
                   );
@@ -415,9 +310,83 @@ export default function UsersManagement() {
           </table>
         </div>
 
+        {/* Mobile card list — shown below sm */}
+        <div className="sm:hidden divide-y divide-gray-50">
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="p-4 space-y-2 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-gray-100 shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3.5 bg-gray-100 rounded w-3/4" />
+                    <div className="h-3 bg-gray-100 rounded w-1/2" />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : users.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No users found</p>
+            </div>
+          ) : (
+            users.map((user) => {
+              const primaryRole = user.roles?.[0] ?? user.role;
+              const RoleIcon = ROLE_ICONS[primaryRole] ?? Shield;
+              return (
+                <div key={user._id} className="p-3 flex items-center gap-3">
+                  {/* Avatar */}
+                  <div className="w-9 h-9 rounded-lg bg-[#1e3a5f]/10 flex items-center justify-center text-xs font-bold text-[#1e3a5f] shrink-0">
+                    {user.profilePhoto ? (
+                      <img src={user.profilePhoto} alt="" className="w-full h-full rounded-lg object-cover" />
+                    ) : (
+                      getInitials(user.surname, user.firstName, user.otherName)
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user.surname} {user.firstName} {user.otherName}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[primaryRole] ?? "bg-gray-100 text-gray-600"}`}>
+                        <RoleIcon className="w-2.5 h-2.5" />
+                        {primaryRole}
+                      </span>
+                      <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[user.status] ?? "bg-gray-100 text-gray-600"}`}>
+                        {user.status}
+                      </span>
+                      {(user.admissionNumber ?? user.employeeId) && (
+                        <span className="text-xs text-gray-400 font-mono">
+                          {user.admissionNumber ?? user.employeeId}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action menu */}
+                  <div className="relative shrink-0">
+                    <ActionMenuButton
+                      userId={user._id}
+                      user={user}
+                      actionMenu={actionMenu}
+                      setActionMenu={setActionMenu}
+                      handleAction={handleAction}
+                      setViewingUserId={setViewingUserId}
+                      setEditUser={setEditUser}
+                    />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-5 py-3 border-t border-gray-50 flex items-center justify-between">
+          <div className="px-4 sm:px-5 py-3 border-t border-gray-50 flex items-center justify-between">
             <p className="text-xs text-gray-500">
               Page {page} of {totalPages}
             </p>
@@ -441,13 +410,11 @@ export default function UsersManagement() {
         )}
       </div>
 
+      {/* ── Modals ── */}
       {showCreate && (
         <CreateUserModal
           onClose={() => setShowCreate(false)}
-          onSuccess={() => {
-            setShowCreate(false);
-            fetchUsers();
-          }}
+          onSuccess={() => { setShowCreate(false); fetchUsers(); }}
         />
       )}
 
@@ -455,10 +422,7 @@ export default function UsersManagement() {
         <EditUserModal
           user={editUser}
           onClose={() => setEditUser(null)}
-          onSuccess={() => {
-            setEditUser(null);
-            fetchUsers();
-          }}
+          onSuccess={() => { setEditUser(null); fetchUsers(); }}
         />
       )}
 
@@ -473,26 +437,104 @@ export default function UsersManagement() {
       {showCreateAdmin && (
         <CreateAdminModal
           onClose={() => setShowCreateAdmin(false)}
-          onSuccess={() => {
-            setShowCreateAdmin(false);
-            fetchUsers();
-          }}
+          onSuccess={() => { setShowCreateAdmin(false); fetchUsers(); }}
         />
       )}
 
       {viewingUserId && (
-  <UserProfileModal
-    userId={viewingUserId}
-    onClose={() => setViewingUserId(null)}
-    onEdit={() => {
-      const user = users.find(u => u._id === viewingUserId);
-      if (user) {
-        setEditUser(user);
-        setViewingUserId(null);
-      }
-    }}
-  />
-)}
+        <UserProfileModal
+          userId={viewingUserId}
+          onClose={() => setViewingUserId(null)}
+          onEdit={() => {
+            const user = users.find((u) => u._id === viewingUserId);
+            if (user) { setEditUser(user); setViewingUserId(null); }
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+// ── Extracted action menu button — shared between table and card views ────────
+
+interface ActionMenuButtonProps {
+  userId: string;
+  user: ExtendedUser;
+  actionMenu: string | null;
+  setActionMenu: (id: string | null) => void;
+  handleAction: (userId: string, action: "activate" | "deactivate" | "suspend" | "delete") => void;
+  setViewingUserId: (id: string | null) => void;
+  setEditUser: (user: ExtendedUser | null) => void;
+}
+
+function ActionMenuButton({
+  userId,
+  user,
+  actionMenu,
+  setActionMenu,
+  handleAction,
+  setViewingUserId,
+  setEditUser,
+}: ActionMenuButtonProps) {
+  const isOpen = actionMenu === userId;
+
+  return (
+    <>
+      <button
+        onClick={(e) => { e.stopPropagation(); setActionMenu(isOpen ? null : userId); }}
+        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+
+      {isOpen && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="absolute right-8 top-0 z-30 bg-white border border-gray-100 rounded-xl shadow-lg py-1 min-w-[160px]"
+        >
+          {user.status !== UserStatus.ACTIVE && (
+            <button
+              onClick={() => handleAction(userId, "activate")}
+              className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
+            >
+              <UserCheck className="w-4 h-4" /> Activate
+            </button>
+          )}
+          {user.status === UserStatus.ACTIVE && (
+            <button
+              onClick={() => handleAction(userId, "deactivate")}
+              className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2"
+            >
+              <UserX className="w-4 h-4" /> Deactivate
+            </button>
+          )}
+          <button
+            onClick={() => { setViewingUserId(userId); setActionMenu(null); }}
+            className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2"
+          >
+            <Eye className="w-4 h-4" /> View Profile
+          </button>
+          <button
+            onClick={() => { setEditUser(user); setActionMenu(null); }}
+            className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+          >
+            <Edit className="w-4 h-4" /> Edit
+          </button>
+          <button
+            onClick={() => handleAction(userId, "suspend")}
+            className="w-full text-left px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2"
+          >
+            <AlertTriangle className="w-4 h-4" /> Suspend
+          </button>
+          <hr className="my-1 border-gray-50" />
+          <button
+            onClick={() => handleAction(userId, "delete")}
+            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" /> Delete
+          </button>
+        </div>
+      )}
+    </>
   );
 }

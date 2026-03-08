@@ -43,15 +43,17 @@ const STATUS_COLORS = {
   [PaymentStatus.PARTIAL]: "bg-amber-100 text-amber-700",
 };
 
-const TAB_CONFIG: { label: string; value: PaymentType; icon: React.ReactNode; description: string }[] = [
+const TAB_CONFIG: { label: string; shortLabel: string; value: PaymentType; icon: React.ReactNode; description: string }[] = [
   {
     label: "School Fees",
+    shortLabel: "Fees",
     value: "school_fees",
     icon: <Banknote className="w-4 h-4" />,
     description: "Track and manage school fees payments",
   },
   {
     label: "Report Card Payments",
+    shortLabel: "Report Cards",
     value: "report_card",
     icon: <FileText className="w-4 h-4" />,
     description: "Manage report card access payments",
@@ -92,7 +94,6 @@ export default function AdminPaymentsView() {
       });
   }, []);
 
-  // Reset results when tab changes
   useEffect(() => {
     setPayments([]);
     setHasSearched(false);
@@ -206,54 +207,65 @@ export default function AdminPaymentsView() {
   const unpaid = payments.filter((p) => p.status === PaymentStatus.UNPAID).length;
   const partial = payments.filter((p) => p.status === PaymentStatus.PARTIAL).length;
 
+  const selectCls = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]";
+  const selectDisabledCls = `${selectCls} disabled:bg-gray-50 disabled:text-gray-400`;
+
   return (
-    <div className="space-y-5">
-      {/* Header */}
+    <div className="space-y-4">
+
+      {/* ── Header ── */}
       <div>
-        <h1 className="font-display text-2xl font-bold text-gray-900">
+        <h1 className="font-display text-xl sm:text-2xl font-bold text-gray-900">
           Payments Management
         </h1>
-        <p className="text-gray-500 text-sm">
+        <p className="text-gray-500 text-xs sm:text-sm mt-0.5">
           Manage school fees and report card payments
         </p>
       </div>
 
-      {/* ── Tabs ── */}
+      {/* ── Tabs + Filters card ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+        {/* Tab switcher */}
         <div className="flex border-b border-gray-100">
           {TAB_CONFIG.map((tab) => (
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all ${
                 activeTab === tab.value
                   ? "text-[#1e3a5f] border-b-2 border-[#1e3a5f] bg-blue-50/30"
                   : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
               }`}
             >
               {tab.icon}
-              {tab.label}
+              <span className="hidden xs:inline">{tab.label}</span>
+              <span className="xs:hidden">{tab.shortLabel}</span>
             </button>
           ))}
         </div>
-        <div className="px-5 py-3 bg-gray-50/50 border-b border-gray-100">
-          <p className="text-xs text-gray-500">
+
+        {/* Tab description */}
+        <div className="px-4 sm:px-5 py-2.5 bg-gray-50/50 border-b border-gray-100">
+          <p className="text-xs text-gray-500 leading-snug">
             {TAB_CONFIG.find((t) => t.value === activeTab)?.description}
             {activeTab === "report_card" && (
-              <span className="ml-2 text-amber-600 font-medium">
-                · Marking paid here unlocks the report card for parents
+              <span className="block xs:inline xs:ml-2 text-amber-600 font-medium mt-0.5 xs:mt-0">
+                · Marking paid unlocks the report card for parents
               </span>
             )}
           </p>
         </div>
 
         {/* ── Filters ── */}
-        <div className="p-5 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-            <Filter className="w-4 h-4" />
+        <div className="p-3 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-700">
+            <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Filter Payments
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+          {/* 1-col on mobile, 2-col on sm, 4-col on lg */}
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
                 Session <span className="text-red-500">*</span>
@@ -266,7 +278,7 @@ export default function AdminPaymentsView() {
                   setPayments([]);
                   setHasSearched(false);
                 }}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+                className={selectCls}
               >
                 <option value="">Select session...</option>
                 {sessions.map((s) => (
@@ -274,6 +286,7 @@ export default function AdminPaymentsView() {
                 ))}
               </select>
             </div>
+
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
                 Term <span className="text-red-500">*</span>
@@ -286,7 +299,7 @@ export default function AdminPaymentsView() {
                   setHasSearched(false);
                 }}
                 disabled={!selectedSession}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400"
+                className={selectDisabledCls}
               >
                 <option value="">Select term...</option>
                 {terms.map((t) => (
@@ -296,6 +309,7 @@ export default function AdminPaymentsView() {
                 ))}
               </select>
             </div>
+
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
                 Class <span className="text-gray-400">(optional)</span>
@@ -303,7 +317,7 @@ export default function AdminPaymentsView() {
               <select
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+                className={selectCls}
               >
                 <option value="">All classes</option>
                 {classes.map((c) => (
@@ -311,6 +325,7 @@ export default function AdminPaymentsView() {
                 ))}
               </select>
             </div>
+
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
                 Payment Status
@@ -318,7 +333,7 @@ export default function AdminPaymentsView() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+                className={selectCls}
               >
                 <option value="">All statuses</option>
                 <option value={PaymentStatus.PAID}>Paid</option>
@@ -327,10 +342,11 @@ export default function AdminPaymentsView() {
               </select>
             </div>
           </div>
+
           <button
             onClick={fetchPayments}
             disabled={!selectedSession || !selectedTerm || loading}
-            className="px-5 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold hover:bg-[#152847] disabled:opacity-50 transition-colors"
+            className="w-full xs:w-auto px-5 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold hover:bg-[#152847] disabled:opacity-50 transition-colors"
           >
             {loading ? "Loading..." : "Load Payments"}
           </button>
@@ -339,14 +355,14 @@ export default function AdminPaymentsView() {
 
       {/* ── Stats ── */}
       {hasSearched && !loading && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {[
             { label: "Paid", count: paid, color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
             { label: "Unpaid", count: unpaid, color: "bg-red-50 text-red-700 border-red-100" },
             { label: "Partial", count: partial, color: "bg-amber-50 text-amber-700 border-amber-100" },
           ].map((stat) => (
-            <div key={stat.label} className={`rounded-2xl border p-4 ${stat.color}`}>
-              <p className="text-2xl font-bold">{stat.count}</p>
+            <div key={stat.label} className={`rounded-2xl border p-3 sm:p-4 ${stat.color}`}>
+              <p className="text-xl sm:text-2xl font-bold">{stat.count}</p>
               <p className="text-xs font-medium mt-0.5">{stat.label}</p>
             </div>
           ))}
@@ -355,11 +371,11 @@ export default function AdminPaymentsView() {
 
       {/* ── Bulk Actions ── */}
       {selectedIds.size > 0 && (
-        <div className="bg-[#1e3a5f] rounded-2xl p-4 flex items-center justify-between">
-          <p className="text-white text-sm font-medium">
+        <div className="bg-[#1e3a5f] rounded-2xl p-3 sm:p-4 flex flex-col xs:flex-row xs:items-center gap-3">
+          <p className="text-white text-sm font-medium shrink-0">
             {selectedIds.size} student{selectedIds.size !== 1 ? "s" : ""} selected
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => handleBulkMark(PaymentStatus.PAID)}
               disabled={bulkLoading}
@@ -384,34 +400,28 @@ export default function AdminPaymentsView() {
         </div>
       )}
 
-      {/* ── Table ── */}
+      {/* ── Table (sm+) / Cards (mobile) ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {!hasSearched ? (
-          <div className="text-center py-16 text-gray-400">
-            <Filter className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="font-medium text-gray-500">Select a session and term to load payments</p>
+          <div className="text-center py-14 text-gray-400 px-4">
+            <Filter className="w-9 h-9 mx-auto mb-3 opacity-30" />
+            <p className="font-medium text-gray-500 text-sm">Select a session and term to load payments</p>
             <p className="text-xs mt-1">Use the filters above to get started</p>
           </div>
         ) : loading ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <tbody>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i}>
-                    {Array.from({ length: 6 }).map((__, j) => (
-                      <td key={j} className="px-5 py-3">
-                        <div className="h-4 bg-gray-100 rounded animate-pulse" />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          /* Skeleton */
+          <div className="divide-y divide-gray-50">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="p-3 sm:p-4 space-y-2 animate-pulse">
+                <div className="h-3.5 bg-gray-100 rounded w-1/2" />
+                <div className="h-3 bg-gray-100 rounded w-1/3" />
+              </div>
+            ))}
           </div>
         ) : payments.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="font-medium text-gray-500">No payment records found</p>
+          <div className="text-center py-14 text-gray-400 px-4">
+            <AlertCircle className="w-9 h-9 mx-auto mb-3 opacity-30" />
+            <p className="font-medium text-gray-500 text-sm">No payment records found</p>
             <p className="text-xs mt-1">
               {activeTab === "report_card"
                 ? "No approved report cards exist for the selected filters"
@@ -419,155 +429,236 @@ export default function AdminPaymentsView() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50/50 border-b border-gray-100">
-                  <th className="px-5 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.size === payments.length && payments.length > 0}
-                      onChange={toggleSelectAll}
-                      className="rounded"
-                    />
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Class</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Amount</th>
-                  {activeTab === "report_card" && (
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">
-                      Method
-                    </th>
-                  )}
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">
-                    {activeTab === "report_card" ? "Paid / Marked" : "Marked By"}
-                  </th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {payments.map((payment) => (
-                  <tr
-                    key={payment._id}
-                    className={`hover:bg-gray-50/50 transition-colors ${
-                      selectedIds.has(payment._id) ? "bg-blue-50/50" : ""
-                    }`}
-                  >
-                    <td className="px-5 py-3.5">
+          <>
+            {/* Desktop table — hidden below sm */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-100">
+                    <th className="px-5 py-3">
                       <input
                         type="checkbox"
-                        checked={selectedIds.has(payment._id)}
-                        onChange={() => toggleSelect(payment._id)}
+                        checked={selectedIds.size === payments.length && payments.length > 0}
+                        onChange={toggleSelectAll}
                         className="rounded"
                       />
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <p className="font-medium text-gray-900">
-                        {payment.student.surname} {payment.student.firstName}{" "}
-                        {payment.student.otherName}
-                      </p>
-                      <p className="text-xs text-gray-400 font-mono">
-                        {payment.student.admissionNumber}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3.5 hidden sm:table-cell text-gray-600 text-sm">
-                      {payment.student.currentClass?.name ?? "—"}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[payment.status]}`}>
-                        {payment.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 hidden md:table-cell text-gray-600">
-                      {payment.amount ? `₦${payment.amount.toLocaleString()}` : "—"}
-                    </td>
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Student</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Class</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Amount</th>
                     {activeTab === "report_card" && (
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Method</th>
+                    )}
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">
+                      {activeTab === "report_card" ? "Paid / Marked" : "Marked By"}
+                    </th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {payments.map((payment) => (
+                    <tr
+                      key={payment._id}
+                      className={`hover:bg-gray-50/50 transition-colors ${selectedIds.has(payment._id) ? "bg-blue-50/50" : ""}`}
+                    >
+                      <td className="px-5 py-3.5">
+                        <input type="checkbox" checked={selectedIds.has(payment._id)} onChange={() => toggleSelect(payment._id)} className="rounded" />
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <p className="font-medium text-gray-900">
+                          {payment.student.surname} {payment.student.firstName} {payment.student.otherName}
+                        </p>
+                        <p className="text-xs text-gray-400 font-mono">{payment.student.admissionNumber}</p>
+                      </td>
+                      <td className="px-4 py-3.5 text-gray-600 text-sm">
+                        {payment.student.currentClass?.name ?? "—"}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[payment.status]}`}>
+                          {payment.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 hidden md:table-cell text-gray-600">
+                        {payment.amount ? `₦${payment.amount.toLocaleString()}` : "—"}
+                      </td>
+                      {activeTab === "report_card" && (
+                        <td className="px-4 py-3.5 hidden md:table-cell">
+                          {payment.paymentMethod ? (
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              payment.paymentMethod === "paystack" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                            }`}>
+                              {payment.paymentMethod === "paystack" ? "Online" : "Manual"}
+                            </span>
+                          ) : "—"}
+                        </td>
+                      )}
                       <td className="px-4 py-3.5 hidden md:table-cell">
-                        {payment.paymentMethod ? (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            payment.paymentMethod === "paystack"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-100 text-gray-600"
-                          }`}>
-                            {payment.paymentMethod === "paystack" ? "Online" : "Manual"}
-                          </span>
+                        {payment.paymentMethod === "paystack" && payment.paidAt ? (
+                          <div>
+                            <p className="text-sm text-emerald-600 font-medium">Paid online</p>
+                            <p className="text-xs text-gray-400">{formatDate(payment.paidAt)}</p>
+                          </div>
+                        ) : payment.markedBy ? (
+                          <div>
+                            <p className="text-sm text-gray-600">
+                              {payment.markedBy.surname} {payment.markedBy.firstName}
+                            </p>
+                            {payment.markedAt && <p className="text-xs text-gray-400">{formatDate(payment.markedAt)}</p>}
+                          </div>
                         ) : "—"}
                       </td>
+                      <td className="px-4 py-3.5">
+                        {!(activeTab === "report_card" && payment.paymentMethod === "paystack" && payment.status === PaymentStatus.PAID) && (
+                          <button
+                            onClick={() => { setMarkModal(payment); setMarkForm({ status: PaymentStatus.PAID, amount: "", note: "" }); }}
+                            className="px-3 py-1 rounded-lg bg-[#1e3a5f]/10 text-[#1e3a5f] text-xs font-medium hover:bg-[#1e3a5f]/20"
+                          >
+                            Update
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile card list — shown below sm */}
+            <div className="sm:hidden">
+              {/* Select-all bar */}
+              <div className="flex items-center gap-3 px-3 py-2.5 bg-gray-50/70 border-b border-gray-100">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.size === payments.length && payments.length > 0}
+                  onChange={toggleSelectAll}
+                  className="rounded"
+                />
+                <span className="text-xs text-gray-500 font-medium">
+                  {selectedIds.size === payments.length && payments.length > 0
+                    ? "Deselect all"
+                    : `Select all (${payments.length})`}
+                </span>
+              </div>
+
+              <div className="divide-y divide-gray-50">
+                {payments.map((payment) => (
+                  <div
+                    key={payment._id}
+                    className={`p-3 flex items-start gap-3 transition-colors ${selectedIds.has(payment._id) ? "bg-blue-50/50" : ""}`}
+                  >
+                    {/* Checkbox */}
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(payment._id)}
+                      onChange={() => toggleSelect(payment._id)}
+                      className="rounded mt-0.5 shrink-0"
+                    />
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {payment.student.surname} {payment.student.firstName} {payment.student.otherName}
+                      </p>
+                      <p className="text-xs text-gray-400 font-mono">{payment.student.admissionNumber}</p>
+
+                      {/* Class · Amount */}
+                      <div className="flex items-center gap-1.5 flex-wrap text-xs text-gray-500">
+                        {payment.student.currentClass?.name && (
+                          <span className="font-medium text-gray-700">{payment.student.currentClass.name}</span>
+                        )}
+                        {payment.amount && (
+                          <>
+                            <span className="text-gray-300">·</span>
+                            <span>₦{payment.amount.toLocaleString()}</span>
+                          </>
+                        )}
+                        {activeTab === "report_card" && payment.paymentMethod && (
+                          <>
+                            <span className="text-gray-300">·</span>
+                            <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                              payment.paymentMethod === "paystack" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                            }`}>
+                              {payment.paymentMethod === "paystack" ? "Online" : "Manual"}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Status + marked-by */}
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                        <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[payment.status]}`}>
+                          {payment.status}
+                        </span>
+                        {payment.paymentMethod === "paystack" && payment.paidAt ? (
+                          <span className="text-xs text-emerald-600 font-medium">Paid online · {formatDate(payment.paidAt)}</span>
+                        ) : payment.markedBy ? (
+                          <span className="text-xs text-gray-400">
+                            by {payment.markedBy.surname} {payment.markedBy.firstName}
+                            {payment.markedAt && ` · ${formatDate(payment.markedAt)}`}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {/* Update button */}
+                    {!(activeTab === "report_card" && payment.paymentMethod === "paystack" && payment.status === PaymentStatus.PAID) && (
+                      <button
+                        onClick={() => { setMarkModal(payment); setMarkForm({ status: PaymentStatus.PAID, amount: "", note: "" }); }}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#1e3a5f]/10 text-[#1e3a5f] text-xs font-medium hover:bg-[#1e3a5f]/20 shrink-0 mt-0.5"
+                      >
+                        Update
+                      </button>
                     )}
-                    <td className="px-4 py-3.5 hidden md:table-cell">
-                      {payment.paymentMethod === "paystack" && payment.paidAt ? (
-                        <div>
-                          <p className="text-sm text-emerald-600 font-medium">Paid online</p>
-                          <p className="text-xs text-gray-400">{formatDate(payment.paidAt)}</p>
-                        </div>
-                      ) : payment.markedBy ? (
-                        <div>
-                          <p className="text-sm text-gray-600">
-                            {payment.markedBy.surname} {payment.markedBy.firstName}
-                          </p>
-                          {payment.markedAt && (
-                            <p className="text-xs text-gray-400">{formatDate(payment.markedAt)}</p>
-                          )}
-                        </div>
-                      ) : "—"}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      {/* Don't show Update button for Paystack-paid report cards */}
-                      {!(activeTab === "report_card" && payment.paymentMethod === "paystack" && payment.status === PaymentStatus.PAID) && (
-                        <button
-                          onClick={() => {
-                            setMarkModal(payment);
-                            setMarkForm({ status: PaymentStatus.PAID, amount: "", note: "" });
-                          }}
-                          className="px-3 py-1 rounded-lg bg-[#1e3a5f]/10 text-[#1e3a5f] text-xs font-medium hover:bg-[#1e3a5f]/20"
-                        >
-                          Update
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* ── Mark Payment Modal ── */}
+      {/* ── Mark Payment Modal — bottom sheet on mobile ── */}
       {markModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6">
-            <h3 className="font-display text-lg font-bold text-gray-900 mb-1">
-              Update {activeTab === "report_card" ? "Report Card" : "School Fees"} Payment
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">
-              {markModal.student.surname} {markModal.student.firstName}{" "}
-              {markModal.student.otherName} —{" "}
-              {markModal.session.name} ·{" "}
-              {markModal.term.name} term
-            </p>
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md shadow-2xl max-h-[92vh] overflow-y-auto">
 
-            {activeTab === "report_card" && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                <p className="text-xs text-amber-700 font-medium">
-                  ⚠️ Marking this as Paid will immediately unlock the report card for the parent to view and download.
-                </p>
+            {/* Sticky header */}
+            <div className="p-4 sm:p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="font-display text-base sm:text-lg font-bold text-gray-900">
+                    Update {activeTab === "report_card" ? "Report Card" : "School Fees"} Payment
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-0.5 truncate">
+                    {markModal.student.surname} {markModal.student.firstName} {markModal.student.otherName}
+                    {" — "}
+                    {markModal.session.name} · {markModal.term.name} term
+                  </p>
+                </div>
+                <button onClick={() => setMarkModal(null)} className="text-gray-400 hover:text-gray-600 p-1 shrink-0">✕</button>
               </div>
-            )}
+            </div>
 
-            <div className="space-y-4">
+            <div className="p-4 sm:p-6 space-y-4">
+              {activeTab === "report_card" && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                  <p className="text-xs text-amber-700 font-medium">
+                    ⚠️ Marking this as Paid will immediately unlock the report card for the parent to view and download.
+                  </p>
+                </div>
+              )}
+
+              {/* Status picker */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Payment Status
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
                 <div className="grid grid-cols-3 gap-2">
                   {Object.values(PaymentStatus).map((status) => (
                     <button
                       key={status}
                       type="button"
                       onClick={() => setMarkForm({ ...markForm, status })}
-                      className={`py-2 rounded-xl text-sm font-medium border transition-all capitalize ${
+                      className={`py-2 rounded-xl text-xs sm:text-sm font-medium border transition-all capitalize ${
                         markForm.status === status
                           ? "bg-[#1e3a5f] text-white border-[#1e3a5f]"
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
@@ -578,6 +669,7 @@ export default function AdminPaymentsView() {
                   ))}
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Amount (₦) <span className="text-gray-400 font-normal">(optional)</span>
@@ -587,9 +679,10 @@ export default function AdminPaymentsView() {
                   value={markForm.amount}
                   onChange={(e) => setMarkForm({ ...markForm, amount: e.target.value })}
                   placeholder="e.g. 5000"
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+                  className={selectCls}
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Note <span className="text-gray-400 font-normal">(optional)</span>
@@ -598,26 +691,26 @@ export default function AdminPaymentsView() {
                   value={markForm.note}
                   onChange={(e) => setMarkForm({ ...markForm, note: e.target.value })}
                   placeholder="e.g. Paid via bank transfer"
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+                  className={selectCls}
                 />
               </div>
-            </div>
 
-            <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => setMarkModal(null)}
-                disabled={markLoading}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 disabled:opacity-40"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleMark}
-                disabled={markLoading}
-                className="flex-1 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold disabled:opacity-50"
-              >
-                {markLoading ? "Updating..." : "Update Payment"}
-              </button>
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => setMarkModal(null)}
+                  disabled={markLoading}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMark}
+                  disabled={markLoading}
+                  className="flex-1 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold disabled:opacity-50"
+                >
+                  {markLoading ? "Updating..." : "Update Payment"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

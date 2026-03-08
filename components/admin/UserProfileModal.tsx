@@ -13,10 +13,11 @@ import {
   Calendar,
   MapPin,
   User,
-  Droplets,
   Shield,
   Loader2,
   Edit,
+  MapPinHouse,
+  Church,
 } from "lucide-react";
 import { UserRole, UserStatus } from "@/types/enums";
 import { formatDate, getInitials } from "@/lib/utils";
@@ -70,6 +71,7 @@ interface FullUser {
   bloodGroup?: string;
   religion?: string;
   stateOfOrigin?: string;
+  localGovernment?: string;
   currentClass?: { name: string; section?: string };
   parents?: Parent[];
   // Teacher
@@ -151,6 +153,8 @@ export default function UserProfileModal({ userId, onClose, onEdit }: Props) {
     user?.roles?.includes(UserRole.PARENT) &&
     user?.roles?.includes(UserRole.TEACHER);
 
+  const isGraduated = user?.studentStatus === "graduated";
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-end">
       {/* Backdrop */}
@@ -230,6 +234,12 @@ export default function UserProfileModal({ userId, onClose, onEdit }: Props) {
                       {user.status.charAt(0).toUpperCase() +
                         user.status.slice(1)}
                     </span>
+                    {/* Graduated badge alongside role/status chips */}
+                    {isGraduated && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-teal-100 text-teal-700 inline-flex items-center gap-1">
+                        🎓 Graduated
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -274,11 +284,35 @@ export default function UserProfileModal({ userId, onClose, onEdit }: Props) {
                         label="Admission No."
                         value={user.admissionNumber ?? "N/A"}
                       />
-                      <InfoRow
-                        icon={BookOpen}
-                        label="Class"
-                        value={user.currentClass?.name ?? "Not assigned"}
-                      />
+
+                      {/* Class — shows a graduated banner when applicable */}
+                      {isGraduated ? (
+                        <div className="flex items-start gap-3 p-3 bg-teal-50 rounded-xl border border-teal-100">
+                          <div className="w-8 h-8 rounded-lg bg-white border border-teal-200 flex items-center justify-center flex-shrink-0">
+                            <GraduationCap className="w-4 h-4 text-teal-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-teal-500 uppercase tracking-wide">
+                              Class
+                            </p>
+                            <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                              <span className="text-sm font-medium text-gray-800">
+                                {user.currentClass?.name ?? "N/A"}
+                              </span>
+                              <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-teal-100 text-teal-700">
+                                🎓 Graduated
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <InfoRow
+                          icon={BookOpen}
+                          label="Class"
+                          value={user.currentClass?.name ?? "Not assigned"}
+                        />
+                      )}
+
                       <InfoRow
                         icon={Shield}
                         label="Department"
@@ -325,14 +359,19 @@ export default function UserProfileModal({ userId, onClose, onEdit }: Props) {
                         }
                       />
                       <InfoRow
-                        icon={Droplets}
-                        label="Blood Group"
-                        value={user.bloodGroup ?? "Not provided"}
+                        icon={MapPinHouse}
+                        label="LGA"
+                        value={user.localGovernment ?? "Not provided"}
                       />
                       <InfoRow
                         icon={MapPin}
                         label="State of Origin"
                         value={user.stateOfOrigin ?? "Not provided"}
+                      />
+                      <InfoRow
+                        icon={Church}
+                        label="Religion"
+                        value={user.religion ?? "Not provided"}
                       />
                       <InfoRow
                         icon={MapPin}
@@ -519,14 +558,24 @@ export default function UserProfileModal({ userId, onClose, onEdit }: Props) {
                           </p>
                           <p className="text-xs text-gray-400">
                             {child.admissionNumber} ·{" "}
-                            {child.currentClass?.name ?? "No class"}
+                            {child.studentStatus === "graduated"
+                              ? "Graduated"
+                              : child.currentClass?.name ?? "No class"}
                           </p>
                         </div>
                         <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${child.studentStatus === "active" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-500"}`}
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                            child.studentStatus === "graduated"
+                              ? "bg-teal-100 text-teal-700"
+                              : child.studentStatus === "active"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-gray-100 text-gray-500"
+                          }`}
                         >
-                          {child.studentStatus?.charAt(0).toUpperCase() +
-                            child.studentStatus?.slice(1)}
+                          {child.studentStatus === "graduated"
+                            ? "🎓 Graduated"
+                            : child.studentStatus?.charAt(0).toUpperCase() +
+                              child.studentStatus?.slice(1)}
                         </span>
                       </div>
                     ))}

@@ -25,4 +25,50 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+@media print {
+  /* 1. Force background colors & images */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 
+  /* 2. Hide everything except the card */
+  body * {
+    visibility: hidden;
+  }
+  .no-print {
+    display: none !important;
+  }
+
+  /* 3. Reset the scaled wrapper so it fills the page naturally */
+  .no-print-scale {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* 4. Undo the JS transform — let the card flow naturally at full size */
+  .no-print-scale > div {
+    transform: none !important;
+    width: 100% !important;
+  }
+
+  /* 5. Make the card itself visible and fill the A4 page */
+  .no-print-scale,
+  .no-print-scale * {
+    visibility: visible;
+  }
+
+  /* 6. Position it correctly on the page */
+  .no-print-scale {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  /* 7. Ensure page margins are clean */
+  @page {
+    margin: 0;
+    size: A4 portrait;
+  }
+}

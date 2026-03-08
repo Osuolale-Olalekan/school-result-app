@@ -1329,6 +1329,11 @@ export default function ReportCardComponent({
     ]);
     setQrDataUrl(qr);
     setLogoBase64(logo);
+    // Also convert profile photo
+  if (report.studentSnapshot.profilePhoto) {
+    const base64 = await convertImageToBase64(report.studentSnapshot.profilePhoto);
+    setProfilePhotoBase64(base64);
+  }
     await new Promise((r) => setTimeout(r, 300));
     window.print();
     setIsPrinting(false);

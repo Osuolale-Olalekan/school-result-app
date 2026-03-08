@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-// import { auth } from "@/lib/auth";
-// import { getServerSession } from "next-auth";
 import { getSession } from "@/lib/session";
-import { authConfig } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { SessionModel, TermModel } from "@/models/Session";
+import ClassAssignmentModel from "@/models/ClassAssignment";
 import {
   AuditAction,
   SessionStatus,
@@ -53,7 +51,7 @@ export async function PATCH(
         resumptionDate?: string;
         schoolDaysOpen?: number;
         status?: TermStatus;
-      }; // ← add this
+      };
     };
 
     const academicSession = await SessionModel.findById(id);
@@ -67,6 +65,15 @@ export async function PATCH(
     if (body.status) {
       academicSession.status = body.status;
       await academicSession.save();
+
+      // When a session is completed, deactivate all its class assignments
+      // so teachers are no longer linked to the old session
+      if (body.status === SessionStatus.COMPLETED) {
+        await ClassAssignmentModel.updateMany(
+          { session: id },
+          { isActive: false },
+        );
+      }
 
       await createAuditLog({
         actorId: session.user.id,
@@ -116,7 +123,6 @@ export async function PATCH(
     const updated = await SessionModel.findById(id).populate("terms").lean();
     return NextResponse.json({ success: true, data: updated! });
   } catch (error) {
-    
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 },

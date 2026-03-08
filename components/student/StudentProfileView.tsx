@@ -139,6 +139,7 @@ export default function StudentProfileView() {
               { icon: Droplets, label: "Blood Group",     value: profile.bloodGroup ?? "Not provided" },
               { icon: MapPin,   label: "State of Origin", value: profile.stateOfOrigin ?? "Not provided" },
               { icon: MapPin,   label: "Address",         value: profile.address ?? "Not provided" },
+              { icon: MapPin, label:"Religion", value: profile.religion ?? "Not provided" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                 <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
