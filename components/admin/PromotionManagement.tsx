@@ -122,7 +122,7 @@ export default function PromotionManagement() {
   const isSSS1Transition = promoteModal?.currentClass?.name === "JSS 3";
 
   const selectCls =
-    "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400";
+    "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400";
 
   return (
     <div className="space-y-4">
@@ -146,7 +146,7 @@ export default function PromotionManagement() {
             placeholder="Search by name or admission number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
           />
         </div>
       </div>
