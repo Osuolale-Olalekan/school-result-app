@@ -190,13 +190,13 @@ export default function ClassesManagement() {
                         )}
                         <button
                           onClick={() => openEdit(cls)}
-                          className="p-1 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all"
+                          className="p-1 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 opacity-70 group-hover:opacity-100 transition-all"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => setDeleteTarget({ id: cls._id, name: cls.name })}
-                          className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                          className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 opacity-70 group-hover:opacity-100 transition-all"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -231,7 +231,7 @@ export default function ClassesManagement() {
                 <select
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value as ClassLevel })}
-                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 >
                   <option value="">Select class...</option>
                   {Object.values(ClassLevel).map((cls) => (
@@ -244,7 +244,7 @@ export default function ClassesManagement() {
                 <select
                   value={form.department}
                   onChange={(e) => setForm({ ...form, department: e.target.value as Department })}
-                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 >
                   {Object.values(Department).map((d) => (
                     <option key={d} value={d}>{d === Department.NONE ? "No Department" : d.charAt(0).toUpperCase() + d.slice(1)}</option>
@@ -257,11 +257,11 @@ export default function ClassesManagement() {
                   type="number"
                   value={form.capacity}
                   onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setShowCreate(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm">Cancel</button>
+                <button onClick={() => setShowCreate(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600">Cancel</button>
                 <button onClick={handleCreate} disabled={creating} className="flex-1 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold disabled:opacity-50">
                   {creating ? "Creating..." : "Create"}
                 </button>
@@ -285,7 +285,7 @@ export default function ClassesManagement() {
                 <select
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value as ClassLevel })}
-                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 >
                   {Object.values(ClassLevel).map((cls) => (
                     <option key={cls} value={cls}>{cls}</option>
@@ -297,7 +297,7 @@ export default function ClassesManagement() {
                 <select
                   value={editForm.department}
                   onChange={(e) => setEditForm({ ...editForm, department: e.target.value as Department })}
-                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 >
                   {Object.values(Department).map((d) => (
                     <option key={d} value={d}>{d === Department.NONE ? "No Department" : d.charAt(0).toUpperCase() + d.slice(1)}</option>
@@ -310,11 +310,11 @@ export default function ClassesManagement() {
                   type="number"
                   value={editForm.capacity}
                   onChange={(e) => setEditForm({ ...editForm, capacity: e.target.value })}
-                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setEditingClass(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm">Cancel</button>
+                <button onClick={() => setEditingClass(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600">Cancel</button>
                 <button onClick={handleEdit} disabled={saving} className="flex-1 py-2.5 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold disabled:opacity-50">
                   {saving ? "Saving..." : "Save Changes"}
                 </button>
