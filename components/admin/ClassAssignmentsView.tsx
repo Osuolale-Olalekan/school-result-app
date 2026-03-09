@@ -140,7 +140,7 @@ export default function ClassAssignmentsView() {
 
   const selectedSessionForForm = sessions.find((s) => s._id === form.sessionId);
 
-  const selectClass = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]";
+  const selectClass = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f]";
 
   return (
     <div className="space-y-4">
@@ -174,7 +174,7 @@ export default function ClassAssignmentsView() {
           <select
             value={sessionFilter}
             onChange={(e) => setSessionFilter(e.target.value)}
-            className="w-full sm:max-w-xs px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+            className="w-full sm:max-w-xs px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f]"
           >
             <option value="">All Sessions</option>
             {sessions.map((s) => (

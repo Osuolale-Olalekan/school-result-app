@@ -234,7 +234,7 @@
 //                   setReports([]);
 //                   setHasSearched(false);
 //                 }}
-//                 className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+//                 className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f]"
 //               >
 //                 <option value="">Select session...</option>
 //                 {sessions.map((s) => (
@@ -254,7 +254,7 @@
 //                   setHasSearched(false);
 //                 }}
 //                 disabled={!selectedSession}
-//                 className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400"
+//                 className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400"
 //               >
 //                 <option value="">Select term...</option>
 //                 {terms.map((t) => (
@@ -582,7 +582,7 @@
 //                     onChange={(e) => setPrincipalComment(e.target.value)}
 //                     rows={3}
 //                     placeholder="Add a comment from the principal..."
-//                     className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-emerald-400 resize-none"
+//                     className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-emerald-400 resize-none"
 //                   />
 //                 </div>
 //               ) : (
@@ -595,7 +595,7 @@
 //                     onChange={(e) => setDeclineReason(e.target.value)}
 //                     rows={3}
 //                     placeholder="Explain why this report is being declined..."
-//                     className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-red-400 resize-none"
+//                     className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-red-400 resize-none"
 //                   />
 //                 </div>
 //               )}
@@ -890,7 +890,7 @@ export default function AdminReportsView() {
                   setReports([]);
                   setHasSearched(false);
                 }}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f]"
               >
                 <option value="">Select session...</option>
                 {sessions.map((s) => (
@@ -910,7 +910,7 @@ export default function AdminReportsView() {
                   setHasSearched(false);
                 }}
                 disabled={!selectedSession}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400"
               >
                 <option value="">Select term...</option>
                 {terms.map((t) => (
@@ -937,7 +937,7 @@ export default function AdminReportsView() {
                   setHasSearched(false);
                 }}
                 disabled={!selectedSession || classesLoading}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f] disabled:bg-gray-50 disabled:text-gray-400"
               >
                 <option value="">
                   {classesLoading ? "Loading classes..." : "All classes"}
@@ -1283,7 +1283,7 @@ export default function AdminReportsView() {
                     onChange={(e) => setPrincipalComment(e.target.value)}
                     rows={3}
                     placeholder="Add a comment from the principal..."
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-emerald-400 resize-none"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-emerald-400 resize-none"
                   />
                 </div>
               ) : (
@@ -1296,7 +1296,7 @@ export default function AdminReportsView() {
                     onChange={(e) => setDeclineReason(e.target.value)}
                     rows={3}
                     placeholder="Explain why this report is being declined..."
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-red-400 resize-none"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-red-400 resize-none"
                   />
                 </div>
               )}

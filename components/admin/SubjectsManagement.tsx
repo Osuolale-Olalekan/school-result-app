@@ -50,7 +50,7 @@ function SubjectFormFields({ form, classes, onChange }: FormFieldsProps) {
             value={form.name}
             onChange={(e) => onChange({ ...form, name: e.target.value })}
             placeholder="e.g. Mathematics"
-            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
           />
         </div>
         <div>
@@ -59,7 +59,7 @@ function SubjectFormFields({ form, classes, onChange }: FormFieldsProps) {
             value={form.code}
             onChange={(e) => onChange({ ...form, code: e.target.value.toUpperCase() })}
             placeholder="e.g. MATH"
-            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400 uppercase"
+            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 uppercase"
           />
         </div>
       </div>

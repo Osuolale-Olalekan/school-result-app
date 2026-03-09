@@ -207,7 +207,7 @@ export default function AdminPaymentsView() {
   const unpaid = payments.filter((p) => p.status === PaymentStatus.UNPAID).length;
   const partial = payments.filter((p) => p.status === PaymentStatus.PARTIAL).length;
 
-  const selectCls = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]";
+  const selectCls = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f]";
   const selectDisabledCls = `${selectCls} disabled:bg-gray-50 disabled:text-gray-400`;
 
   return (

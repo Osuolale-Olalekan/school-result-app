@@ -400,8 +400,8 @@ export default function SessionsManagement() {
   const upcomingSessions = sessions.filter((s) => s.status === SessionStatus.UPCOMING);
   const completedSessions = sessions.filter((s) => s.status === SessionStatus.COMPLETED);
 
-  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400";
-  const dateInputClass = "w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-amber-400";
+  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400";
+  const dateInputClass = "w-full px-2 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400";
   const errorInputClass = "w-full px-3 py-2 rounded-xl border border-red-300 text-sm focus:outline-none focus:border-red-400 bg-red-50";
 
   return (
@@ -585,7 +585,7 @@ export default function SessionsManagement() {
                           if (terms[i]) terms[i].schoolDaysOpen = parseInt(e.target.value) || 0;
                           setForm({ ...form, terms });
                         }}
-                        className="w-full sm:w-32 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                        className="w-full sm:w-32 px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                       />
                     </div>
                   </div>
@@ -657,7 +657,7 @@ export default function SessionsManagement() {
                       <select
                         value={term.status}
                         onChange={(e) => updateTermField(i, "status", e.target.value as TermStatus)}
-                        className="px-2 py-1 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-amber-400"
+                        className="px-2 py-1 rounded-lg border border-gray-200 text-xs text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                       >
                         {Object.values(TermStatus).map((s) => (
                           <option key={s} value={s}>{s}</option>
@@ -685,7 +685,7 @@ export default function SessionsManagement() {
                         min={0}
                         value={term.schoolDaysOpen}
                         onChange={(e) => updateTermField(i, "schoolDaysOpen", parseInt(e.target.value) || 0)}
-                        className="w-full sm:w-32 px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                        className="w-full sm:w-32 px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                       />
                     </div>
                   </div>
@@ -1457,7 +1457,7 @@ function SessionCard({ session, isExpanded, onToggle, onEdit, onUpdateStatus }: 
 //                             e.target.value as TermStatus,
 //                           )
 //                         }
-//                         className="px-2 py-1 rounded-lg border border-gray-200 text-xs focus:outline-none focus:border-amber-400"
+//                         className="px-2 py-1 rounded-lg border border-gray-200 text-xs text-gray-900 bg-white focus:outline-none focus:border-amber-400"
 //                       >
 //                         {Object.values(TermStatus).map((s) => (
 //                           <option key={s} value={s}>

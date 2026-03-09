@@ -746,12 +746,11 @@ function StudentCard({
 
   // Shared input class helpers
   const inputClass = (extra = "") =>
-    `${extra} text-sm focus:outline-none ${
-      isLocked
-        ? "bg-gray-50 text-gray-400 cursor-not-allowed border-gray-100"
-        : "border-gray-200 focus:border-amber-400"
-    }`;
-
+  `${extra} text-sm text-gray-900 bg-white focus:outline-none ${
+    isLocked
+      ? "bg-gray-50 text-gray-400 cursor-not-allowed border-gray-100"
+      : "border-gray-200 focus:border-amber-400"
+  }`;
   return (
     <div
       className={`bg-white rounded-2xl shadow-sm border overflow-hidden ${

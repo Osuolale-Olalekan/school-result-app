@@ -94,7 +94,7 @@ export default function CreateAdminModal({ onClose, onSuccess }: Props) {
                 value={form.surname}
                 onChange={(e) => update("surname", e.target.value)}
                 placeholder="Family Name"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
               />
             </div>
             <div>
@@ -105,7 +105,7 @@ export default function CreateAdminModal({ onClose, onSuccess }: Props) {
                 value={form.firstName}
                 onChange={(e) => update("firstName", e.target.value)}
                 placeholder="John"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
               />
             </div>
             <div>
@@ -116,7 +116,7 @@ export default function CreateAdminModal({ onClose, onSuccess }: Props) {
                 value={form.otherName}
                 onChange={(e) => update("otherName", e.target.value)}
                 placeholder="Doe"
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
               />
             </div>
 
@@ -132,7 +132,7 @@ export default function CreateAdminModal({ onClose, onSuccess }: Props) {
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
               placeholder="admin@school.com"
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
             />
           </div>
 
@@ -144,7 +144,7 @@ export default function CreateAdminModal({ onClose, onSuccess }: Props) {
               value={form.phone}
               onChange={(e) => update("phone", e.target.value)}
               placeholder="08012345678"
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
             />
           </div>
         </div>

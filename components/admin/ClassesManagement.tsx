@@ -231,7 +231,7 @@ export default function ClassesManagement() {
                 <select
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value as ClassLevel })}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 >
                   <option value="">Select class...</option>
                   {Object.values(ClassLevel).map((cls) => (
@@ -244,7 +244,7 @@ export default function ClassesManagement() {
                 <select
                   value={form.department}
                   onChange={(e) => setForm({ ...form, department: e.target.value as Department })}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 >
                   {Object.values(Department).map((d) => (
                     <option key={d} value={d}>{d === Department.NONE ? "No Department" : d.charAt(0).toUpperCase() + d.slice(1)}</option>
@@ -257,7 +257,7 @@ export default function ClassesManagement() {
                   type="number"
                   value={form.capacity}
                   onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 />
               </div>
               <div className="flex gap-3">
@@ -285,7 +285,7 @@ export default function ClassesManagement() {
                 <select
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value as ClassLevel })}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 >
                   {Object.values(ClassLevel).map((cls) => (
                     <option key={cls} value={cls}>{cls}</option>
@@ -297,7 +297,7 @@ export default function ClassesManagement() {
                 <select
                   value={editForm.department}
                   onChange={(e) => setEditForm({ ...editForm, department: e.target.value as Department })}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 >
                   {Object.values(Department).map((d) => (
                     <option key={d} value={d}>{d === Department.NONE ? "No Department" : d.charAt(0).toUpperCase() + d.slice(1)}</option>
@@ -310,7 +310,7 @@ export default function ClassesManagement() {
                   type="number"
                   value={editForm.capacity}
                   onChange={(e) => setEditForm({ ...editForm, capacity: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400"
                 />
               </div>
               <div className="flex gap-3">

@@ -217,7 +217,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#1e3a5f]";
+  const inputClass = "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f]";
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
   return (
