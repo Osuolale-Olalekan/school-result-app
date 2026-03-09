@@ -49,7 +49,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
     if (IS_DEV) {
       const transporter = await getDevTransporter();
       const info = await transporter.sendMail({
-        from: `"${SCHOOL}" <no-reply@godswayschool.edu.ng>`,
+        from: `"${SCHOOL}" <no-reply@godswayschool.com>`,
         to: Array.isArray(to) ? to.join(", ") : to,
         subject,
         html,
@@ -62,7 +62,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
       console.log("──────────────────────────────────────────────────────────────");
     } else {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const from = process.env.EMAIL_FROM ?? "noreply@godswayschool.edu.ng";
+      const from = process.env.EMAIL_FROM ?? "noreply@godswayschool.com";
       await resend.emails.send({ from, to, subject, html });
     }
   } catch (error) {
