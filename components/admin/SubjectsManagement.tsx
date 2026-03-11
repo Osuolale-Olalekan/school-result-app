@@ -254,13 +254,13 @@ export default function SubjectsManagement() {
                   )}
                   <button
                     onClick={() => openEdit(subject)}
-                    className="p-1 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all"
+                    className="p-1 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 opacity-70 group-hover:opacity-100 transition-all"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => setDeleteTarget({ id: subject._id, name: subject.name })}
-                    className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                    className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 opacity-70 group-hover:opacity-100 transition-all"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
