@@ -34,10 +34,6 @@ useEffect(() => {
     });
 }, []);
 
-
-
-
-
   useEffect(() => {
     fetch("/api/admin/classes")
       .then((r) => r.json())

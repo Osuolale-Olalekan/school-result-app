@@ -1081,6 +1081,7 @@ export default function UserForm({
   const [selectedClassName, setSelectedClassName] = useState("");
   const [department, setDepartment] = useState<Department>(Department.NONE);
   const [selectedState, setSelectedState] = useState("");
+  const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
 
   const isSSS = selectedClassName.startsWith("SSS");
 
@@ -1091,7 +1092,7 @@ export default function UserForm({
     <form
       onSubmit={handleSubmit((data) => {
         if (isSSS && department === Department.NONE) return;
-        onSubmit({ ...(data as Record<string, unknown>), department });
+        onSubmit({ ...(data as Record<string, unknown>), department, children: selectedChildren });
       })}
       className="space-y-4"
     >
@@ -1466,19 +1467,41 @@ export default function UserForm({
               Link Children{" "}
               <span className="text-gray-400 font-normal">(optional)</span>
             </label>
-            <select
-              multiple
-              {...register("children")}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f] min-h-[120px]"
-            >
-              {students.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s.surname} {s.firstName} {s.otherName}
-                </option>
-              ))}
-            </select>
+            <div className="border border-gray-200 rounded-xl max-h-[180px] overflow-y-auto divide-y divide-gray-50">
+              {students.length === 0 ? (
+                <p className="text-xs text-gray-400 p-3">No students found</p>
+              ) : (
+                students.map((s) => {
+                  const isSelected = selectedChildren.includes(s._id);
+                  return (
+                    <div
+                      key={s._id}
+                      onClick={() =>
+                        setSelectedChildren((prev) =>
+                          prev.includes(s._id)
+                            ? prev.filter((id) => id !== s._id)
+                            : [...prev, s._id]
+                        )
+                      }
+                      className={`flex items-center justify-between px-4 py-2.5 cursor-pointer transition-colors ${
+                        isSelected ? "bg-[#1e3a5f]/5" : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className="text-sm text-gray-700">
+                        {s.surname} {s.firstName} {s.otherName}
+                      </span>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isSelected ? "bg-[#1e3a5f] border-[#1e3a5f]" : "border-gray-300"
+                      }`}>
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
             <p className="text-xs text-gray-400 mt-1">
-              Hold Ctrl (Windows) or Cmd (Mac) to select multiple children
+              {selectedChildren.length} child{selectedChildren.length !== 1 ? "ren" : ""} selected
             </p>
           </div>
         </>
