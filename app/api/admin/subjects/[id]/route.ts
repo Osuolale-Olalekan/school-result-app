@@ -34,6 +34,7 @@ export async function PATCH(
       name?: string;
       code?: string;
       hasPractical?: boolean;
+      department?: string;
       assignedClasses?: string[];
     };
 
@@ -67,6 +68,7 @@ export async function PATCH(
     if (body.name !== undefined) subject.name = body.name.trim();
     if (body.code !== undefined) subject.code = body.code.toUpperCase().trim();
     if (body.hasPractical !== undefined) subject.hasPractical = body.hasPractical;
+    if (body.department !== undefined) subject.department = body.department as typeof subject.department;
 
     await subject.save();
 
@@ -83,7 +85,6 @@ export async function PATCH(
     const updated = await SubjectModel.findById(id).populate("assignedClasses", "name section").lean();
     return NextResponse.json({ success: true, data: updated!, message: "Subject updated successfully" });
   } catch (error) {
-    
     const mongoError = error as { code?: number };
     if (mongoError.code === 11000) {
       return NextResponse.json({ success: false, error: "Subject code already exists" }, { status: 409 });
@@ -106,7 +107,6 @@ export async function DELETE(
     const subject = await SubjectModel.findById(id);
     if (!subject) return NextResponse.json({ success: false, error: "Subject not found" }, { status: 404 });
 
-    // Block if subject is referenced in any report cards
     const reportCardCount = await ReportCardModel.countDocuments({ "subjects.subject": id });
     if (reportCardCount > 0) {
       return NextResponse.json(
@@ -115,7 +115,6 @@ export async function DELETE(
       );
     }
 
-    // Auto-remove from all assigned classes
     if (subject.assignedClasses.length) {
       await ClassModel.updateMany(
         { _id: { $in: subject.assignedClasses } },
@@ -139,7 +138,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: "Subject deleted successfully" });
   } catch (error) {
-    
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

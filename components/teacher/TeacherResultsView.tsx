@@ -25,6 +25,7 @@ interface ClassAssignment {
       name: string;
       code: string;
       hasPractical: boolean;
+      department: string;
     }>;
   };
   session: {
@@ -40,6 +41,7 @@ interface Student {
   firstName: string;
   otherName: string;
   admissionNumber: string;
+  department: string;
 }
 
 interface SubjectScore {
@@ -219,27 +221,59 @@ export default function TeacherResultsView() {
     });
   }
 
+  // function initStudentDraft(studentId: string) {
+  //   if (drafts[studentId] || !selectedAssignment) return;
+  //   const subjects = selectedAssignment.class.subjects;
+  //   setDrafts((prev) => ({
+  //     ...prev,
+  //     [studentId]: {
+  //       studentId,
+  //       scores: subjects.map((s) => ({
+  //         subject: s._id,
+  //         subjectName: s.name,
+  //         subjectCode: s.code,
+  //         testScore: 0,
+  //         examScore: 0,
+  //         practicalScore: 0,
+  //         hasPractical: s.hasPractical,
+  //       })),
+  //       attendance: { schoolDaysOpen: 0, daysPresent: 0, daysAbsent: 0 },
+  //       teacherComment: "",
+  //     },
+  //   }));
+  // }
   function initStudentDraft(studentId: string) {
-    if (drafts[studentId] || !selectedAssignment) return;
-    const subjects = selectedAssignment.class.subjects;
-    setDrafts((prev) => ({
-      ...prev,
-      [studentId]: {
-        studentId,
-        scores: subjects.map((s) => ({
-          subject: s._id,
-          subjectName: s.name,
-          subjectCode: s.code,
-          testScore: 0,
-          examScore: 0,
-          practicalScore: 0,
-          hasPractical: s.hasPractical,
-        })),
-        attendance: { schoolDaysOpen: 0, daysPresent: 0, daysAbsent: 0 },
-        teacherComment: "",
-      },
-    }));
-  }
+  if (drafts[studentId] || !selectedAssignment) return;
+
+  const student = students.find(s => s._id === studentId);
+  const allSubjects = selectedAssignment.class.subjects;
+
+  // Filter: show general subjects + subjects matching student's department
+  const studentSubjects = allSubjects.filter(s =>
+    s.department === "general" ||
+    s.department === "none" ||    // treat old subjects without department as general
+    !s.department ||
+    s.department === student?.department
+  );
+
+  setDrafts((prev) => ({
+    ...prev,
+    [studentId]: {
+      studentId,
+      scores: studentSubjects.map((s) => ({
+        subject: s._id,
+        subjectName: s.name,
+        subjectCode: s.code,
+        testScore: 0,
+        examScore: 0,
+        practicalScore: 0,
+        hasPractical: s.hasPractical,
+      })),
+      attendance: { schoolDaysOpen: 0, daysPresent: 0, daysAbsent: 0 },
+      teacherComment: "",
+    },
+  }));
+}
 
   async function saveResult(studentId: string) {
     const draft = drafts[studentId];

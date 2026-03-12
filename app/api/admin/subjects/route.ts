@@ -39,6 +39,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       name: string;
       code: string;
       hasPractical: boolean;
+      department?: string;
       assignedClasses?: string[];
     };
 
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       name: body.name.trim(),
       code: body.code.toUpperCase().trim(),
       hasPractical: body.hasPractical ?? false,
+      department: body.department ?? "general",
       assignedClasses: body.assignedClasses ?? [],
     });
 

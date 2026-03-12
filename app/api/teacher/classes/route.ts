@@ -26,7 +26,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<object[]>>> {
       isActive: true,
       ...(activeSession ? { session: activeSession._id } : {}),
     })
-      .populate({ path: "class", populate: { path: "subjects", select: "name code hasPractical" } })
+      .populate({ path: "class", populate: { path: "subjects", select: "name code hasPractical department" } })
       .populate({ path: "session", select: "name status terms", populate: { path: "terms", select: "name status startDate endDate" } })
       .lean();
 

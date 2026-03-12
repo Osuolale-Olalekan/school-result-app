@@ -8,7 +8,7 @@ import DeleteConfirmModal from "./DeleteConfirmModal";
 interface Assignment {
   _id: string;
   teacher: { _id: string; surname: string; firstName: string; otherName: string; email: string };
-  class: { _id: string; name: string; section: string };
+  class: { _id: string; name: string; section: string; subjects: Array<{_id: string; name: string; code: string; hasPractical: boolean; department: string}> };
   session: { _id: string; name: string; status: string };
   isActive: boolean;
 }

@@ -120,6 +120,7 @@ export interface ISubject extends BaseDocument {
   name: string;
   code: string;
   hasPractical: boolean;
+  department: Department | "general"; // ← add this
   assignedClasses: string[]; // IClass _ids
 }
 

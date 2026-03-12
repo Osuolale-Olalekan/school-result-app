@@ -9,6 +9,7 @@ interface Subject {
   name: string;
   code: string;
   hasPractical: boolean;
+  department: string;
   assignedClasses: Array<{ _id: string; name: string }>;
 }
 
@@ -22,6 +23,7 @@ interface SubjectFormData {
   name: string;
   code: string;
   hasPractical: boolean;
+  department: string;
   assignedClasses: string[];
 }
 
@@ -63,6 +65,7 @@ function SubjectFormFields({ form, classes, onChange }: FormFieldsProps) {
           />
         </div>
       </div>
+
       <div className="flex items-center gap-3">
         <input
           type="checkbox"
@@ -75,6 +78,38 @@ function SubjectFormFields({ form, classes, onChange }: FormFieldsProps) {
           Has practical component (+20 marks)
         </label>
       </div>
+
+      {/* Department Selector */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: "general", label: "General (All Students)" },
+            { value: "science", label: "Science" },
+            { value: "art", label: "Art" },
+            { value: "commercial", label: "Commercial" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange({ ...form, department: opt.value })}
+              className={`px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${
+                form.department === opt.value
+                  ? "bg-amber-50 border-amber-300 text-amber-800"
+                  : "border-gray-200 text-gray-600 hover:border-gray-300"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {form.department === "general" && (
+          <p className="text-xs text-gray-400 mt-1">
+            This subject will appear for all students regardless of department.
+          </p>
+        )}
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Classes</label>
         <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
@@ -98,7 +133,7 @@ function SubjectFormFields({ form, classes, onChange }: FormFieldsProps) {
   );
 }
 
-const EMPTY_FORM: SubjectFormData = { name: "", code: "", hasPractical: false, assignedClasses: [] };
+const EMPTY_FORM: SubjectFormData = { name: "", code: "", hasPractical: false, department: "general", assignedClasses: [] };
 
 export default function SubjectsManagement() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -166,6 +201,7 @@ export default function SubjectsManagement() {
       name: subject.name,
       code: subject.code,
       hasPractical: subject.hasPractical,
+      department: subject.department ?? "general",
       assignedClasses: subject.assignedClasses.map((c) => c._id),
     });
   }
@@ -211,6 +247,13 @@ export default function SubjectsManagement() {
     }
   }
 
+  const deptBadgeClass = (dept: string) => {
+    if (dept === "science") return "bg-blue-100 text-blue-700";
+    if (dept === "art") return "bg-purple-100 text-purple-700";
+    if (dept === "commercial") return "bg-green-100 text-green-700";
+    return "";
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -245,11 +288,17 @@ export default function SubjectsManagement() {
                   <h3 className="font-semibold text-gray-900">{subject.name}</h3>
                   <p className="text-xs font-mono text-gray-400">{subject.code}</p>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-wrap justify-end">
                   {subject.hasPractical && (
                     <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium flex items-center gap-1">
                       <Beaker className="w-3 h-3" />
                       Practical
+                    </span>
+                  )}
+                  {/* Department badge — only shown for non-general subjects */}
+                  {subject.department && subject.department !== "general" && (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${deptBadgeClass(subject.department)}`}>
+                      {subject.department.charAt(0).toUpperCase() + subject.department.slice(1)}
                     </span>
                   )}
                   <button
