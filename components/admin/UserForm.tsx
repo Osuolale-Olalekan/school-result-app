@@ -608,20 +608,22 @@ const nigeriaStates = [
   {
     state: "Kwara",
     lgas: [
-      "Asa",
-      "Baruten",
-      "Edu",
-      "Ekiti (Araromi/Opin)",
-      "Ilorin-East",
-      "Ilorin-South",
-      "Ilorin-West",
-      "Isin",
-      "Kaiama",
-      "Moro",
-      "Offa",
-      "Oke-Ero",
-      "Oyun",
-      "Pategi",
+      "Edu: Lafiagi",
+      "Ekiti: Araromi-Opin",
+      "Ifelodun: Share",
+      "Ilorin East: Oke-Oyi",
+      "Ilorin South: Fufu",
+      "Ilorin West: Oja-Oba",
+      "Irepodun: Omu-Aran",
+      "Isin: Owu-Isin",
+      "Kaiama: Kaiama",
+      "Moro: Bode-Saadu",
+      "Offa: Offa",
+      "Oke-Ero: Ilofa",
+      "Oyun: Ilemona",
+      "Patigi: Patigi",
+      "Asa: Afon",
+      "Baruten: Kosubosu",
     ],
   },
   {
@@ -1092,7 +1094,11 @@ export default function UserForm({
     <form
       onSubmit={handleSubmit((data) => {
         if (isSSS && department === Department.NONE) return;
-        onSubmit({ ...(data as Record<string, unknown>), department, children: selectedChildren });
+        onSubmit({
+          ...(data as Record<string, unknown>),
+          department,
+          children: selectedChildren,
+        });
       })}
       className="space-y-4"
     >
@@ -1480,7 +1486,7 @@ export default function UserForm({
                         setSelectedChildren((prev) =>
                           prev.includes(s._id)
                             ? prev.filter((id) => id !== s._id)
-                            : [...prev, s._id]
+                            : [...prev, s._id],
                         )
                       }
                       className={`flex items-center justify-between px-4 py-2.5 cursor-pointer transition-colors ${
@@ -1490,10 +1496,16 @@ export default function UserForm({
                       <span className="text-sm text-gray-700">
                         {s.surname} {s.firstName} {s.otherName}
                       </span>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                        isSelected ? "bg-[#1e3a5f] border-[#1e3a5f]" : "border-gray-300"
-                      }`}>
-                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                          isSelected
+                            ? "bg-[#1e3a5f] border-[#1e3a5f]"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {isSelected && (
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        )}
                       </div>
                     </div>
                   );
@@ -1501,7 +1513,8 @@ export default function UserForm({
               )}
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              {selectedChildren.length} child{selectedChildren.length !== 1 ? "ren" : ""} selected
+              {selectedChildren.length} child
+              {selectedChildren.length !== 1 ? "ren" : ""} selected
             </p>
           </div>
         </>
