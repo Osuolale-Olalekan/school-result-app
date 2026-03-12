@@ -221,10 +221,10 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Edit User</h2>
             <p className="text-xs text-gray-400 mt-0.5">
@@ -236,7 +236,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           {/* Profile Photo */}
           <div className="flex flex-col items-center gap-3">
             <div
@@ -264,7 +264,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
           </div>
 
           {/* Basic fields */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Surname *</label>
               <input name="surname" value={form.surname} onChange={handleChange} required className={inputClass} />
@@ -307,7 +307,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Date of Birth</label>
                   <input

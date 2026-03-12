@@ -192,7 +192,7 @@ export default function UsersManagement() {
               placeholder="Search by name or email..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
             />
           </div>
 
@@ -487,10 +487,11 @@ function ActionMenuButton({
         <MoreVertical className="w-4 h-4" />
       </button>
 
+      {/* Desktop dropdown */}
       {isOpen && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-8 top-0 z-30 bg-white border border-gray-100 rounded-xl shadow-lg py-1 min-w-[160px]"
+          className="hidden sm:block absolute right-8 top-0 z-30 bg-white border border-gray-100 rounded-xl shadow-lg py-1 min-w-[160px]"
         >
           {user.status !== UserStatus.ACTIVE && (
             <button
@@ -533,6 +534,91 @@ function ActionMenuButton({
           >
             <Trash2 className="w-4 h-4" /> Delete
           </button>
+        </div>
+      )}
+
+      {/* Mobile bottom sheet */}
+      {isOpen && (
+        <div className="sm:hidden" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+            onClick={() => setActionMenu(null)}
+          />
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl pb-safe">
+            {/* Handle + user name */}
+            <div className="flex items-center gap-3 px-4 pt-3 pb-2 border-b border-gray-50">
+              <div className="w-8 h-1 bg-gray-200 rounded-full mx-auto absolute top-2 left-1/2 -translate-x-1/2" />
+              <div className="w-8 h-8 rounded-lg bg-[#1e3a5f]/10 flex items-center justify-center text-xs font-bold text-[#1e3a5f] mt-2">
+                {user.surname.charAt(0)}{user.firstName.charAt(0)}
+              </div>
+              <div className="mt-2">
+                <p className="text-sm font-semibold text-gray-800">{user.surname} {user.firstName}</p>
+                <p className="text-xs text-gray-400 capitalize">{user.roles?.[0]}</p>
+              </div>
+            </div>
+
+            {/* Actions grid */}
+            <div className="grid grid-cols-4 gap-1 p-3 border-b border-gray-50">
+              <button
+                onClick={() => { setViewingUserId(userId); setActionMenu(null); }}
+                className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <Eye className="w-4 h-4 text-gray-600" />
+                </div>
+                <span className="text-xs text-gray-500">View</span>
+              </button>
+              <button
+                onClick={() => { setEditUser(user); setActionMenu(null); }}
+                className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-blue-50 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                  <Edit className="w-4 h-4 text-blue-600" />
+                </div>
+                <span className="text-xs text-blue-600">Edit</span>
+              </button>
+              {user.status !== UserStatus.ACTIVE ? (
+                <button
+                  onClick={() => handleAction(userId, "activate")}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-emerald-50 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+                    <UserCheck className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <span className="text-xs text-emerald-600">Activate</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleAction(userId, "suspend")}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-amber-50 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <span className="text-xs text-amber-500">Suspend</span>
+                </button>
+              )}
+              <button
+                onClick={() => handleAction(userId, "delete")}
+                className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-red-50 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center">
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </div>
+                <span className="text-xs text-red-500">Delete</span>
+              </button>
+            </div>
+
+            {/* Cancel */}
+            <div className="p-3">
+              <button
+                onClick={() => setActionMenu(null)}
+                className="w-full py-2.5 rounded-xl bg-gray-100 text-sm font-medium text-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>
