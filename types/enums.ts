@@ -117,6 +117,34 @@ export enum AnnouncementStatus {
   PUBLISHED = "published",
   ARCHIVED = "archived",
 }
+
+// ─── Add these to your existing enums.ts ─────────────────────────────────────
+
+export enum BehaviourType {
+  POSITIVE = "positive",
+  NEGATIVE = "negative",
+}
+
+export enum BehaviourCategory {
+  // Negative
+  FIGHTING              = "fighting",
+  LATENESS              = "lateness",
+  TRUANCY               = "truancy",
+  DISRESPECT            = "disrespect",
+  // Positive
+  OUTSTANDING_PERFORMANCE = "outstanding_performance",
+  LEADERSHIP            = "leadership",
+  AWARD_ACHIEVEMENT     = "award_achievement",
+}
+
+export enum BehaviourSeverity {
+  LOW    = "low",
+  MEDIUM = "medium",
+  HIGH   = "high",
+}
+
+// Also add to NotificationType:
+// BEHAVIOUR_RECORD = "behaviour_record",
 // export enum UserRole {
 //   ADMIN = "admin",
 //   TEACHER = "teacher",

@@ -63,6 +63,7 @@ export async function GET(
         { firstName: { $regex: search, $options: "i" } },
         { otherName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
+        { admissionNumber: { $regex: search, $options: "i" } },
       ];
     }
 

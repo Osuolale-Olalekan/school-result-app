@@ -11,3 +11,4 @@ import "@/models/Session";
 import "@/models/PaymentRecord"
 import "@/models/SchoolSettings"
 import "@/models/Announcements"
+import "@/models/BehaviourRecord"
