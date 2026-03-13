@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   ShieldAlert, ThumbsUp, ThumbsDown, Calendar,
-  User, Loader2, RefreshCw, Filter,
+  User, Loader2, RefreshCw,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { BehaviourSeverity, BehaviourType, UserRole } from "@/types/enums";
+import { BehaviourSeverity, BehaviourType } from "@/types/enums";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,9 +33,9 @@ interface BehaviourRecord {
 // ─── Severity styles ──────────────────────────────────────────────────────────
 
 const SEVERITY_STYLES: Record<BehaviourSeverity, { label: string; bg: string; text: string; border: string }> = {
-  [BehaviourSeverity.LOW]:    { label: "Low",    bg: "rgba(245,158,11,0.1)",  text: "#fbbf24", border: "rgba(245,158,11,0.2)"  },
-  [BehaviourSeverity.MEDIUM]: { label: "Medium", bg: "rgba(249,115,22,0.12)", text: "#f97316", border: "rgba(249,115,22,0.22)" },
-  [BehaviourSeverity.HIGH]:   { label: "High",   bg: "rgba(239,68,68,0.12)",  text: "#f87171", border: "rgba(239,68,68,0.22)"  },
+  [BehaviourSeverity.LOW]:    { label: "Low",    bg: "bg-amber-50",  text: "text-amber-600",  border: "border-amber-200"  },
+  [BehaviourSeverity.MEDIUM]: { label: "Medium", bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-200" },
+  [BehaviourSeverity.HIGH]:   { label: "High",   bg: "bg-red-50",    text: "text-red-600",    border: "border-red-200"    },
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -50,26 +50,24 @@ interface BehaviourViewProps {
 }
 
 export default function BehaviourView({ role, childId, compact = false }: BehaviourViewProps) {
-  const [records, setRecords]         = useState<BehaviourRecord[]>([]);
-  const [isLoading, setIsLoading]     = useState(true);
-  const [typeFilter, setTypeFilter]   = useState<string>("all");
-  const [page, setPage]               = useState(1);
-  const [totalPages, setTotalPages]   = useState(1);
+  const [records, setRecords]             = useState<BehaviourRecord[]>([]);
+  const [isLoading, setIsLoading]         = useState(true);
+  const [typeFilter, setTypeFilter]       = useState<string>("all");
+  const [page, setPage]                   = useState(1);
+  const [totalPages, setTotalPages]       = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const limit = compact ? 5 : 15;
+  const limit   = compact ? 5 : 15;
   const apiBase = role === "parent" ? "/api/parent/behaviour" : "/api/student/behaviour";
 
   const fetchRecords = useCallback(
     async (p = 1, append = false, silent = false) => {
       if (p === 1 && !silent) setIsLoading(true);
       else if (p > 1) setIsLoadingMore(true);
-
       try {
         const params = new URLSearchParams({ page: String(p), limit: String(limit) });
         if (typeFilter !== "all") params.set("type", typeFilter);
         if (role === "parent" && childId) params.set("childId", childId);
-
         const res  = await fetch(`${apiBase}?${params}`);
         const json = await res.json();
         if (json.success) {
@@ -78,9 +76,7 @@ export default function BehaviourView({ role, childId, compact = false }: Behavi
           );
           setTotalPages(json.pagination?.totalPages ?? 1);
         }
-      } catch {
-        // silent
-      } finally {
+      } catch { /* silent */ } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
       }
@@ -99,30 +95,21 @@ export default function BehaviourView({ role, childId, compact = false }: Behavi
     void fetchRecords(next, true, false);
   }
 
-  // ── Stats summary ──
   const negCount = records.filter((r) => r.type === BehaviourType.NEGATIVE).length;
   const posCount = records.filter((r) => r.type === BehaviourType.POSITIVE).length;
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div
-      className="w-full min-w-0 rounded-2xl p-4 lg:p-6 space-y-4"
-      style={{
-        background: "linear-gradient(160deg, #0f1923 0%, #0a1118 100%)",
-        border: "1px solid rgba(14,165,233,0.12)",
-      }}
-    >
+    <div className="w-full min-w-0 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 lg:p-5 space-y-4">
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(249,115,22,0.15)", border: "1px solid rgba(249,115,22,0.25)" }}
-          >
-            <ShieldAlert className="w-4 h-4" style={{ color: "#f97316" }} />
+          <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center flex-shrink-0">
+            <ShieldAlert className="w-4 h-4 text-amber-500" />
           </div>
-          <h2 className="text-sm font-bold" style={{ color: "#f5f0e8" }}>
+          <h2 className="text-sm font-bold text-gray-900 font-display">
             Behaviour Records
           </h2>
         </div>
@@ -130,16 +117,10 @@ export default function BehaviourView({ role, childId, compact = false }: Behavi
         {/* Mini stats */}
         {!isLoading && records.length > 0 && (
           <div className="flex items-center gap-2">
-            <span
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold"
-              style={{ background: "rgba(16,185,129,0.1)", color: "#34d399", border: "1px solid rgba(16,185,129,0.18)" }}
-            >
+            <span className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
               <ThumbsUp className="w-3 h-3" /> {posCount}
             </span>
-            <span
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold"
-              style={{ background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)" }}
-            >
+            <span className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-red-50 text-red-500 border border-red-200">
               <ThumbsDown className="w-3 h-3" /> {negCount}
             </span>
           </div>
@@ -148,20 +129,16 @@ export default function BehaviourView({ role, childId, compact = false }: Behavi
 
       {/* Type filter (hidden in compact) */}
       {!compact && (
-        <div
-          className="flex gap-1 p-1 rounded-xl w-fit"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(14,165,233,0.12)" }}
-        >
+        <div className="flex gap-1 p-1 rounded-xl bg-gray-100 w-fit">
           {["all", "negative", "positive"].map((t) => (
             <button
               key={t}
               onClick={() => { setTypeFilter(t); setPage(1); }}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all"
-              style={
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
                 typeFilter === t
-                  ? { background: "rgba(249,115,22,0.2)", color: "#f97316", border: "1px solid rgba(249,115,22,0.3)" }
-                  : { color: "rgba(245,240,232,0.4)", border: "1px solid transparent" }
-              }
+                  ? "bg-white text-amber-600 shadow-sm border border-gray-200"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
             >
               {t === "all" ? "All" : t === "negative" ? "⚠ Negative" : "★ Positive"}
             </button>
@@ -172,17 +149,12 @@ export default function BehaviourView({ role, childId, compact = false }: Behavi
       {/* List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-10">
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f97316" }} />
+          <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
         </div>
       ) : records.length === 0 ? (
-        <div
-          className="flex flex-col items-center justify-center py-10 rounded-2xl"
-          style={{ border: "1px dashed rgba(14,165,233,0.12)", background: "rgba(255,255,255,0.01)" }}
-        >
-          <ShieldAlert className="w-7 h-7 mb-2" style={{ color: "rgba(245,240,232,0.12)" }} />
-          <p className="text-xs" style={{ color: "rgba(245,240,232,0.3)" }}>
-            No behaviour records yet
-          </p>
+        <div className="flex flex-col items-center justify-center py-10 rounded-2xl border border-dashed border-gray-200 bg-gray-50">
+          <ShieldAlert className="w-7 h-7 mb-2 text-gray-300" />
+          <p className="text-xs text-gray-400">No behaviour records yet</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -199,69 +171,54 @@ export default function BehaviourView({ role, childId, compact = false }: Behavi
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
-                className="p-3 rounded-xl"
-                style={{
-                  background: isNeg ? "rgba(239,68,68,0.05)" : "rgba(16,185,129,0.05)",
-                  border: isNeg ? "1px solid rgba(239,68,68,0.12)" : "1px solid rgba(16,185,129,0.12)",
-                }}
+                className={`p-3 rounded-xl bg-white border ${
+                  isNeg ? "border-red-100" : "border-emerald-100"
+                }`}
               >
                 <div className="flex items-start gap-2.5">
                   {/* Icon */}
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{
-                      background: isNeg ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)",
-                      border: isNeg ? "1px solid rgba(239,68,68,0.2)" : "1px solid rgba(16,185,129,0.2)",
-                    }}
-                  >
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 border ${
+                    isNeg ? "bg-red-50 border-red-100" : "bg-emerald-50 border-emerald-100"
+                  }`}>
                     {isNeg
-                      ? <ThumbsDown className="w-3 h-3" style={{ color: "#f87171" }} />
-                      : <ThumbsUp   className="w-3 h-3" style={{ color: "#34d399" }} />
+                      ? <ThumbsDown className="w-3 h-3 text-red-500" />
+                      : <ThumbsUp   className="w-3 h-3 text-emerald-500" />
                     }
                   </div>
 
                   <div className="flex-1 min-w-0">
                     {/* Badges row */}
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                      {/* For parent view: show student name */}
                       {role === "parent" && student && (
-                        <span className="text-xs font-semibold" style={{ color: "#f5f0e8" }}>
+                        <span className="text-xs font-semibold text-gray-900">
                           {student.firstName} {student.surname}
                         </span>
                       )}
-                      <span
-                        className="px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize"
-                        style={{
-                          background: isNeg ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)",
-                          color: isNeg ? "#f87171" : "#34d399",
-                          border: isNeg ? "1px solid rgba(239,68,68,0.18)" : "1px solid rgba(16,185,129,0.18)",
-                        }}
-                      >
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize border ${
+                        isNeg
+                          ? "bg-red-50 text-red-600 border-red-200"
+                          : "bg-emerald-50 text-emerald-600 border-emerald-200"
+                      }`}>
                         {catLabel}
                       </span>
                       {sevStyle && (
-                        <span
-                          className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-                          style={{ background: sevStyle.bg, color: sevStyle.text, border: `1px solid ${sevStyle.border}` }}
-                        >
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${sevStyle.bg} ${sevStyle.text} ${sevStyle.border}`}>
                           {sevStyle.label}
                         </span>
                       )}
                     </div>
 
                     {/* Description */}
-                    <p className="text-xs mb-1.5" style={{ color: "rgba(245,240,232,0.55)", lineHeight: "1.5" }}>
-                      {r.description}
-                    </p>
+                    <p className="text-xs text-gray-500 mb-1.5 leading-relaxed">{r.description}</p>
 
                     {r.actionTaken && (
-                      <p className="text-[10px] mb-1.5 italic" style={{ color: "rgba(245,240,232,0.35)" }}>
+                      <p className="text-[10px] text-gray-400 italic mb-1.5">
                         Action taken: {r.actionTaken}
                       </p>
                     )}
 
                     {/* Meta */}
-                    <div className="flex items-center gap-3 text-[10px]" style={{ color: "rgba(245,240,232,0.3)" }}>
+                    <div className="flex items-center gap-3 text-[10px] text-gray-400">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-2.5 h-2.5" />
                         {new Date(r.date).toLocaleDateString("en-NG")}
@@ -284,12 +241,7 @@ export default function BehaviourView({ role, childId, compact = false }: Behavi
             <button
               onClick={handleLoadMore}
               disabled={isLoadingMore}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs transition-all disabled:opacity-50"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "rgba(245,240,232,0.5)",
-              }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs text-gray-500 bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all disabled:opacity-50"
             >
               {isLoadingMore
                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -302,8 +254,7 @@ export default function BehaviourView({ role, childId, compact = false }: Behavi
           {compact && totalPages > 1 && (
             <a
               href={role === "parent" ? "/parent/behaviour" : "/student/behaviour"}
-              className="block text-center text-[10px] py-1.5"
-              style={{ color: "#0ea5e9" }}
+              className="block text-center text-[10px] py-1.5 text-amber-600 hover:text-amber-700 font-medium transition-colors"
             >
               View all records →
             </a>
