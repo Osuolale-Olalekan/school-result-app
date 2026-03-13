@@ -61,7 +61,7 @@ AnnouncementSchema.index({ status: 1, targetClassIds: 1 });
 AnnouncementSchema.index({ expiresAt: 1 }); // for TTL-style filtering
 
 const AnnouncementModel: Model<IAnnouncementDocument> =
-  mongoose.models.Announcement ??
+  mongoose.models.Announcements ??
   mongoose.model<IAnnouncementDocument>("Announcements", AnnouncementSchema);
 
 export default AnnouncementModel;

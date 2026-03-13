@@ -30,6 +30,8 @@ export async function GET(
 
   try {
     await connectDB();
+    console.log("teacher id:", session.user.id, typeof session.user.id);
+console.log("classId:", classId);
 
     // Verify teacher is assigned to this class
     const assignment = await ClassAssignmentModel.findOne({
@@ -37,6 +39,7 @@ export async function GET(
       class: classId,
       isActive: true,
     });
+    console.log("assignment found:", assignment);
 
     if (!assignment) {
       return Response.json(
