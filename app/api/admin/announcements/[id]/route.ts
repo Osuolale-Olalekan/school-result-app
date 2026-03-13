@@ -21,9 +21,10 @@ import type { ApiResponse, IAnnouncement } from "@/types";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<IAnnouncement>>> {
   const session = await getServerSession(authConfig);
+  const { id } = await params;
   if (!session?.user || session.user.activeRole !== UserRole.ADMIN) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
@@ -31,7 +32,7 @@ export async function GET(
   try {
     await connectDB();
 
-    const announcement = await AnnouncementModel.findById(params.id)
+    const announcement = await AnnouncementModel.findById(id)
       .populate("createdBy", "surname firstName")
       .lean();
 
@@ -59,8 +60,9 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<IAnnouncement>>> {
+  const { id } = await params
   const session = await getServerSession(authConfig);
   if (!session?.user || session.user.activeRole !== UserRole.ADMIN) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -69,7 +71,7 @@ export async function PATCH(
   try {
     await connectDB();
 
-    const existing = await AnnouncementModel.findById(params.id);
+    const existing = await AnnouncementModel.findById(id);
     if (!existing) {
       return NextResponse.json(
         { success: false, error: "Announcement not found" },
@@ -164,8 +166,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiResponse<null>>> {
+  const { id } = await params
   const session = await getServerSession(authConfig);
   if (!session?.user || session.user.activeRole !== UserRole.ADMIN) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -174,7 +177,7 @@ export async function DELETE(
   try {
     await connectDB();
 
-    const announcement = await AnnouncementModel.findById(params.id);
+    const announcement = await AnnouncementModel.findById(id);
     if (!announcement) {
       return NextResponse.json(
         { success: false, error: "Announcement not found" },
@@ -192,7 +195,7 @@ export async function DELETE(
       );
     }
 
-    await AnnouncementModel.findByIdAndDelete(params.id);
+    await AnnouncementModel.findByIdAndDelete(id);
 
     // ✅ Correct signature — actorId not actor
     await createAuditLog({
@@ -201,7 +204,7 @@ export async function DELETE(
       actorRole: session.user.activeRole,
       action: AuditAction.DELETE,
       entity: "Announcement",
-      entityId: params.id,
+      entityId: id,
       description: `Deleted announcement: "${announcement.title}"`,
       ipAddress: request.headers.get("x-forwarded-for") ?? undefined,
     });
