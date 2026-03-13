@@ -10,7 +10,7 @@ import { UserRole } from "@/types/enums";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authConfig);
   if (!session?.user || session.user.activeRole !== UserRole.STUDENT) {
@@ -21,7 +21,7 @@ export async function POST(
     await connectDB();
 
     const SubmissionModel = (await import("@/models/Submission")).default;
-    const { id: assignmentId } = params;
+    const { id: assignmentId } = await params;
 
     const assignment = await AssignmentModel.findById(assignmentId).lean();
     if (!assignment || assignment.status !== "published") {

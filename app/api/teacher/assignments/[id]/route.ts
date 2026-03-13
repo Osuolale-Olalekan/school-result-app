@@ -10,8 +10,9 @@ import { createAuditLog } from "@/lib/audit";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
   const session = await getServerSession(authConfig);
   if (!session?.user || session.user.activeRole !== UserRole.TEACHER) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -22,7 +23,7 @@ export async function GET(
     const SubmissionModel = (await import("@/models/Submission")).default;
 
     const assignment = await AssignmentModel.findOne({
-      _id: params.id, createdBy: session.user.id,
+      _id: id, createdBy: session.user.id,
     })
       .populate("classId",   "name section")
       .populate("subjectId", "name")
@@ -32,7 +33,7 @@ export async function GET(
       return NextResponse.json({ success: false, error: "Assignment not found" }, { status: 404 });
     }
 
-    const submissions = await SubmissionModel.find({ assignmentId: params.id })
+    const submissions = await SubmissionModel.find({ assignmentId: id })
       .populate("studentId", "firstName surname admissionNumber")
       .sort({ submittedAt: -1 })
       .lean();
@@ -45,8 +46,9 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
   const session = await getServerSession(authConfig);
   if (!session?.user || session.user.activeRole !== UserRole.TEACHER) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -56,7 +58,7 @@ export async function PATCH(
     await connectDB();
 
     const assignment = await AssignmentModel.findOne({
-      _id: params.id, createdBy: session.user.id,
+      _id: id, createdBy: session.user.id,
     });
 
     if (!assignment) {

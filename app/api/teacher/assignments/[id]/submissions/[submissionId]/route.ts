@@ -10,8 +10,9 @@ import { UserRole } from "@/types/enums";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; submissionId: string } }
+  { params }: { params: Promise<{ id: string; submissionId: string }> }
 ) {
+    const { id, submissionId } = await params
   const session = await getServerSession(authConfig);
   if (!session?.user || session.user.activeRole !== UserRole.TEACHER) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -22,7 +23,7 @@ export async function PATCH(
     const SubmissionModel = (await import("@/models/Submission")).default;
 
     const assignment = await AssignmentModel.findOne({
-      _id: params.id, createdBy: session.user.id,
+      _id: id, createdBy: session.user.id,
     }).lean();
 
     if (!assignment) {
@@ -42,7 +43,7 @@ export async function PATCH(
     }
 
     const submission = await SubmissionModel.findByIdAndUpdate(
-      params.submissionId,
+      submissionId,
       { score, feedback: feedback?.trim(), gradedBy: session.user.id, gradedAt: new Date() },
       { new: true }
     );
@@ -56,11 +57,3 @@ export async function PATCH(
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
-
-// app/api/teacher/assignments/
-//   route.ts                              ← GET + POST
-//   [id]/
-//     route.ts                            ← GET + PATCH
-//     submissions/
-//       [submissionId]/
-        // route.ts                        ← PATCH (grade)
