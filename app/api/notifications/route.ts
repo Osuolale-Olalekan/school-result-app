@@ -20,20 +20,23 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
     const query: Record<string, unknown> = { recipient: session.user.id };
     if (unreadOnly) query.isRead = false;
 
-    const total = await NotificationModel.countDocuments(query);
-    const notifications = await NotificationModel.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean();
+    const [total, unreadCount, notifications] = await Promise.all([
+      NotificationModel.countDocuments(query),
+      NotificationModel.countDocuments({ recipient: session.user.id, isRead: false }),
+      NotificationModel.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+    ]);
 
     return NextResponse.json({
       success: true,
       data: notifications,
+      unreadCount,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
-    
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

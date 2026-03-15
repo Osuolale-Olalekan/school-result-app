@@ -251,8 +251,6 @@
 //     </header>
 //   );
 // }
-
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -263,7 +261,8 @@ import { getInitials, formatDateTime, truncate } from "@/lib/utils";
 import type { INotification } from "@/types";
 import Image from "next/image";
 
-const SCHOOL_LOGO = "https://res.cloudinary.com/dvgfumpoj/image/upload/v1771669318/school_logos_bm6n2y.png";
+const SCHOOL_LOGO =
+  "https://res.cloudinary.com/dvgfumpoj/image/upload/v1771669318/school_logos_bm6n2y.png";
 
 interface SessionUser {
   id: string;
@@ -298,11 +297,11 @@ function getRoleBadgeStyle(role: UserRole) {
 
 function getRoleAccentColor(role: UserRole): string {
   switch (role) {
-    case UserRole.ADMIN: return "#f97316";
+    case UserRole.ADMIN:   return "#f97316";
     case UserRole.TEACHER: return "#0ea5e9";
-    case UserRole.PARENT: return "#10b981";
+    case UserRole.PARENT:  return "#10b981";
     case UserRole.STUDENT: return "#8b5cf6";
-    default: return "#f97316";
+    default:               return "#f97316";
   }
 }
 
@@ -312,15 +311,14 @@ export default function DashboardHeader({ user }: Props) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const notifRef = useRef<HTMLDivElement>(null);
-  const userRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const prevUnreadRef = useRef<number>(0);
   const initialLoad = useRef<boolean>(true);
-const desktopNotifRef = useRef<HTMLDivElement>(null);
-const desktopUserRef = useRef<HTMLDivElement>(null);
-const mobileNotifRef = useRef<HTMLDivElement>(null);
-const mobileUserRef = useRef<HTMLDivElement>(null);
+  const desktopNotifRef = useRef<HTMLDivElement>(null);
+  const desktopUserRef = useRef<HTMLDivElement>(null);
+  const mobileNotifRef = useRef<HTMLDivElement>(null);
+  const mobileUserRef = useRef<HTMLDivElement>(null);
+
   const accentColor = getRoleAccentColor(user.activeRole);
   const roleLabel = user.activeRole.charAt(0).toUpperCase() + user.activeRole.slice(1);
 
@@ -331,16 +329,20 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node;
       if (
-    desktopNotifRef.current && !desktopNotifRef.current.contains(e.target as Node) &&
-    mobileNotifRef.current && !mobileNotifRef.current.contains(e.target as Node)
-  ) setShowNotifications(false);
-
-  if (
-    desktopUserRef.current && !desktopUserRef.current.contains(e.target as Node) &&
-    mobileUserRef.current && !mobileUserRef.current.contains(e.target as Node)
-  ) setShowUserMenu(false);
-}
+        !desktopNotifRef.current?.contains(target) &&
+        !mobileNotifRef.current?.contains(target)
+      ) {
+        setShowNotifications(false);
+      }
+      if (
+        !desktopUserRef.current?.contains(target) &&
+        !mobileUserRef.current?.contains(target)
+      ) {
+        setShowUserMenu(false);
+      }
+    }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -349,14 +351,14 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
     let cancelled = false;
     async function fetchNotifications() {
       try {
-        const res = await fetch("/api/notifications?unread=true&limit=6");
+        const res = await fetch("/api/notifications?limit=6");
         const json = await res.json() as {
           success: boolean;
           data?: INotification[];
-          pagination?: { total: number };
+          unreadCount?: number;
         };
         if (!cancelled && json.success && json.data) {
-          const newCount = json.pagination?.total ?? 0;
+          const newCount = json.unreadCount ?? 0;
           if (!initialLoad.current && newCount > prevUnreadRef.current) {
             audioRef.current?.play().catch(() => {});
           }
@@ -369,20 +371,36 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
         // silently fail
       }
     }
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
+    void fetchNotifications();
+    const interval = setInterval(() => void fetchNotifications(), 30000);
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   async function markAllRead() {
-    await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ markAll: true }),
-    });
-    setUnreadCount(0);
-    setNotifications([]);
-    prevUnreadRef.current = 0;
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markAll: true }),
+      });
+      setUnreadCount(0);
+      prevUnreadRef.current = 0;
+      // Keep notifications visible — don't clear the list
+    } catch {
+      // silently fail
+    }
+  }
+
+  function handleToggleNotifications() {
+    const opening = !showNotifications;
+    setShowNotifications(opening);
+    setShowUserMenu(false);
+    if (opening && unreadCount > 0) void markAllRead();
+  }
+
+  function handleToggleUserMenu() {
+    setShowUserMenu(!showUserMenu);
+    setShowNotifications(false);
   }
 
   return (
@@ -397,7 +415,7 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
           {/* Notifications */}
           <div className="relative" ref={desktopNotifRef}>
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={handleToggleNotifications}
               className="relative w-9 h-9 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors"
             >
               <Bell className="w-4 h-4" />
@@ -426,14 +444,27 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
                     </div>
                   ) : (
                     notifications.map((n) => (
-                      <div key={n._id} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors">
+                      <a
+                        key={n._id}
+                        href={n.link ?? "/notifications"}
+                        onClick={() => setShowNotifications(false)}
+                        className="block px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors cursor-pointer"
+                      >
                         <p className="text-sm font-medium text-gray-800 mb-0.5">{truncate(n.title, 40)}</p>
                         <p className="text-xs text-gray-500 mb-1">{truncate(n.message, 60)}</p>
                         <p className="text-[10px] text-gray-400">{formatDateTime(n.createdAt)}</p>
-                      </div>
+                      </a>
                     ))
                   )}
                 </div>
+                <a
+                  href="/notifications"
+                  onClick={() => setShowNotifications(false)}
+                  className="flex items-center justify-center py-3 text-xs font-semibold border-t border-gray-100 hover:bg-gray-50 transition-colors"
+                  style={{ color: "#0ea5e9" }}
+                >
+                  View all notifications
+                </a>
               </div>
             )}
           </div>
@@ -441,15 +472,9 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
           {/* User menu */}
           <div className="relative" ref={desktopUserRef}>
             <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
+              onClick={handleToggleUserMenu}
               className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-gray-50 transition-colors"
             >
-              {/* <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0a1d3b] to-[#1e3a5f] flex items-center justify-center text-white text-xs font-bold overflow-hidden">
-                {user.image
-                  ? <Image src={user.image} alt="avatar" width={28} height={28} className="w-full h-full rounded-lg object-cover" />
-                  : getInitials(user.surname, user.firstName, user.otherName)
-                }
-              </div> */}
               <div className="hidden sm:block text-left">
                 <p className="text-xs font-semibold text-gray-800 leading-tight">
                   {user.surname} {user.firstName}
@@ -467,10 +492,9 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
                   <p className="text-sm font-semibold text-gray-800">{user.surname} {user.firstName}</p>
                   <p className="text-xs text-gray-400">{user.email}</p>
                 </div>
-
                 <a
-                
                   href={`/${user.activeRole}/profile`}
+                  onClick={() => setShowUserMenu(false)}
                   className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   <User className="w-4 h-4" />
@@ -530,7 +554,7 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
             {/* Notification Bell */}
             <div className="relative" ref={mobileNotifRef}>
               <button
-                onClick={() => { setShowNotifications(!showNotifications); setShowUserMenu(false); }}
+                onClick={handleToggleNotifications}
                 className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
                 style={{
                   background: showNotifications ? "rgba(14,165,233,0.2)" : "rgba(255,255,255,0.07)",
@@ -552,84 +576,92 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
               </button>
 
               {/* Mobile Notifications Dropdown */}
-              {/* Mobile Notifications Dropdown */}
-{showNotifications && (
-  <div
-    className="fixed top-[57px] left-2 right-2 rounded-2xl overflow-hidden z-50"
-    style={{
-      background: "rgba(8,22,50,0.98)",
-      border: "1px solid rgba(14,165,233,0.2)",
-      boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-      backdropFilter: "blur(20px)",
-    }}
-  >
-    <div
-      className="flex items-center justify-between px-4 py-3"
-      style={{ borderBottom: "1px solid rgba(14,165,233,0.12)" }}
-    >
-      <span className="font-semibold text-sm" style={{ color: "#f5f0e8" }}>Notifications</span>
-      {unreadCount > 0 && (
-        <button
-          onClick={markAllRead}
-          className="text-xs font-medium"
-          style={{ color: "#0ea5e9" }}
-        >
-          Mark all read
-        </button>
-      )}
-    </div>
-    <div className="max-h-72 overflow-y-auto">
-      {notifications.length === 0 ? (
-        <div className="py-8 text-center">
-          <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(122,184,212,0.3)" }} />
-          <p className="text-sm" style={{ color: "rgba(245,240,232,0.4)" }}>No new notifications</p>
-        </div>
-      ) : (
-        notifications.map((n) => (
-          <div
-            key={n._id}
-            className="px-4 py-3"
-            style={{ borderBottom: "1px solid rgba(14,165,233,0.07)" }}
-          >
-            <p className="text-sm font-semibold mb-0.5" style={{ color: "#f5f0e8" }}>
-              {truncate(n.title, 40)}
-            </p>
-            <p className="text-xs mb-1" style={{ color: "rgba(245,240,232,0.5)" }}>
-              {truncate(n.message, 65)}
-            </p>
-            <p className="text-[10px]" style={{ color: "rgba(122,184,212,0.5)" }}>
-              {formatDateTime(n.createdAt)}
-            </p>
-          </div>
-        ))
-      )}
-    </div>
-  </div>
-)}
+              {showNotifications && (
+                <div
+                  className="fixed top-[57px] left-2 right-2 rounded-2xl overflow-hidden z-50"
+                  style={{
+                    background: "rgba(8,22,50,0.98)",
+                    border: "1px solid rgba(14,165,233,0.2)",
+                    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+                    backdropFilter: "blur(20px)",
+                  }}
+                >
+                  <div
+                    className="flex items-center justify-between px-4 py-3"
+                    style={{ borderBottom: "1px solid rgba(14,165,233,0.12)" }}
+                  >
+                    <span className="font-semibold text-sm" style={{ color: "#f5f0e8" }}>
+                      Notifications
+                    </span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllRead}
+                        className="text-xs font-medium"
+                        style={{ color: "#0ea5e9" }}
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center">
+                        <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(122,184,212,0.3)" }} />
+                        <p className="text-sm" style={{ color: "rgba(245,240,232,0.4)" }}>No new notifications</p>
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <a
+                          key={n._id}
+                          href={n.link ?? "/notifications"}
+                          onClick={() => setShowNotifications(false)}
+                          className="block px-4 py-3 cursor-pointer transition-colors hover:bg-white/[.04]"
+                          style={{ borderBottom: "1px solid rgba(14,165,233,0.07)" }}
+                        >
+                          <p className="text-sm font-semibold mb-0.5" style={{ color: "#f5f0e8" }}>
+                            {truncate(n.title, 40)}
+                          </p>
+                          <p className="text-xs mb-1" style={{ color: "rgba(245,240,232,0.5)" }}>
+                            {truncate(n.message, 65)}
+                          </p>
+                          <p className="text-[10px]" style={{ color: "rgba(122,184,212,0.5)" }}>
+                            {formatDateTime(n.createdAt)}
+                          </p>
+                        </a>
+                      ))
+                    )}
+                  </div>
+                  <a
+                    href="/notifications"
+                    onClick={() => setShowNotifications(false)}
+                    className="flex items-center justify-center py-3 text-xs font-semibold hover:bg-white/[.03] transition-colors"
+                    style={{ color: "#0ea5e9", borderTop: "1px solid rgba(14,165,233,0.12)" }}
+                  >
+                    View all notifications
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Avatar / User menu */}
             <div className="relative" ref={mobileUserRef}>
               <button
-                onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
+                onClick={handleToggleUserMenu}
                 className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-xl transition-all"
                 style={{
                   background: showUserMenu ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)",
                   border: "1px solid rgba(255,255,255,0.12)",
                 }}
               >
-                {/* <div
+                <div
                   className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0"
-                  style={{
-                    background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}88 100%)`,
-                    boxShadow: `0 2px 8px ${accentColor}40`,
-                  }}
+                  style={{ background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}88 100%)` }}
                 >
                   {user.image
                     ? <Image src={user.image} alt="avatar" width={28} height={28} className="w-full h-full object-cover" />
                     : getInitials(user.surname, user.firstName, user.otherName)
                   }
-                </div> */}
+                </div>
                 <ChevronDown className="w-3 h-3" style={{ color: "rgba(245,240,232,0.4)" }} />
               </button>
 
@@ -645,10 +677,7 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
                   }}
                 >
                   {/* User info */}
-                  <div
-                    className="px-4 py-4"
-                    style={{ borderBottom: "1px solid rgba(14,165,233,0.12)" }}
-                  >
+                  <div className="px-4 py-4" style={{ borderBottom: "1px solid rgba(14,165,233,0.12)" }}>
                     <div className="flex items-center gap-3">
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0 overflow-hidden"
@@ -680,7 +709,7 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
                   <div className="py-1">
                     <a
                       href={`/${user.activeRole}/profile`}
-                      className="flex items-center gap-3 px-4 py-3 text-sm transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/[.04]"
                       style={{ color: "rgba(245,240,232,0.75)" }}
                       onClick={() => setShowUserMenu(false)}
                     >
@@ -694,7 +723,7 @@ const mobileUserRef = useRef<HTMLDivElement>(null);
                     </a>
                     <button
                       onClick={() => signOut({ callbackUrl: "/sign-in" })}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/[.04]"
                       style={{ color: "rgba(239,68,68,0.85)" }}
                     >
                       <div

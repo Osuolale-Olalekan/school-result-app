@@ -9,7 +9,7 @@ import DashboardHeader from "@/components/layout/DashboardHeader";
 import RoleSwitcher from "./ComponentSwitcher";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  await headers();
+  // await headers();
   const session = await getSession();
 
   if (!session?.user) {

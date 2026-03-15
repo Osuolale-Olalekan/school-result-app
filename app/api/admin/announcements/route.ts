@@ -217,7 +217,7 @@ async function sendAnnouncementNotifications(
       title: notificationTitle,
       message: `New school announcement: ${title}`,
       metadata: { announcementId, priority },
-      link: `/announcements/${announcementId}`,
+      link: `/announcements`,
     }))
   );
 }

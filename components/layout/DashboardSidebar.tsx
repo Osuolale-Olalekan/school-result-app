@@ -26,6 +26,7 @@ import {
   User,
   Megaphone,
   ShieldAlert,
+  Bell,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { UserRole } from "@/types/enums";
@@ -61,6 +62,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
   { label: "Behaviour", href: "/admin/behaviour", icon: ShieldAlert },
   { label: "Assignments", href: "/admin/assignments",   icon: BookOpen },
+  { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "My Profile", href: "/admin/profile", icon: User },
 ];
 
@@ -71,6 +73,7 @@ const TEACHER_NAV: NavItem[] = [
   { label: "Announcements", href: "/announcements", icon: Megaphone },
   { label: "Behaviour", href: "/teacher/behaviour", icon: ShieldAlert },
   { label: "Assignments", href: "/teacher/assignments", icon: BookOpen },
+  { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "My Profile", href: "/teacher/profile", icon: User }, // ← add
 ];
 
@@ -80,7 +83,8 @@ const PARENT_NAV: NavItem[] = [
   { label: "Report Cards", href: "/parent/reports", icon: FileText },
   { label: "Announcements", href: "/announcements", icon: Megaphone },
   { label: "Behaviour", href: "/parent/behaviour",  icon: ShieldAlert },
-  { label: "Assignments", href: "/parent/assignments",  icon: BookOpen },
+  // { label: "Assignments", href: "/parent/assignments",  icon: BookOpen },
+  { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "My Profile", href: "/parent/profile", icon: User }, // ← add
 ];
 
@@ -90,6 +94,7 @@ const STUDENT_NAV: NavItem[] = [
   { label: "Announcements", href: "/announcements", icon: Megaphone },
   { label: "Behaviour", href: "/student/behaviour", icon: ShieldAlert },
   { label: "Assignments", href: "/student/assignments", icon: BookOpen },
+  { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "My Profile", href: "/student/profile", icon: User }, // ← add
 ];
 
