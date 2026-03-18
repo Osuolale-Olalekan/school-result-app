@@ -1149,7 +1149,7 @@ export default function UserForm({
         <input
           {...register("email")}
           type="email"
-          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f]"
+          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#1e3a5f]" 
         />
         {typedErrors.email && (
           <p className="text-red-500 text-xs mt-1">
