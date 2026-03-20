@@ -37,6 +37,13 @@ export async function POST(
     await user.save({ validateBeforeSave: false });
 
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
+    // ✅ Fix — guard against no email
+if (!user.email) {
+  return NextResponse.json(
+    { success: false, error: "This account has no email address. Please contact the school admin to reset your password." },
+    { status: 400 }
+  );
+}
     await sendPasswordResetEmail(user.email, user.firstName, resetUrl);
 
     return NextResponse.json({
