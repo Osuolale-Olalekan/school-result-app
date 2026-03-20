@@ -72,14 +72,14 @@ export async function POST(
       ipAddress: request.headers.get("x-forwarded-for") ?? undefined,
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: { email: admin.email },
-        message: "Admin account created successfully",
-      },
-      { status: 201 },
-    );
+    // ✅ Fix — assert email as string (admin always has email)
+return NextResponse.json(
+  {
+    success: true,
+    data: { email: admin.email as string },
+    message: "...",
+  }
+);
   } catch (error) {
     
     return NextResponse.json(
