@@ -444,7 +444,7 @@ export default function FeeStructureManagement() {
                 >
                   <option value="">Select class…</option>
                   {classes.map((c) => (
-                    <option key={c._id} value={c._id}>{c.name}{c.section ? ` (${c.section})` : ""}</option>
+                    <option key={c._id} value={c._id}>{c.name}</option>
                   ))}
                 </select>
               </div>

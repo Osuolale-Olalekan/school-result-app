@@ -8,6 +8,7 @@ export interface INotificationDocument extends Document {
   title: string;
   message: string;
   isRead: boolean;
+  isCleared: boolean;
   metadata?: Record<string, string | number | boolean>;
   link?: string;
   createdAt: Date;
@@ -22,6 +23,7 @@ const NotificationSchema = new Schema<INotificationDocument>(
     title: { type: String, required: true },
     message: { type: String, required: true },
     isRead: { type: Boolean, default: false },
+    isCleared: { type: Boolean, default: false },
     metadata: { type: Schema.Types.Mixed },
     link: { type: String },
   },

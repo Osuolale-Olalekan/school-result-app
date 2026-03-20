@@ -32,7 +32,7 @@ interface Timetable {
 }
 
 interface ClassDoc   { _id: string; name: string; section?: string }
-interface SessionDoc { _id: string; name: string; status?: string }
+interface SessionDoc { _id: string; name: string; status?: string; terms?: TermDoc[] }
 interface TermDoc    { _id: string; name: string }
 interface SubjectDoc { _id: string; name: string }
 interface TeacherDoc { _id: string; firstName: string; surname: string }
@@ -160,14 +160,8 @@ export default function TimetableManagement() {
       if (tt.success) setTimetables(tt.data ?? []);
       if (cl.success) setClasses(cl.data ?? []);
       if (se.success) {
-        setSessions(se.data ?? []);
-        const active = (se.data ?? []).find((s: SessionDoc) => s.status === "active");
-        if (active) {
-          const trRes  = await fetch(`/api/admin/sessions/${active._id}`);
-          const trJson = await trRes.json();
-          if (trJson.success) setTerms(trJson.data?.terms ?? []);
-        }
-      }
+  setSessions(se.data ?? []);
+}
       if (te.success) setTeachers(te.data ?? []);
       if (su.success) setSubjects(su.data ?? []);
     } catch {
@@ -178,6 +172,11 @@ export default function TimetableManagement() {
   }, []);
 
   useEffect(() => { void fetchAll(true); }, [fetchAll]);
+  useEffect(() => {
+  const s = sessions.find((s) => s._id === createForm.sessionId);
+  setTerms(s?.terms ?? []);
+  setCreateForm((f) => ({ ...f, termId: "" }));
+}, [createForm.sessionId, sessions]);
 
   async function handleCreate() {
     if (!createForm.classId || !createForm.sessionId || !createForm.termId)
@@ -519,7 +518,7 @@ export default function TimetableManagement() {
                 >
                   <option value="">Select class…</option>
                   {classes.map((c) => (
-                    <option key={c._id} value={c._id}>{c.name}{c.section ? ` (${c.section})` : ""}</option>
+                    <option key={c._id} value={c._id}>{c.name}</option>
                   ))}
                 </select>
               </div>

@@ -6,7 +6,7 @@
     "serialize-javascript": "^6.0.2"
   },
   "scripts": {
-    "dev": "set NEXT_FORCE_WEBPACK=1 && next dev",
+    "dev": "next dev --turbopack",
     "dev-clean": "if exist .next rmdir /s /q .next && if exist node_modules rmdir /s /q node_modules && npm install && npm run dev",
     "build": "next build",
     "start": "next start",

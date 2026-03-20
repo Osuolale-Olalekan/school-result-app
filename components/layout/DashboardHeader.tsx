@@ -254,7 +254,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, ChevronDown, User, LogOut } from "lucide-react";
+import { Bell, ChevronDown, User, LogOut, Trash2, X } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { UserRole, UserStatus } from "@/types/enums";
 import { getInitials, formatDateTime, truncate } from "@/lib/utils";
@@ -265,20 +265,22 @@ const SCHOOL_LOGO =
   "https://res.cloudinary.com/dvgfumpoj/image/upload/v1771669318/school_logos_bm6n2y.png";
 
 interface SessionUser {
-  id: string;
-  email: string;
-  surname: string;
-  firstName: string;
-  otherName: string;
-  roles: UserRole[];
+  id:         string;
+  email:      string;
+  surname:    string;
+  firstName:  string;
+  otherName:  string;
+  roles:      UserRole[];
   activeRole: UserRole;
-  status: UserStatus;
-  image?: string | null;
+  status:     UserStatus;
+  image?:     string | null;
 }
 
 interface Props {
   user: SessionUser;
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getRoleBadgeStyle(role: UserRole) {
   switch (role) {
@@ -305,22 +307,108 @@ function getRoleAccentColor(role: UserRole): string {
   }
 }
 
-export default function DashboardHeader({ user }: Props) {
-  const [notifications, setNotifications] = useState<INotification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
+// ─── NotificationItems — declared OUTSIDE the parent component ────────────────
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const prevUnreadRef = useRef<number>(0);
-  const initialLoad = useRef<boolean>(true);
-  const desktopNotifRef = useRef<HTMLDivElement>(null);
-  const desktopUserRef = useRef<HTMLDivElement>(null);
-  const mobileNotifRef = useRef<HTMLDivElement>(null);
-  const mobileUserRef = useRef<HTMLDivElement>(null);
+interface NotificationItemsProps {
+  notifications:       INotification[];
+  dark?:               boolean;
+  onClose:             () => void;
+  onClearOne:          (e: React.MouseEvent, id: string) => void;
+}
+
+function NotificationItems({
+  notifications,
+  dark = false,
+  onClose,
+  onClearOne,
+}: NotificationItemsProps) {
+  if (notifications.length === 0) {
+    return (
+      <div className="py-8 text-center">
+        <Bell
+          className="w-8 h-8 mx-auto mb-2"
+          style={dark ? { color: "rgba(122,184,212,0.3)" } : { color: "#e5e7eb" }}
+        />
+        <p
+          className="text-sm"
+          style={dark ? { color: "rgba(245,240,232,0.4)" } : { color: "#9ca3af" }}
+        >
+          No new notifications
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {notifications.map((n) => (
+        <div key={n._id} className="group relative">
+          <a
+            href={n.link ?? "/notifications"}
+            onClick={onClose}
+            className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${
+              dark ? "hover:bg-white/[.04]" : "hover:bg-gray-50"
+            }`}
+            style={dark ? { borderBottom: "1px solid rgba(14,165,233,0.07)" } : undefined}
+          >
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-sm font-medium mb-0.5 pr-5"
+                style={dark ? { color: "#f5f0e8", fontWeight: 600 } : { color: "#1f2937" }}
+              >
+                {truncate(n.title, 36)}
+              </p>
+              <p
+                className="text-xs mb-1"
+                style={dark ? { color: "rgba(245,240,232,0.5)" } : { color: "#6b7280" }}
+              >
+                {truncate(n.message, 55)}
+              </p>
+              <p
+                className="text-[10px]"
+                style={dark ? { color: "rgba(122,184,212,0.5)" } : { color: "#9ca3af" }}
+              >
+                {formatDateTime(n.createdAt)}
+              </p>
+            </div>
+          </a>
+
+          {/* Clear single — appears on hover */}
+          <button
+            onClick={(e) => onClearOne(e, n._id)}
+            className="absolute top-3 right-3 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+            style={dark
+              ? { color: "rgba(245,240,232,0.4)", background: "rgba(255,255,255,0.06)" }
+              : { color: "#9ca3af", background: "#f3f4f6" }
+            }
+            title="Clear notification"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      ))}
+    </>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export default function DashboardHeader({ user }: Props) {
+  const [notifications,      setNotifications]      = useState<INotification[]>([]);
+  const [unreadCount,        setUnreadCount]        = useState(0);
+  const [showNotifications,  setShowNotifications]  = useState(false);
+  const [showUserMenu,       setShowUserMenu]       = useState(false);
+
+  const audioRef          = useRef<HTMLAudioElement | null>(null);
+  const prevUnreadRef     = useRef<number>(0);
+  const initialLoad       = useRef<boolean>(true);
+  const desktopNotifRef   = useRef<HTMLDivElement>(null);
+  const desktopUserRef    = useRef<HTMLDivElement>(null);
+  const mobileNotifRef    = useRef<HTMLDivElement>(null);
+  const mobileUserRef     = useRef<HTMLDivElement>(null);
 
   const accentColor = getRoleAccentColor(user.activeRole);
-  const roleLabel = user.activeRole.charAt(0).toUpperCase() + user.activeRole.slice(1);
+  const roleLabel   = user.activeRole.charAt(0).toUpperCase() + user.activeRole.slice(1);
 
   useEffect(() => {
     audioRef.current = new Audio("/sounds/notification.mp3");
@@ -330,16 +418,10 @@ export default function DashboardHeader({ user }: Props) {
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       const target = e.target as Node;
-      if (
-        !desktopNotifRef.current?.contains(target) &&
-        !mobileNotifRef.current?.contains(target)
-      ) {
+      if (!desktopNotifRef.current?.contains(target) && !mobileNotifRef.current?.contains(target)) {
         setShowNotifications(false);
       }
-      if (
-        !desktopUserRef.current?.contains(target) &&
-        !mobileUserRef.current?.contains(target)
-      ) {
+      if (!desktopUserRef.current?.contains(target) && !mobileUserRef.current?.contains(target)) {
         setShowUserMenu(false);
       }
     }
@@ -351,11 +433,9 @@ export default function DashboardHeader({ user }: Props) {
     let cancelled = false;
     async function fetchNotifications() {
       try {
-        const res = await fetch("/api/notifications?limit=6");
+        const res  = await fetch("/api/notifications?limit=6");
         const json = await res.json() as {
-          success: boolean;
-          data?: INotification[];
-          unreadCount?: number;
+          success: boolean; data?: INotification[]; unreadCount?: number;
         };
         if (!cancelled && json.success && json.data) {
           const newCount = json.unreadCount ?? 0;
@@ -363,13 +443,11 @@ export default function DashboardHeader({ user }: Props) {
             audioRef.current?.play().catch(() => {});
           }
           prevUnreadRef.current = newCount;
-          initialLoad.current = false;
+          initialLoad.current   = false;
           setNotifications(json.data);
           setUnreadCount(newCount);
         }
-      } catch {
-        // silently fail
-      }
+      } catch { /* silently fail */ }
     }
     void fetchNotifications();
     const interval = setInterval(() => void fetchNotifications(), 30000);
@@ -379,16 +457,40 @@ export default function DashboardHeader({ user }: Props) {
   async function markAllRead() {
     try {
       await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ markAll: true }),
       });
       setUnreadCount(0);
       prevUnreadRef.current = 0;
-      // Keep notifications visible — don't clear the list
-    } catch {
-      // silently fail
-    }
+    } catch { /* silently fail */ }
+  }
+
+  async function clearAll() {
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clearAll: true }),
+      });
+      setNotifications([]);
+      setUnreadCount(0);
+      prevUnreadRef.current = 0;
+    } catch { /* silently fail */ }
+  }
+
+  async function clearOne(e: React.MouseEvent, id: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId: id, action: "clear" }),
+      });
+      setNotifications((prev) => prev.filter((n) => n._id !== id));
+      setUnreadCount((prev) => {
+        const wasUnread = notifications.find((n) => n._id === id && !n.isRead);
+        return wasUnread ? Math.max(0, prev - 1) : prev;
+      });
+    } catch { /* silently fail */ }
   }
 
   function handleToggleNotifications() {
@@ -403,16 +505,23 @@ export default function DashboardHeader({ user }: Props) {
     setShowNotifications(false);
   }
 
+  const closeNotifications = () => setShowNotifications(false);
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+
   return (
     <>
-      {/* ── Desktop Header (lg+) ───────────────────────────────────── */}
+      {/* ════════════════════════════════════════════════════ */}
+      {/* Desktop Header (lg+)                               */}
+      {/* ════════════════════════════════════════════════════ */}
       <header className="hidden lg:flex bg-white border-b border-gray-100 px-6 h-14 items-center justify-between sticky top-0 z-30">
         <div className="text-sm text-gray-500">
           Welcome, <span className="font-semibold text-gray-800">{user.firstName}</span>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Notifications */}
+
+          {/* ── Desktop Bell ── */}
           <div className="relative" ref={desktopNotifRef}>
             <button
               onClick={handleToggleNotifications}
@@ -430,38 +539,36 @@ export default function DashboardHeader({ user }: Props) {
               <div className="absolute right-0 top-11 w-80 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
                   <span className="font-semibold text-sm text-gray-800">Notifications</span>
-                  {unreadCount > 0 && (
-                    <button onClick={markAllRead} className="text-xs text-blue-600 hover:text-blue-700">
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-                <div className="max-h-72 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="py-8 text-center">
-                      <Bell className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                      <p className="text-gray-400 text-sm">No new notifications</p>
-                    </div>
-                  ) : (
-                    notifications.map((n) => (
-                      <a
-                        key={n._id}
-                        href={n.link ?? "/notifications"}
-                        onClick={() => setShowNotifications(false)}
-                        className="block px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors cursor-pointer"
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <button onClick={markAllRead} className="text-xs text-blue-600 hover:text-blue-700">
+                        Mark all read
+                      </button>
+                    )}
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearAll}
+                        className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600 transition-colors"
                       >
-                        <p className="text-sm font-medium text-gray-800 mb-0.5">{truncate(n.title, 40)}</p>
-                        <p className="text-xs text-gray-500 mb-1">{truncate(n.message, 60)}</p>
-                        <p className="text-[10px] text-gray-400">{formatDateTime(n.createdAt)}</p>
-                      </a>
-                    ))
-                  )}
+                        <Trash2 className="w-3 h-3" /> Clear all
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                <div className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                  <NotificationItems
+                    notifications={notifications}
+                    dark={false}
+                    onClose={closeNotifications}
+                    onClearOne={clearOne}
+                  />
+                </div>
+
                 <a
                   href="/notifications"
-                  onClick={() => setShowNotifications(false)}
-                  className="flex items-center justify-center py-3 text-xs font-semibold border-t border-gray-100 hover:bg-gray-50 transition-colors"
-                  style={{ color: "#0ea5e9" }}
+                  onClick={closeNotifications}
+                  className="flex items-center justify-center py-3 text-xs font-semibold border-t border-gray-100 hover:bg-gray-50 transition-colors text-blue-500"
                 >
                   View all notifications
                 </a>
@@ -469,7 +576,7 @@ export default function DashboardHeader({ user }: Props) {
             )}
           </div>
 
-          {/* User menu */}
+          {/* ── Desktop User Menu ── */}
           <div className="relative" ref={desktopUserRef}>
             <button
               onClick={handleToggleUserMenu}
@@ -479,7 +586,10 @@ export default function DashboardHeader({ user }: Props) {
                 <p className="text-xs font-semibold text-gray-800 leading-tight">
                   {user.surname} {user.firstName}
                 </p>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={getRoleBadgeStyle(user.activeRole)}>
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                  style={getRoleBadgeStyle(user.activeRole)}
+                >
                   {roleLabel}
                 </span>
               </div>
@@ -497,23 +607,24 @@ export default function DashboardHeader({ user }: Props) {
                   onClick={() => setShowUserMenu(false)}
                   className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                 >
-                  <User className="w-4 h-4" />
-                  My Profile
+                  <User className="w-4 h-4" /> My Profile
                 </a>
                 <button
                   onClick={() => signOut({ callbackUrl: "/sign-in" })}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
                 >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
+                  <LogOut className="w-4 h-4" /> Sign Out
                 </button>
               </div>
             )}
           </div>
+
         </div>
       </header>
 
-      {/* ── Mobile Header (< lg) — premium dark app style ─────────── */}
+      {/* ════════════════════════════════════════════════════ */}
+      {/* Mobile Header (< lg)                               */}
+      {/* ════════════════════════════════════════════════════ */}
       <header
         className="lg:hidden sticky top-0 z-30"
         style={{
@@ -551,7 +662,7 @@ export default function DashboardHeader({ user }: Props) {
           {/* Right — Bell + Avatar */}
           <div className="flex items-center gap-2">
 
-            {/* Notification Bell */}
+            {/* ── Mobile Bell ── */}
             <div className="relative" ref={mobileNotifRef}>
               <button
                 onClick={handleToggleNotifications}
@@ -575,7 +686,6 @@ export default function DashboardHeader({ user }: Props) {
                 )}
               </button>
 
-              {/* Mobile Notifications Dropdown */}
               {showNotifications && (
                 <div
                   className="fixed top-[57px] left-2 right-2 rounded-2xl overflow-hidden z-50"
@@ -593,47 +703,36 @@ export default function DashboardHeader({ user }: Props) {
                     <span className="font-semibold text-sm" style={{ color: "#f5f0e8" }}>
                       Notifications
                     </span>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={markAllRead}
-                        className="text-xs font-medium"
-                        style={{ color: "#0ea5e9" }}
-                      >
-                        Mark all read
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-72 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="py-8 text-center">
-                        <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: "rgba(122,184,212,0.3)" }} />
-                        <p className="text-sm" style={{ color: "rgba(245,240,232,0.4)" }}>No new notifications</p>
-                      </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <a
-                          key={n._id}
-                          href={n.link ?? "/notifications"}
-                          onClick={() => setShowNotifications(false)}
-                          className="block px-4 py-3 cursor-pointer transition-colors hover:bg-white/[.04]"
-                          style={{ borderBottom: "1px solid rgba(14,165,233,0.07)" }}
+                    <div className="flex items-center gap-3">
+                      {unreadCount > 0 && (
+                        <button onClick={markAllRead} className="text-xs font-medium" style={{ color: "#0ea5e9" }}>
+                          Mark all read
+                        </button>
+                      )}
+                      {notifications.length > 0 && (
+                        <button
+                          onClick={clearAll}
+                          className="flex items-center gap-1 text-xs font-medium"
+                          style={{ color: "#f87171" }}
                         >
-                          <p className="text-sm font-semibold mb-0.5" style={{ color: "#f5f0e8" }}>
-                            {truncate(n.title, 40)}
-                          </p>
-                          <p className="text-xs mb-1" style={{ color: "rgba(245,240,232,0.5)" }}>
-                            {truncate(n.message, 65)}
-                          </p>
-                          <p className="text-[10px]" style={{ color: "rgba(122,184,212,0.5)" }}>
-                            {formatDateTime(n.createdAt)}
-                          </p>
-                        </a>
-                      ))
-                    )}
+                          <Trash2 className="w-3 h-3" /> Clear
+                        </button>
+                      )}
+                    </div>
                   </div>
+
+                  <div className="max-h-72 overflow-y-auto">
+                    <NotificationItems
+                      notifications={notifications}
+                      dark={true}
+                      onClose={closeNotifications}
+                      onClearOne={clearOne}
+                    />
+                  </div>
+
                   <a
                     href="/notifications"
-                    onClick={() => setShowNotifications(false)}
+                    onClick={closeNotifications}
                     className="flex items-center justify-center py-3 text-xs font-semibold hover:bg-white/[.03] transition-colors"
                     style={{ color: "#0ea5e9", borderTop: "1px solid rgba(14,165,233,0.12)" }}
                   >
@@ -643,7 +742,7 @@ export default function DashboardHeader({ user }: Props) {
               )}
             </div>
 
-            {/* Avatar / User menu */}
+            {/* ── Mobile User Menu ── */}
             <div className="relative" ref={mobileUserRef}>
               <button
                 onClick={handleToggleUserMenu}
@@ -665,7 +764,6 @@ export default function DashboardHeader({ user }: Props) {
                 <ChevronDown className="w-3 h-3" style={{ color: "rgba(245,240,232,0.4)" }} />
               </button>
 
-              {/* Mobile User Dropdown */}
               {showUserMenu && (
                 <div
                   className="absolute right-0 top-11 w-60 rounded-2xl overflow-hidden z-50"
@@ -676,7 +774,6 @@ export default function DashboardHeader({ user }: Props) {
                     backdropFilter: "blur(20px)",
                   }}
                 >
-                  {/* User info */}
                   <div className="px-4 py-4" style={{ borderBottom: "1px solid rgba(14,165,233,0.12)" }}>
                     <div className="flex items-center gap-3">
                       <div
@@ -705,13 +802,12 @@ export default function DashboardHeader({ user }: Props) {
                     </p>
                   </div>
 
-                  {/* Menu items */}
                   <div className="py-1">
                     <a
                       href={`/${user.activeRole}/profile`}
+                      onClick={() => setShowUserMenu(false)}
                       className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/[.04]"
                       style={{ color: "rgba(245,240,232,0.75)" }}
-                      onClick={() => setShowUserMenu(false)}
                     >
                       <div
                         className="w-7 h-7 rounded-lg flex items-center justify-center"
