@@ -775,16 +775,17 @@ function ActionMenuButton({
           >
             <Edit className="w-4 h-4" /> Edit
           </button>
-          {/* Reset Password — available for all users */}
-          <button
-            onClick={() => {
-              setResetUser(user);
-              setActionMenu(null);
-            }}
-            className="w-full text-left px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2"
-          >
-            <KeyRound className="w-4 h-4" /> Reset Password
-          </button>
+          {!user.email && (
+            <button
+              onClick={() => {
+                setResetUser(user);
+                setActionMenu(null);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2"
+            >
+              <KeyRound className="w-4 h-4" /> Reset Password
+            </button>
+          )}
           <button
             onClick={() => handleAction(userId, "suspend")}
             className="w-full text-left px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2"
@@ -826,7 +827,10 @@ function ActionMenuButton({
             </div>
 
             {/* Actions grid — 5 items now */}
-            <div className="grid grid-cols-4 gap-1 p-3 border-b border-gray-50">
+            {/* Actions grid — dynamic cols based on whether Reset is shown */}
+            <div
+              className={`grid ${!user.email ? "grid-cols-4" : "grid-cols-3"} gap-1 p-3 border-b border-gray-50`}
+            >
               <button
                 onClick={() => {
                   setViewingUserId(userId);
@@ -851,19 +855,20 @@ function ActionMenuButton({
                 </div>
                 <span className="text-xs text-blue-600">Edit</span>
               </button>
-              {/* Reset Password */}
-              <button
-                onClick={() => {
-                  setResetUser(user);
-                  setActionMenu(null);
-                }}
-                className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-amber-50"
-              >
-                <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
-                  <KeyRound className="w-4 h-4 text-amber-600" />
-                </div>
-                <span className="text-xs text-amber-600">Reset</span>
-              </button>
+              {!user.email && (
+                <button
+                  onClick={() => {
+                    setResetUser(user);
+                    setActionMenu(null);
+                  }}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-amber-50"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
+                    <KeyRound className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <span className="text-xs text-amber-600">Reset</span>
+                </button>
+              )}
               {user.status !== UserStatus.ACTIVE ? (
                 <button
                   onClick={() => handleAction(userId, "activate")}

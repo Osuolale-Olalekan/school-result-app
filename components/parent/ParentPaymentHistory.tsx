@@ -103,7 +103,8 @@ export default function ParentPaymentHistory() {
   const [terms, setTerms] = useState<TermDoc[]>([]);
 
   useEffect(() => {
-    fetch("/api/admin/sessions")
+    // fetch("/api/admin/sessions")
+    fetch("/api/sessions")
       .then((r) => r.json())
       .then((j: { success: boolean; data?: SessionDoc[] }) => {
         if (j.success) {
