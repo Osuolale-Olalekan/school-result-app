@@ -77,6 +77,7 @@ export async function GET(): Promise<
         },
       },
       { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
+       { $match: { "classInfo.name": { $exists: true, $ne: null } } },
       { $group: { _id: "$classInfo.name", count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]);
