@@ -9,8 +9,57 @@ const TEACHER_ROUTES = ["/teacher"];
 const PARENT_ROUTES = ["/parent"];
 const STUDENT_ROUTES = ["/student"];
 
+// ─── Rate Limiter ─────────────────────────────────────────────────────────────
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+
+const RATE_LIMIT_RULES: { pattern: string; limit: number; windowMs: number }[] = [
+  { pattern: "/api/auth",           limit: 10,  windowMs: 60_000  }, // 10 login attempts/min
+  { pattern: "/api/admin",          limit: 100, windowMs: 60_000  }, // 100 admin API calls/min
+  { pattern: "/api/",               limit: 200, windowMs: 60_000  }, // 200 general API calls/min
+];
+
+function getRateLimit(pathname: string) {
+  return RATE_LIMIT_RULES.find((r) => pathname.startsWith(r.pattern));
+}
+
+function isRateLimited(ip: string, pathname: string): boolean {
+  const rule = getRateLimit(pathname);
+  if (!rule) return false;
+
+  const key     = `${ip}:${rule.pattern}`;
+  const now     = Date.now();
+  const entry   = rateLimitMap.get(key);
+
+  if (!entry || now - entry.lastReset > rule.windowMs) {
+    rateLimitMap.set(key, { count: 1, lastReset: now });
+    return false;
+  }
+
+  entry.count++;
+  if (entry.count > rule.limit) return true;
+
+  return false;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // ── Rate limiting — only applies to API routes ────────────────────────────
+  if (pathname.startsWith("/api")) {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? req.headers.get("x-real-ip")
+      ?? "unknown";
+
+    if (isRateLimited(ip, pathname)) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests. Please slow down." },
+        { status: 429 }
+      );
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
   // Allow public routes and API routes
@@ -33,38 +82,31 @@ export async function proxy(req: NextRequest) {
   }
 
   // ── Check if user is still active in DB ──────────────────────────
-  // Only runs on page navigations, not API calls (those are excluded above)
   try {
     const baseUrl = req.nextUrl.origin;
     const res = await fetch(`${baseUrl}/api/auth/check-status`, {
       headers: { cookie: req.headers.get("cookie") ?? "" },
     });
     if (res.status === 403) {
-      // User suspended or deleted — clear session and redirect
       const signInUrl = new URL("/sign-in", req.url);
       signInUrl.searchParams.set("error", "AccountSuspended");
       return NextResponse.redirect(signInUrl);
     }
   } catch {
-    // If check fails (e.g. network error), allow through — don't lock out users
+    // If check fails, allow through
   }
-  // ─────────────────────────────────────────────────────────────────
 
   const activeRole = token.activeRole as UserRole;
 
-  // Role-based access control
   if (activeRole !== UserRole.ADMIN && ADMIN_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
-
   if (activeRole !== UserRole.TEACHER && TEACHER_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
-
   if (activeRole !== UserRole.PARENT && PARENT_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
-
   if (activeRole !== UserRole.STUDENT && STUDENT_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }

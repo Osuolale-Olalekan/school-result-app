@@ -29,6 +29,7 @@ import {
   sanitizeOptional,
 } from "@/lib/utils";
 import type { ApiResponse } from "@/types";
+import { Types } from "mongoose";
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
 
@@ -41,12 +42,12 @@ async function requireAdmin() {
 // ─── Shared created user type ─────────────────────────────────────────────────
 
 interface CreatedUser {
-  _id:        unknown;
-  surname:    string;
-  firstName:  string;
-  otherName:  string;
-  email?:     string;   // optional — students may not have an email
-  roles:      UserRole[];
+  _id: unknown;
+  surname: string;
+  firstName: string;
+  otherName: string;
+  email?: string; // optional — students may not have an email
+  roles: UserRole[];
   activeRole: UserRole;
 }
 
@@ -57,28 +58,31 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<object[]>>> {
   const session = await requireAdmin();
   if (!session) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
   try {
     await connectDB();
 
     const { searchParams } = new URL(request.url);
-    const role   = searchParams.get("role") as UserRole | null;
+    const role = searchParams.get("role") as UserRole | null;
     const status = searchParams.get("status");
-    const page   = parseInt(searchParams.get("page")  ?? "1");
-    const limit  = parseInt(searchParams.get("limit") ?? "20");
+    const page = parseInt(searchParams.get("page") ?? "1");
+    const limit = parseInt(searchParams.get("limit") ?? "20");
     const search = searchParams.get("search");
 
     const query: Record<string, unknown> = {};
-    if (role)   query.roles  = role;
+    if (role) query.roles = role;
     if (status) query.status = status;
     if (search) {
       query.$or = [
-        { surname:         { $regex: search, $options: "i" } },
-        { firstName:       { $regex: search, $options: "i" } },
-        { otherName:       { $regex: search, $options: "i" } },
-        { email:           { $regex: search, $options: "i" } },
+        { surname: { $regex: search, $options: "i" } },
+        { firstName: { $regex: search, $options: "i" } },
+        { otherName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
         { admissionNumber: { $regex: search, $options: "i" } },
       ];
     }
@@ -98,7 +102,10 @@ export async function GET(
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch {
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -109,25 +116,27 @@ export async function POST(
 ): Promise<NextResponse<ApiResponse<object>>> {
   const session = await requireAdmin();
   if (!session) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
   try {
     await connectDB();
 
-    const body        = (await request.json()) as Record<string, unknown>;
-    const { role }    = body as { role: UserRole };
-    const tempPassword   = Math.random().toString(36).slice(-8) + "A1!";
+    const body = (await request.json()) as Record<string, unknown>;
+    const { role } = body as { role: UserRole };
+    const tempPassword = Math.random().toString(36).slice(-8) + "A1!";
     const hashedPassword = await bcrypt.hash(tempPassword, 12);
 
     let created: CreatedUser | null = null;
 
     // ── STUDENT ──────────────────────────────────────────────────────────────
     if (role === UserRole.STUDENT) {
-
       // Normalize email — undefined if blank
       const emailRaw = (body.email as string | undefined)?.trim();
-      const email    = emailRaw ? emailRaw.toLowerCase() : undefined;
+      const email = emailRaw ? emailRaw.toLowerCase() : undefined;
 
       // Check email uniqueness only if provided
       if (email) {
@@ -135,7 +144,7 @@ export async function POST(
         if (emailExists) {
           return NextResponse.json(
             { success: false, error: "Email already exists" },
-            { status: 409 }
+            { status: 409 },
           );
         }
       }
@@ -149,19 +158,25 @@ export async function POST(
         if (existing) {
           return NextResponse.json(
             { success: false, error: "Admission number already exists" },
-            { status: 409 }
+            { status: 409 },
           );
         }
         admissionNumber = (body.admissionNumber as string).toUpperCase();
       } else {
         const studentCount = await StudentModel.countDocuments();
-        admissionNumber    = generateAdmissionNumber(new Date().getFullYear(), studentCount + 1);
+        admissionNumber = generateAdmissionNumber(
+          new Date().getFullYear(),
+          studentCount + 1,
+        );
       }
 
       // Validate class
       const classDoc = await ClassModel.findById(body.currentClass);
       if (!classDoc) {
-        return NextResponse.json({ success: false, error: "Class not found" }, { status: 400 });
+        return NextResponse.json(
+          { success: false, error: "Class not found" },
+          { status: 400 },
+        );
       }
 
       // Validate department for SSS students
@@ -169,87 +184,104 @@ export async function POST(
       if (isSSS && (!body.department || body.department === Department.NONE)) {
         return NextResponse.json(
           { success: false, error: "Department is required for SSS students" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       created = (await StudentModel.create({
-        surname:       (body.surname   as string).trim(),
-        firstName:     (body.firstName as string).trim(),
-        otherName:     (body.otherName as string | undefined)?.trim() ?? "",
-        email,                              // ← undefined if no email provided
-        password:      hashedPassword,
-        phone:         sanitizePhone(body.phone),
-        roles:         [UserRole.STUDENT],
-        activeRole:    UserRole.STUDENT,
-        status:        UserStatus.ACTIVE,
-        profilePhoto:  body.profilePhoto,
+        surname: (body.surname as string).trim(),
+        firstName: (body.firstName as string).trim(),
+        otherName: (body.otherName as string | undefined)?.trim() ?? "",
+        email, // ← undefined if no email provided
+        password: hashedPassword,
+        phone: sanitizePhone(body.phone),
+        roles: [UserRole.STUDENT],
+        activeRole: UserRole.STUDENT,
+        status: UserStatus.ACTIVE,
+        profilePhoto: body.profilePhoto,
         admissionNumber,
         admissionDate: body.admissionDate ?? new Date(),
-        dateOfBirth:   body.dateOfBirth,
-        gender:        body.gender,
-        address:       sanitizeOptional(body.address),
-        guardianName:  sanitizeOptional(body.guardianName),
-        guardianPhone: body.guardianPhone ? sanitizePhone(body.guardianPhone) : undefined,
-        currentClass:  body.currentClass,
-        department:    body.department ?? Department.NONE,
+        dateOfBirth: body.dateOfBirth,
+        gender: body.gender,
+        address: sanitizeOptional(body.address),
+        guardianName: sanitizeOptional(body.guardianName),
+        guardianPhone: body.guardianPhone
+          ? sanitizePhone(body.guardianPhone)
+          : undefined,
+        // currentClass:  body.currentClass,
+        currentClass: new Types.ObjectId(body.currentClass as string),
+        department: body.department ?? Department.NONE,
         studentStatus: StudentStatus.ACTIVE,
-        parents:       body.parents ?? [],
+        parents: body.parents ?? [],
         stateOfOrigin: body.stateOfOrigin,
         localGovernment: body.localGovernment,
-        religion:      body.religion,
-        bloodGroup:    body.bloodGroup,
+        religion: body.religion,
+        bloodGroup: body.bloodGroup,
       })) as unknown as CreatedUser;
 
-    // ── TEACHER ──────────────────────────────────────────────────────────────
+      // ── TEACHER ──────────────────────────────────────────────────────────────
     } else if (role === UserRole.TEACHER) {
       const teacherCount = await TeacherModel.countDocuments();
-      const employeeId   = generateEmployeeId(teacherCount + 1);
+      const employeeId = generateEmployeeId(teacherCount + 1);
 
       created = (await TeacherModel.create({
-        surname:          (body.surname   as string).trim(),
-        firstName:        (body.firstName as string).trim(),
-        otherName:        (body.otherName as string | undefined)?.trim() ?? "",
-        email:            (body.email as string).toLowerCase().trim(),
-        password:         hashedPassword,
-        phone:            sanitizePhone(body.phone),
-        roles:            [UserRole.TEACHER],
-        activeRole:       UserRole.TEACHER,
-        status:           UserStatus.ACTIVE,
-        profilePhoto:     body.profilePhoto,
+        surname: (body.surname as string).trim(),
+        firstName: (body.firstName as string).trim(),
+        otherName: (body.otherName as string | undefined)?.trim() ?? "",
+        email: (body.email as string).toLowerCase().trim(),
+        password: hashedPassword,
+        phone: sanitizePhone(body.phone),
+        roles: [UserRole.TEACHER],
+        activeRole: UserRole.TEACHER,
+        status: UserStatus.ACTIVE,
+        profilePhoto: body.profilePhoto,
         employeeId,
-        qualification:    sanitizeOptional(body.qualification),
-        specialization:   sanitizeOptional(body.specialization),
+        qualification: sanitizeOptional(body.qualification),
+        specialization: sanitizeOptional(body.specialization),
         dateOfEmployment: body.dateOfEmployment ?? new Date(),
       })) as unknown as CreatedUser;
 
-    // ── PARENT ───────────────────────────────────────────────────────────────
+      // ── PARENT ───────────────────────────────────────────────────────────────
     } else if (role === UserRole.PARENT) {
       created = (await ParentModel.create({
-        surname:      (body.surname   as string).trim(),
-        firstName:    (body.firstName as string).trim(),
-        otherName:    (body.otherName as string | undefined)?.trim() ?? "",
-        email:        (body.email as string).toLowerCase().trim(),
-        password:     hashedPassword,
-        phone:        sanitizePhone(body.phone),
-        roles:        [UserRole.PARENT],
-        activeRole:   UserRole.PARENT,
-        status:       UserStatus.ACTIVE,
+        surname: (body.surname as string).trim(),
+        firstName: (body.firstName as string).trim(),
+        otherName: (body.otherName as string | undefined)?.trim() ?? "",
+        email: (body.email as string).toLowerCase().trim(),
+        password: hashedPassword,
+        phone: sanitizePhone(body.phone),
+        roles: [UserRole.PARENT],
+        activeRole: UserRole.PARENT,
+        status: UserStatus.ACTIVE,
         profilePhoto: body.profilePhoto,
-        children:     body.children ?? [],
-        occupation:   body.occupation,
+        children: body.children ?? [],
+        occupation: body.occupation,
         relationship: body.relationship,
       })) as unknown as CreatedUser;
 
       // Link parent to children
+      // if (Array.isArray(body.children) && body.children.length > 0) {
+      //   await StudentModel.updateMany(
+      //     { _id: { $in: body.children } },
+      //     { $addToSet: { parents: created._id } }
+      //   );
+      // }
+
+      // Link parent to children
       if (Array.isArray(body.children) && body.children.length > 0) {
         await StudentModel.updateMany(
-          { _id: { $in: body.children } },
-          { $addToSet: { parents: created._id } }
+          {
+            _id: {
+              $in: (body.children as string[]).map(
+                (id) => new Types.ObjectId(id),
+              ),
+            },
+          },
+          { $addToSet: { parents: created._id } },
         );
       }
 
-    // ── ADMIN ─────────────────────────────────────────────────────────────────
+      // ── ADMIN ─────────────────────────────────────────────────────────────────
     } else if (role === UserRole.ADMIN) {
       const existing = await UserModel.findOne({
         email: (body.email as string).toLowerCase().trim(),
@@ -257,56 +289,66 @@ export async function POST(
       if (existing) {
         return NextResponse.json(
           { success: false, error: "Email already exists" },
-          { status: 409 }
+          { status: 409 },
         );
       }
 
       created = (await UserModel.create({
-        surname:    (body.surname   as string).trim(),
-        firstName:  (body.firstName as string).trim(),
-        otherName:  (body.otherName as string | undefined)?.trim() ?? "",
-        email:      (body.email as string).toLowerCase().trim(),
-        password:   hashedPassword,
-        phone:      body.phone,
-        roles:      [UserRole.ADMIN],
+        surname: (body.surname as string).trim(),
+        firstName: (body.firstName as string).trim(),
+        otherName: (body.otherName as string | undefined)?.trim() ?? "",
+        email: (body.email as string).toLowerCase().trim(),
+        password: hashedPassword,
+        phone: body.phone,
+        roles: [UserRole.ADMIN],
         activeRole: UserRole.ADMIN,
-        status:     UserStatus.ACTIVE,
+        status: UserStatus.ACTIVE,
       })) as unknown as CreatedUser;
-
     } else {
-      return NextResponse.json({ success: false, error: "Invalid role" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Invalid role" },
+        { status: 400 },
+      );
     }
 
     if (!created) {
-      return NextResponse.json({ success: false, error: "Failed to create user" }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: "Failed to create user" },
+        { status: 500 },
+      );
     }
 
     // ── Send welcome email — only if the user has an email ──────────────────
     if (created.email) {
-      await sendWelcomeEmail(created.email, created.firstName, role, tempPassword);
+      await sendWelcomeEmail(
+        created.email,
+        created.firstName,
+        role,
+        tempPassword,
+      );
     }
 
     // ── In-app notification ──────────────────────────────────────────────────
     await createNotification({
-      recipientId:   created._id?.toString() ?? "",
+      recipientId: created._id?.toString() ?? "",
       recipientRole: role,
-      type:          NotificationType.ACCOUNT_CREATED,
-      title:         "Welcome to God's Way Model Groups of Schools",
-      message:       created.email
+      type: NotificationType.ACCOUNT_CREATED,
+      title: "Welcome to God's Way Model Groups of Schools",
+      message: created.email
         ? `Your ${role} account has been created. Please check your email for login credentials.`
         : `Your ${role} account has been created. Use your admission number and the password provided by your admin to log in.`,
     });
 
     // ── Audit log ────────────────────────────────────────────────────────────
     await createAuditLog({
-      actorId:     session.user.id,
-      actorName:   `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
-      actorRole:   UserRole.ADMIN,
-      action:      AuditAction.CREATE,
-      entity:      role.charAt(0).toUpperCase() + role.slice(1),
-      entityId:    created._id?.toString() ?? "",
+      actorId: session.user.id,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
+      actorRole: UserRole.ADMIN,
+      action: AuditAction.CREATE,
+      entity: role.charAt(0).toUpperCase() + role.slice(1),
+      entityId: created._id?.toString() ?? "",
       description: `Created ${role} account for ${created.surname} ${created.firstName} ${created.otherName}`,
-      ipAddress:   request.headers.get("x-forwarded-for") ?? undefined,
+      ipAddress: request.headers.get("x-forwarded-for") ?? undefined,
     });
 
     const { ...safeUser } = created;
@@ -314,33 +356,41 @@ export async function POST(
     // ── If student has no email, return the temp password so admin can share it
     const responseData: Record<string, unknown> = { ...safeUser };
     if (role === UserRole.STUDENT && !created.email) {
-      responseData.tempPassword    = tempPassword;
-      responseData.admissionNumber = (safeUser as unknown as { admissionNumber?: string }).admissionNumber;
-      responseData.hasEmail        = false;
+      responseData.tempPassword = tempPassword;
+      responseData.admissionNumber = (
+        safeUser as unknown as { admissionNumber?: string }
+      ).admissionNumber;
+      responseData.hasEmail = false;
     } else {
       responseData.hasEmail = true;
     }
 
     return NextResponse.json(
-      { success: true, data: responseData, message: "User created successfully" },
-      { status: 201 }
+      {
+        success: true,
+        data: responseData,
+        message: "User created successfully",
+      },
+      { status: 201 },
     );
-
   } catch (error) {
-    const mongoError = error as { code?: number; keyValue?: Record<string, string> };
+    const mongoError = error as {
+      code?: number;
+      keyValue?: Record<string, string>;
+    };
     if (mongoError.code === 11000) {
       const field = Object.keys(mongoError.keyValue ?? {})[0];
       return NextResponse.json(
         { success: false, error: `${field} already exists` },
-        { status: 409 }
+        { status: 409 },
       );
     }
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
-
-
-
 
 // import { NextRequest, NextResponse } from "next/server";
 // import bcrypt from "bcrypt";
@@ -696,4 +746,3 @@ export async function POST(
 //     );
 //   }
 // }
-

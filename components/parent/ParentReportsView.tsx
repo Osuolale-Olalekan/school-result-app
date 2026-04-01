@@ -127,7 +127,7 @@ export default function ParentReportsView() {
           studentId,
           sessionId: report.session._id,
           termId: report.term._id,
-          amount: REPORT_CARD_FEE,
+          // amount: REPORT_CARD_FEE,
         }),
       });
       const json = await res.json() as {

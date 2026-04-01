@@ -69,7 +69,7 @@ export default function ClassAssignmentsView() {
     try {
       const [assignRes, teacherRes, classRes, sessionRes] = await Promise.all([
         fetch("/api/admin/class-assignments").then((r) => r.json()),
-        fetch("/api/admin/users?role=teacher&limit=100").then((r) => r.json()),
+        fetch("/api/admin/users?role=teacher&limit=1000").then((r) => r.json()),
         fetch("/api/admin/classes").then((r) => r.json()),
         fetch("/api/admin/sessions").then((r) => r.json()),
       ]);

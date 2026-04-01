@@ -60,7 +60,7 @@ export default function PromotionManagement() {
     setLoading(true);
     try {
       const [studRes, classRes] = await Promise.all([
-        fetch("/api/admin/users?role=student&limit=100"),
+        fetch("/api/admin/users?role=student&limit=1000"),
         fetch("/api/admin/classes"),
       ]);
       const j1 = (await studRes.json()) as { success: boolean; data?: Student[] };

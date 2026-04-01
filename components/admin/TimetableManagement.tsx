@@ -151,7 +151,7 @@ export default function TimetableManagement() {
         fetch("/api/admin/timetable"),
         fetch("/api/admin/classes"),
         fetch("/api/admin/sessions"),
-        fetch("/api/admin/users?role=teacher&limit=100"),
+        fetch("/api/admin/users?role=teacher&limit=1000"),
         fetch("/api/admin/subjects"),
       ]);
       const [tt, cl, se, te, su] = await Promise.all([

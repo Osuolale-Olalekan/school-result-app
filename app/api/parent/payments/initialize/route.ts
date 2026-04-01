@@ -13,11 +13,12 @@ import {
   generatePaymentReference,
 } from "@/lib/paystack";
 import type { ApiResponse } from "@/types";
+import FeeStructureModel from "@/models/FeeStructure";
+import StudentModel from "@/models/Student";
 
 export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<ApiResponse<object>>> {
-
   const session = await getSession();
   if (!session?.user || session.user.activeRole !== UserRole.PARENT) {
     return NextResponse.json(
@@ -29,21 +30,74 @@ export async function POST(
   try {
     await connectDB();
 
-    const { studentId, sessionId, termId, amount, type = "report_card" } =
-      (await request.json()) as {
-        studentId: string;
-        sessionId: string;
-        termId:    string;
-        amount:    number;
-        type?:     "report_card" | "school_fees";
-      };
+    const {
+      studentId,
+      sessionId,
+      termId,
+      type = "report_card",
+    } = (await request.json()) as {
+      studentId: string;
+      sessionId: string;
+      termId: string;
+      // amount:    number;
+      type?: "report_card" | "school_fees";
+    };
+
+    const REPORT_CARD_FEE = 1000;
+    let amount: number;
+
+    if (type === "report_card") {
+      amount = REPORT_CARD_FEE;
+    } else if (type === "school_fees") {
+      const student = await StudentModel.findById(studentId, {
+        currentClass: 1,
+      }).lean();
+      if (!student) {
+        return NextResponse.json(
+          { success: false, error: "Student not found" },
+          { status: 404 },
+        );
+      }
+
+      const feeStructure = await FeeStructureModel.findOne({
+        classId: student.currentClass,
+        sessionId: sessionId,
+        termId: termId,
+      }).lean();
+
+      if (!feeStructure) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "No fee structure found for this class and term",
+          },
+          { status: 404 },
+        );
+      }
+
+      amount = feeStructure.items
+        .filter((i) => i.isCompulsory)
+        .reduce((sum, i) => sum + i.amount, 0);
+
+      if (!amount) {
+        return NextResponse.json(
+          { success: false, error: "Fee amount could not be determined" },
+          { status: 400 },
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { success: false, error: "Invalid payment type" },
+        { status: 400 },
+      );
+    }
 
     // Verify parent has access to this student
     const parent = (await UserModel.findById(session.user.id).lean()) as {
-      email:      string;
-      surname:    string;
-      firstName:  string;
-      children?:  Array<{ toString(): string }>;
+      email: string;
+      surname: string;
+      firstName: string;
+      children?: Array<{ toString(): string }>;
     } | null;
 
     if (!parent) {
@@ -53,7 +107,8 @@ export async function POST(
       );
     }
 
-    const hasAccess = parent.children?.some((c) => c.toString() === studentId) ?? false;
+    const hasAccess =
+      parent.children?.some((c) => c.toString() === studentId) ?? false;
     if (!hasAccess) {
       return NextResponse.json(
         { success: false, error: "Access denied" },
@@ -65,14 +120,17 @@ export async function POST(
     const existing = await PaymentRecordModel.findOne({
       student: studentId,
       session: sessionId,
-      term:    termId,
+      term: termId,
       type,
-      status:  PaymentStatus.PAID,
+      status: PaymentStatus.PAID,
     });
 
     if (existing) {
       return NextResponse.json(
-        { success: false, error: `${type === "report_card" ? "Report card" : "School fees"} already paid for this term` },
+        {
+          success: false,
+          error: `${type === "report_card" ? "Report card" : "School fees"} already paid for this term`,
+        },
         { status: 400 },
       );
     }
@@ -80,13 +138,14 @@ export async function POST(
     const reference = generatePaymentReference(studentId, `${termId}-${type}`);
 
     // Callback URL based on type
-    const callbackUrl = type === "report_card"
-      ? `${process.env.NEXT_PUBLIC_APP_URL}/parent/reports?studentId=${studentId}`
-      : `${process.env.NEXT_PUBLIC_APP_URL}/parent/payments?studentId=${studentId}&verified=1`;
+    const callbackUrl =
+      type === "report_card"
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/parent/reports?studentId=${studentId}`
+        : `${process.env.NEXT_PUBLIC_APP_URL}/parent/payments?studentId=${studentId}&verified=1`;
 
     const paystackData = await initializePaystackPayment({
-      email:        parent.email,
-      amount:       amount * 100, // kobo
+      email: parent.email,
+      amount: amount * 100, // kobo
       reference,
       callback_url: callbackUrl,
       metadata: {
@@ -103,21 +162,21 @@ export async function POST(
       {
         student: studentId,
         session: sessionId,
-        term:    termId,
+        term: termId,
         type,
       },
       {
         $setOnInsert: {
           student: studentId,
           session: sessionId,
-          term:    termId,
+          term: termId,
           type,
         },
         $set: {
-          status:              PaymentStatus.UNPAID,
-          paystackReference:   reference,
-          paystackAccessCode:  paystackData.access_code,
-          paymentMethod:       "paystack",
+          status: PaymentStatus.UNPAID,
+          paystackReference: reference,
+          paystackAccessCode: paystackData.access_code,
+          paymentMethod: "paystack",
         },
       },
       { upsert: true, new: true },
@@ -127,7 +186,7 @@ export async function POST(
       success: true,
       data: {
         authorizationUrl: paystackData.authorization_url,
-        accessCode:       paystackData.access_code,
+        accessCode: paystackData.access_code,
         reference,
       },
     });
@@ -160,7 +219,7 @@ export async function POST(
 // export async function POST(
 //   request: NextRequest,
 // ): Promise<NextResponse<ApiResponse<object>>> {
-  
+
 //   const session = await getSession();
 //   if (!session?.user || session.user.activeRole !== UserRole.PARENT) {
 //     return NextResponse.json(
@@ -221,8 +280,6 @@ export async function POST(
 //     }
 
 //     const reference = generatePaymentReference(studentId, termId);
-
-    
 
 //     // Initialize with Paystack
 //     const paystackData = await initializePaystackPayment({

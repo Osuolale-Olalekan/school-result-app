@@ -131,7 +131,7 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
       });
 
     if (primaryRole === UserRole.PARENT || primaryRole === UserRole.TEACHER) {
-      fetch("/api/admin/users?role=student&limit=100")
+      fetch("/api/admin/users?role=student&limit=1000")
         .then((r) => r.json())
         .then((j: { success: boolean; data?: Array<{ _id: string; surname: string; firstName: string; otherName: string }> }) => {
           if (j.success && j.data) setStudents(j.data);

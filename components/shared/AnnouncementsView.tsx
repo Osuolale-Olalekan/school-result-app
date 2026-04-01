@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { AnnouncementAudience, AnnouncementPriority } from "@/types/enums";
 import type { IAnnouncement } from "@/types";
+import Link from "next/link";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -235,12 +236,12 @@ export default function AnnouncementsView({
 
           {/* Compact — view all link */}
           {compact && totalPages > 1 && (
-            <a
+            <Link
               href="/announcements"
               className="block text-center text-[10px] py-1.5 text-amber-600 hover:text-amber-700 font-medium transition-colors"
             >
               View all announcements →
-            </a>
+            </Link>
           )}
         </div>
       )}

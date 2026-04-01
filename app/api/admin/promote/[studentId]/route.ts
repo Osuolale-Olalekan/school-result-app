@@ -10,6 +10,7 @@ import { AuditAction, ClassLevel, Department, StudentStatus, UserRole } from "@/
 import { createAuditLog } from "@/lib/audit";
 import { CLASS_PROGRESSION, getSSSClassName } from "@/lib/promotion";
 import type { ApiResponse } from "@/types";
+import { Types } from "mongoose";
 
 interface RouteParams {
   params: Promise<{ studentId: string }>;
@@ -111,7 +112,7 @@ export async function POST(
       }
     }
 
-    const updateData: Record<string, unknown> = { currentClass: newClassId };
+    const updateData: Record<string, unknown> = { currentClass: new Types.ObjectId(newClassId) };
     if (department && department !== Department.NONE) {
       updateData.department = department;
     }

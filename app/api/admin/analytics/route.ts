@@ -30,26 +30,32 @@ export async function GET(): Promise<
     await connectDB();
 
     const [
-  totalStudents,
-  totalTeachers,
-  totalParents,
-  activeStudents,
-  graduatedStudents,
-  totalClasses,        // ← currently gets UserModel.countDocuments($ne GRADUATED) — wrong
-  pendingReports,
-  approvedReports,
-  recentAuditLogs,
-] = await Promise.all([
-  UserModel.countDocuments({ role: UserRole.STUDENT }),
-  UserModel.countDocuments({ role: UserRole.TEACHER }),
-  UserModel.countDocuments({ role: UserRole.PARENT }),
-  UserModel.countDocuments({ role: UserRole.STUDENT, studentStatus: StudentStatus.ACTIVE }),
-  UserModel.countDocuments({ role: UserRole.STUDENT, studentStatus: { $ne: StudentStatus.GRADUATED } }),
-  ClassModel.countDocuments(),                                    // ← totalClasses should get this
-  ReportCardModel.countDocuments({ status: ReportStatus.SUBMITTED }),
-  ReportCardModel.countDocuments({ status: ReportStatus.APPROVED }),
-  AuditLogModel.find().sort({ createdAt: -1 }).limit(10).lean(),
-]);
+      totalStudents,
+      totalTeachers,
+      totalParents,
+      activeStudents,
+      graduatedStudents,
+      totalClasses, // ← currently gets UserModel.countDocuments($ne GRADUATED) — wrong
+      pendingReports,
+      approvedReports,
+      recentAuditLogs,
+    ] = await Promise.all([
+      UserModel.countDocuments({ role: UserRole.STUDENT }),
+      UserModel.countDocuments({ role: UserRole.TEACHER }),
+      UserModel.countDocuments({ role: UserRole.PARENT }),
+      UserModel.countDocuments({
+        role: UserRole.STUDENT,
+        studentStatus: StudentStatus.ACTIVE,
+      }),
+      UserModel.countDocuments({
+        role: UserRole.STUDENT,
+        studentStatus: { $ne: StudentStatus.GRADUATED },
+      }),
+      ClassModel.countDocuments(), // ← totalClasses should get this
+      ReportCardModel.countDocuments({ status: ReportStatus.SUBMITTED }),
+      ReportCardModel.countDocuments({ status: ReportStatus.APPROVED }),
+      AuditLogModel.find().sort({ createdAt: -1 }).limit(10).lean(),
+    ]);
 
     // Students by class
     // const studentsByClassRaw = await UserModel.aggregate([
@@ -77,7 +83,7 @@ export async function GET(): Promise<
         },
       },
       { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
-       { $match: { "classInfo.name": { $exists: true, $ne: null } } },
+      { $match: { "classInfo.name": { $exists: true, $ne: null } } },
       { $group: { _id: "$classInfo.name", count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]);
