@@ -249,12 +249,19 @@ export default function TeacherResultsView() {
   const allSubjects = selectedAssignment.class.subjects;
 
   // Filter: show general subjects + subjects matching student's department
-  const studentSubjects = allSubjects.filter(s =>
-    s.department === "general" ||
-    s.department === "none" ||    // treat old subjects without department as general
-    !s.department ||
-    s.department === student?.department
-  );
+  // If student has no department, show all subjects (JSS / primary)
+  const hasNoDepartment = !student?.department || 
+    student.department === "none" || 
+    student.department === "general";
+
+  const studentSubjects = hasNoDepartment
+    ? allSubjects  // show everything
+    : allSubjects.filter(s =>
+        s.department === "general" ||
+        s.department === "none" ||
+        !s.department ||
+        s.department === student.department
+      );
 
   setDrafts((prev) => ({
     ...prev,
