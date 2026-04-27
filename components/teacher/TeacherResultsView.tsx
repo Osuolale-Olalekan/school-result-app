@@ -974,7 +974,8 @@ function StudentCard({
                               type="number"
                               min={0}
                               max={score.hasPractical ? 20 : 30}
-                              value={score.testScore}
+                              // value={score.testScore}
+                              value={score.testScore === 0 ? "" : score.testScore}
                               readOnly={isLocked}
                               onChange={(e) => {
                                 if (isLocked) return;
@@ -1003,7 +1004,8 @@ function StudentCard({
                               type="number"
                               min={0}
                               max={score.hasPractical ? 60 : 70}
-                              value={score.examScore}
+                              // value={score.examScore}
+                              value={score.examScore === 0 ? "" : score.examScore}
                               readOnly={isLocked}
                               onChange={(e) => {
                                 if (isLocked) return;
@@ -1032,7 +1034,8 @@ function StudentCard({
                               type="number"
                               min={0}
                               max={20}
-                              value={score.practicalScore}
+                              // value={score.practicalScore}
+                              value={score.practicalScore === 0 ? "" : score.practicalScore}
                               readOnly={isLocked}
                               onChange={(e) => {
                                 if (isLocked) return;
