@@ -90,17 +90,21 @@ export default function TeacherResultsView() {
     fetchAssignments();
   }, []);
 
-  useEffect(() => {
-    if (selectedAssignment && selectedTerm) {
-      setExpandedStudents(new Set());
-      fetchStudents(selectedAssignment.class._id);
+  // ── useEffect ──
+useEffect(() => {
+  if (selectedAssignment && selectedTerm) {
+    setExpandedStudents(new Set());
+    fetchStudents(selectedAssignment.class._id).then((freshStudents) => {
       fetchDrafts(
         selectedAssignment.class._id,
         selectedAssignment.session._id,
         selectedTerm,
+        freshStudents ?? [],
+        selectedAssignment,
       );
-    }
-  }, [selectedTerm, selectedAssignment]);
+    });
+  }
+}, [selectedTerm, selectedAssignment]);
 
   async function fetchAssignments() {
     setLoading(true);
@@ -131,65 +135,157 @@ export default function TeacherResultsView() {
   }
 
   async function fetchStudents(classId: string) {
-    const res = await fetch(`/api/teacher/classes/${classId}/students`);
-    const json = (await res.json()) as { success: boolean; data?: Student[] };
-    if (json.success && json.data) setStudents(json.data);
+  const res = await fetch(`/api/teacher/classes/${classId}/students`);
+  const json = (await res.json()) as { success: boolean; data?: Student[] };
+  if (json.success && json.data) {
+    setStudents(json.data);
+    return json.data;
   }
+  return [];
+}
 
-  async function fetchDrafts(
-    classId: string,
-    sessionId: string,
-    termId: string,
-  ) {
-    if (!termId) return;
-    const res = await fetch(
-      `/api/teacher/results?classId=${classId}&termId=${termId}`,
-    );
-    const json = (await res.json()) as {
-      success: boolean;
-      data?: Array<{
-        _id: string;
-        student: string;
-        subjects: SubjectScore[];
-        attendance: {
-          schoolDaysOpen: number;
-          daysPresent: number;
-          daysAbsent: number;
-        };
-        teacherComment?: string;
-        status: ReportStatus;
-        declineReason?: string;
-      }>;
-    };
+  // async function fetchDrafts(
+  //   classId: string,
+  //   sessionId: string,
+  //   termId: string,
+  // ) {
+  //   if (!termId) return;
+  //   const res = await fetch(
+  //     `/api/teacher/results?classId=${classId}&termId=${termId}`,
+  //   );
+  //   const json = (await res.json()) as {
+  //     success: boolean;
+  //     data?: Array<{
+  //       _id: string;
+  //       student: string;
+  //       subjects: SubjectScore[];
+  //       attendance: {
+  //         schoolDaysOpen: number;
+  //         daysPresent: number;
+  //         daysAbsent: number;
+  //       };
+  //       teacherComment?: string;
+  //       status: ReportStatus;
+  //       declineReason?: string;
+  //     }>;
+  //   };
 
-    if (json.success && json.data) {
-      const loadedDrafts: Record<string, ReportDraft> = {};
-      const loadedIds: string[] = [];
-      for (const report of json.data) {
-        const studentId =
-          typeof report.student === "string"
-            ? report.student
-            : String(report.student);
-        loadedDrafts[studentId] = {
-          studentId: report.student,
-          scores: report.subjects.map((s) => ({ ...s })),
-          attendance: report.attendance,
-          teacherComment: report.teacherComment ?? "",
-          status: report.status,
-          declineReason: report.declineReason,
+  //   if (json.success && json.data) {
+  //     const loadedDrafts: Record<string, ReportDraft> = {};
+  //     const loadedIds: string[] = [];
+  //     for (const report of json.data) {
+  //       const studentId =
+  //         typeof report.student === "string"
+  //           ? report.student
+  //           : String(report.student);
+  //       loadedDrafts[studentId] = {
+  //         studentId: report.student,
+  //         scores: report.subjects.map((s) => ({ ...s })),
+  //         attendance: report.attendance,
+  //         teacherComment: report.teacherComment ?? "",
+  //         status: report.status,
+  //         declineReason: report.declineReason,
+  //       };
+  //       // ← Only track IDs for reports that can still be submitted
+  //       if (
+  //         report.status === ReportStatus.DRAFT ||
+  //         report.status === ReportStatus.DECLINED
+  //       ) {
+  //         loadedIds.push(report._id);
+  //       }
+  //     }
+  //     setDrafts(loadedDrafts);
+  //     setSavedReportIds(loadedIds); // ← approved IDs never enter this list
+  //   }
+  // }
+
+  // ── fetchDrafts — add freshStudents param, fix closing braces ──
+async function fetchDrafts(
+  classId: string,
+  sessionId: string,
+  termId: string,
+  freshStudents: Student[], // ← ADD THIS
+  assignment: ClassAssignment
+) {
+  if (!termId) return;
+  const res = await fetch(`/api/teacher/results?classId=${classId}&termId=${termId}`);
+  const json = (await res.json()) as {
+    success: boolean;
+    data?: Array<{
+      _id: string;
+      student: string;
+      subjects: SubjectScore[];
+      attendance: { schoolDaysOpen: number; daysPresent: number; daysAbsent: number };
+      teacherComment?: string;
+      status: ReportStatus;
+      declineReason?: string;
+    }>;
+  };
+
+  if (json.success && json.data) {
+    const loadedDrafts: Record<string, ReportDraft> = {};
+    const loadedIds: string[] = [];
+
+    for (const report of json.data) {
+      const studentId = typeof report.student === "string"
+        ? report.student
+        : String(report.student);
+
+      const student = freshStudents.find((s) => s._id === studentId); // ← freshStudents
+      const hasNoDepartment = !student?.department ||
+        student.department === "none" ||
+        student.department === "general";
+
+      // const allClassSubjects = selectedAssignment?.class.subjects ?? [];
+      const allClassSubjects = assignment.class.subjects ?? []; // ← use assignment param instead of selectedAssignment state
+
+      const relevantSubjects = hasNoDepartment
+        ? allClassSubjects
+        : allClassSubjects.filter((s) =>
+            s.department === "general" ||
+            s.department === "none" ||
+            !s.department ||
+            s.department === student?.department
+          );
+
+      const savedScoreMap = new Map(report.subjects.map((s) => [s.subject, s]));
+
+      const mergedScores = relevantSubjects.map((s) => {
+        const saved = savedScoreMap.get(s._id);
+        return {
+          subject: s._id,
+          subjectName: s.name,
+          subjectCode: s.code,
+          hasPractical: s.hasPractical,
+          testScore: saved?.testScore ?? 0,
+          examScore: saved?.examScore ?? 0,
+          practicalScore: saved?.practicalScore ?? 0,
         };
-        // ← Only track IDs for reports that can still be submitted
-        if (
-          report.status === ReportStatus.DRAFT ||
-          report.status === ReportStatus.DECLINED
-        ) {
-          loadedIds.push(report._id);
-        }
+      });
+
+      loadedDrafts[studentId] = {
+        studentId: report.student,
+        scores: mergedScores,
+        attendance: report.attendance,
+        teacherComment: report.teacherComment ?? "",
+        status: report.status,
+        declineReason: report.declineReason,
+      };
+
+      if (
+        report.status === ReportStatus.DRAFT ||
+        report.status === ReportStatus.DECLINED
+      ) {
+        loadedIds.push(report._id);
       }
-      setDrafts(loadedDrafts);
-      setSavedReportIds(loadedIds); // ← approved IDs never enter this list
     }
+
+    setDrafts(loadedDrafts);       // ← these were being cut off by the }}}
+    setSavedReportIds(loadedIds);
   }
+}
+
+
 
   function toggleExpanded(studentId: string) {
     setExpandedStudents((prev) => {
@@ -339,6 +435,8 @@ export default function TeacherResultsView() {
             selectedAssignment.class._id,
             selectedAssignment.session._id,
             selectedTerm,
+            students, // ← pass current students to avoid mismatch with drafts' subjects
+            selectedAssignment,
           );
         }
       } else {
@@ -394,6 +492,8 @@ export default function TeacherResultsView() {
             selectedAssignment.class._id,
             selectedAssignment.session._id,
             selectedTerm,
+            students, // ← pass current students to avoid mismatch with drafts' subjects
+            selectedAssignment,
           );
         }
       } else {

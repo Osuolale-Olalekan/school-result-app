@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import Script from "next/script";
+import PWAInstallBanner from "@/components/PWAInstallBanner";
 
 const displayFont = Playfair_Display({
   subsets: ["latin"],
@@ -118,6 +119,7 @@ export default function RootLayout({
       >
         <SessionProvider>
           {children}
+          <PWAInstallBanner/>
           <Toaster
             richColors
             position="top-right"
@@ -125,6 +127,10 @@ export default function RootLayout({
               style: { fontFamily: "var(--font-body)" },
             }}
           />
+
+
+
+
           {/* Tawk.to Live Chat Widget */}
           {/* <Script
             id="tawk-to"

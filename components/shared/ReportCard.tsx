@@ -13,6 +13,7 @@ interface ReportCardProps {
     termName: TermName;
     className: string;
     principalSignature?: string | null;
+    schoolStamp?: string | null;
   };
   showActions?: boolean;
 }
@@ -22,53 +23,76 @@ const SCHOOL_LOGO_URL =
 
 const A4_W = 794;
 const A4_H = 1123;
+const TWO_PAGE_THRESHOLD = 21;
 
-// ─── helper: recursively fix flex-centering on a cloned DOM node ───────────────
+// ─── helper: recursively fix flex-centering on a cloned DOM node ──────────────
 function fixFlexAlignment(el: HTMLElement) {
   const style = el.style;
-
-  // If this element uses flex centering, convert to block + padding trick
   if (style.display === "flex" || style.display === "inline-flex") {
-    const alignItems = style.alignItems;
-    const justifyContent = style.justifyContent;
-    const flexDirection = style.flexDirection || "row";
-    const isColumn = flexDirection === "column";
-
-    // For column flex containers centered on cross-axis (alignItems center)
-    // html2canvas handles these worst — safest fix is to just let content flow naturally
-    if (alignItems === "center") {
-      style.alignItems = "flex-start";
-    }
-    if (justifyContent === "center" && isColumn) {
+    if (style.alignItems === "center") style.alignItems = "flex-start";
+    if (
+      style.justifyContent === "center" &&
+      (style.flexDirection || "row") === "column"
+    ) {
       style.justifyContent = "flex-start";
     }
   }
-
-  // Recurse into children
   Array.from(el.children).forEach((child) =>
-    fixFlexAlignment(child as HTMLElement)
+    fixFlexAlignment(child as HTMLElement),
   );
 }
-// ──────────────────────────────────────────────────────────────────────────────
+
+// ─── Shared onclone patcher ───────────────────────────────────────────────────
+function patchClone(_doc: Document, clonedEl: HTMLElement) {
+  fixFlexAlignment(clonedEl);
+
+  const perfBox = clonedEl.querySelector<HTMLElement>("[data-perf-box]");
+  if (perfBox) {
+    perfBox.style.justifyContent = "flex-start";
+    perfBox.style.paddingTop = "14px";
+  }
+
+  const avatar = clonedEl.querySelector<HTMLElement>("[data-avatar]");
+  if (avatar) {
+    avatar.style.display = "table-cell";
+    avatar.style.verticalAlign = "middle";
+    avatar.style.textAlign = "center";
+  }
+
+  const attFooter = clonedEl.querySelector<HTMLElement>("[data-att-footer]");
+  if (attFooter) {
+    attFooter.style.alignItems = "flex-start";
+    attFooter.style.paddingTop = "5px";
+    attFooter.style.paddingBottom = "5px";
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function ReportCardComponent({
   report,
   showActions = true,
 }: ReportCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
+  const page1Ref = useRef<HTMLDivElement>(null);
+  const page2Ref = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const [profilePhotoBase64, setProfilePhotoBase64] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
+  const [signatureBase64, setSignatureBase64] = useState<string | null>(null);
+  const [stampBase64, setStampBase64] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
+
+  const isTwoPage = report.subjects.length > TWO_PAGE_THRESHOLD;
+  const isThirdTerm = report.termName === TermName.THIRD;
+  const avgScore = report.percentage.toFixed(1);
 
   useEffect(() => {
     function updateScale() {
       if (!wrapperRef.current) return;
       const available = wrapperRef.current.clientWidth;
-      const newScale = Math.min(1, available / A4_W);
-      setScale(newScale);
+      setScale(Math.min(1, available / A4_W));
     }
     updateScale();
     const observer = new ResizeObserver(updateScale);
@@ -77,14 +101,16 @@ export default function ReportCardComponent({
   }, []);
 
   async function generateQR() {
-    const verifyUrl = `${window.location.origin}/verify-report/${report._id}`;
-    return QRCode.toDataURL(verifyUrl, { width: 100, margin: 1 });
+    return QRCode.toDataURL(
+      `${window.location.origin}/verify-report/${report._id}`,
+      { width: 100, margin: 1 },
+    );
   }
 
   async function convertImageToBase64(url: string): Promise<string> {
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
+      const res = await fetch(url);
+      const blob = await res.blob();
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
@@ -96,47 +122,48 @@ export default function ReportCardComponent({
     }
   }
 
-  async function handlePrint() {
-    setIsPrinting(true);
+  async function prepareAssets() {
     const [qr, logo] = await Promise.all([
       generateQR(),
       convertImageToBase64(SCHOOL_LOGO_URL),
     ]);
     setQrDataUrl(qr);
     setLogoBase64(logo);
+
     if (report.studentSnapshot.profilePhoto) {
-      const base64 = await convertImageToBase64(report.studentSnapshot.profilePhoto);
-      setProfilePhotoBase64(base64);
+      const b64 = await convertImageToBase64(report.studentSnapshot.profilePhoto);
+      setProfilePhotoBase64(b64);
     }
-    await new Promise((r) => setTimeout(r, 500));
+
+    // ── Fix: convert signature & stamp to base64 so html2canvas renders them ──
+    if (report.principalSignature) {
+      const b64 = await convertImageToBase64(report.principalSignature);
+      setSignatureBase64(b64);
+    }
+    if (report.schoolStamp) {
+      const b64 = await convertImageToBase64(report.schoolStamp);
+      setStampBase64(b64);
+    }
+
+    // Give React time to re-render with new state
+    await new Promise((r) => setTimeout(r, 600));
+  }
+
+  async function handlePrint() {
+    setIsPrinting(true);
+    await prepareAssets();
     window.print();
     setIsPrinting(false);
   }
 
   async function handleDownload() {
     setIsPrinting(true);
-
-    const [qr, logo] = await Promise.all([
-      generateQR(),
-      convertImageToBase64(SCHOOL_LOGO_URL),
-    ]);
-    setQrDataUrl(qr);
-    setLogoBase64(logo);
-
-    if (report.studentSnapshot.profilePhoto) {
-      const base64 = await convertImageToBase64(report.studentSnapshot.profilePhoto);
-      setProfilePhotoBase64(base64);
-    }
-
-    // Give React time to re-render with the new state values above
-    await new Promise((r) => setTimeout(r, 600));
+    await prepareAssets();
 
     const { jsPDF } = await import("jspdf");
     const { default: html2canvas } = await import("html2canvas");
 
-    if (!cardRef.current) return;
-
-    const canvas = await html2canvas(cardRef.current, {
+    const canvasOptions = {
       scale: 3,
       useCORS: true,
       allowTaint: false,
@@ -146,37 +173,9 @@ export default function ReportCardComponent({
       windowWidth: A4_W,
       imageTimeout: 0,
       foreignObjectRendering: false,
-      // ── KEY FIX: patch flex-centering in the cloned DOM before html2canvas renders it
-      onclone: (_doc, clonedEl) => {
-        fixFlexAlignment(clonedEl);
+      onclone: patchClone,
+    };
 
-        // Also explicitly fix the performance box (column flex, justifyContent center)
-        // by giving it a fixed height and using padding to simulate centering
-        const perfBox = clonedEl.querySelector<HTMLElement>("[data-perf-box]");
-        if (perfBox) {
-          perfBox.style.justifyContent = "flex-start";
-          perfBox.style.paddingTop = "14px";
-        }
-
-        // Fix the initials avatar box
-        const avatar = clonedEl.querySelector<HTMLElement>("[data-avatar]");
-        if (avatar) {
-          avatar.style.display = "table-cell";
-          avatar.style.verticalAlign = "middle";
-          avatar.style.textAlign = "center";
-        }
-
-        // Fix attendance rate footer bar
-        const attFooter = clonedEl.querySelector<HTMLElement>("[data-att-footer]");
-        if (attFooter) {
-          attFooter.style.alignItems = "flex-start";
-          attFooter.style.paddingTop = "5px";
-          attFooter.style.paddingBottom = "5px";
-        }
-      },
-    });
-
-    const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
@@ -184,26 +183,474 @@ export default function ReportCardComponent({
       compress: true,
     });
 
-    pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+    if (page1Ref.current) {
+      const canvas1 = await html2canvas(page1Ref.current, canvasOptions);
+      pdf.addImage(canvas1.toDataURL("image/png"), "PNG", 0, 0, 210, 297);
+    }
+
+    if (isTwoPage && page2Ref.current) {
+      pdf.addPage();
+      const canvas2 = await html2canvas(page2Ref.current, canvasOptions);
+      pdf.addImage(canvas2.toDataURL("image/png"), "PNG", 0, 0, 210, 297);
+    }
+
     pdf.save(
-      `ReportCard_${report.studentSnapshot.admissionNumber}_${report.termName}_${report.sessionName}.pdf`
+      `ReportCard_${report.studentSnapshot.admissionNumber}_${report.termName}_${report.sessionName}.pdf`,
     );
     setIsPrinting(false);
   }
 
-  const isThirdTerm = report.termName === TermName.THIRD;
-  const avgScore = report.percentage.toFixed(1);
-
+  // ── Row height calculation ────────────────────────────────────────────────────
   const FIXED_HEIGHT = 170 + 122 + 42 + 36 + 42 + 140 + 46 + 40;
   const conditionalHeight =
     (isThirdTerm ? 52 : 0) + (report.nextTermResumptionDate ? 46 : 0);
   const availableForRows = A4_H - FIXED_HEIGHT - conditionalHeight;
-  const subjectCount = report.subjects.length;
-  const rowHeight = Math.min(
+  const singlePageRowHeight = Math.min(
     52,
-    Math.max(24, Math.floor(availableForRows / Math.max(subjectCount, 1)))
+    Math.max(
+      24,
+      Math.floor(availableForRows / Math.max(report.subjects.length, 1)),
+    ),
   );
 
+  // Two-page: page 1 has more room since bottom sections move to page 2
+  const twoPageAvailableForRows = A4_H - 420;
+  const twoPageRowHeight = Math.min(
+    52,
+    Math.max(
+      24,
+      Math.floor(twoPageAvailableForRows / Math.max(report.subjects.length, 1)),
+    ),
+  );
+
+  const rowHeight = isTwoPage ? twoPageRowHeight : singlePageRowHeight;
+
+  // ── Sub-components ────────────────────────────────────────────────────────────
+
+  function PageHeader({ showQR = true }: { showQR?: boolean }) {
+    return (
+      <div
+        style={{
+          background: "linear-gradient(135deg, #1e3a5f 0%, #0a1628 100%)",
+          color: "white",
+          padding: "16px 28px",
+          position: "relative",
+          overflow: "hidden",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ position: "absolute", top: -40, right: -40, width: 150, height: 150, borderRadius: "50%", background: "rgba(245,158,11,0.08)" }} />
+        <div style={{ position: "absolute", bottom: -20, left: -20, width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
+          {/* Logo */}
+          <div style={{ flexShrink: 0, width: 100, height: 100 }}>
+            <img
+              src={logoBase64 || SCHOOL_LOGO_URL}
+              alt="School Logo"
+              crossOrigin="anonymous"
+              style={{ width: 100, height: 100, objectFit: "contain", borderRadius: 10, display: "block" }}
+            />
+          </div>
+
+          {/* School Info */}
+          <div style={{ flex: 1, textAlign: "center", padding: "0 18px" }}>
+            <h1 style={{ fontSize: 18, fontWeight: "900", margin: "0 0 3px", letterSpacing: "0.5px", textTransform: "uppercase", color: "white", lineHeight: 1.2 }}>
+              GOD&apos;S WAY MODEL GROUPS OF SCHOOLS
+            </h1>
+            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", margin: "0 0 6px", letterSpacing: "2px" }}>
+              SOWING THE SEED OF MERIT AND EXCELLENCE
+            </p>
+            <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.6)", lineHeight: 1.75 }}>
+              <p style={{ margin: 0 }}>📍 NO 12 SIYANBOLA STREET, OSOGBO, OSUN STATE</p>
+              <p style={{ margin: 0 }}>📞 08069825847, 08067110930 &nbsp;|&nbsp; ✉️ godswaygroupofschools@gmail.com</p>
+            </div>
+          </div>
+
+          {/* QR or continuation badge */}
+          <div style={{ flexShrink: 0, textAlign: "center" }}>
+            {showQR ? (
+              qrDataUrl ? (
+                <div style={{ background: "white", padding: 7, borderRadius: 8 }}>
+                  <img src={qrDataUrl} alt="QR Code" style={{ width: 86, height: 86, display: "block" }} />
+                  <p style={{ fontSize: 9, color: "#555", margin: "3px 0 0", textAlign: "center" }}>Verify Report</p>
+                </div>
+              ) : (
+                <div style={{ width: 100, height: 100, background: "rgba(255,255,255,0.05)", borderRadius: 8, border: "1px dashed rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", textAlign: "center", padding: 4 }}>QR on Download</span>
+                </div>
+              )
+            ) : (
+              <div style={{ width: 100, height: 100, background: "rgba(245,158,11,0.12)", borderRadius: 8, border: "1px solid rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontSize: 10, color: "#f59e0b", textAlign: "center", padding: 6, fontWeight: "bold", lineHeight: 1.4 }}>
+                  PAGE 2{"\n"}CONT.
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Title Bar */}
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+          <div style={{ padding: "7px 20px", background: "rgba(245,158,11,0.15)", borderRadius: 8, border: "1px solid rgba(245,158,11,0.3)", display: "inline-flex", alignItems: "center", gap: 12 }}>
+            <span style={{ color: "#f59e0b", fontSize: 12, fontWeight: "bold", letterSpacing: "0.5px", lineHeight: 1 }}>STUDENT REPORT CARD</span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, lineHeight: 1 }}>·</span>
+            <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 11, lineHeight: 1 }}>
+              {report.termName.toUpperCase()} TERM &nbsp;·&nbsp; {report.sessionName} SESSION
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function StudentInfoStrip() {
+    return (
+      <div style={{ padding: "12px 28px", borderBottom: "2px solid #f0f4f8", display: "flex", gap: 14, alignItems: "stretch", flexShrink: 0 }}>
+        <div style={{ flexShrink: 0 }}>
+          {report.studentSnapshot.profilePhoto ? (
+            <img
+              src={profilePhotoBase64 || report.studentSnapshot.profilePhoto}
+              alt="Student"
+              style={{ width: 86, height: 86, objectFit: "cover", borderRadius: 10, border: "3px solid #1e3a5f", display: "block" }}
+            />
+          ) : (
+            <div
+              data-avatar
+              style={{ width: 86, height: 86, borderRadius: 10, background: "#e8eff7", border: "3px solid #1e3a5f", display: "table-cell", verticalAlign: "middle", textAlign: "center", fontSize: 26, color: "#1e3a5f", fontWeight: "bold", boxSizing: "border-box" }}
+            >
+              {report.studentSnapshot.surname.charAt(0)}
+              {report.studentSnapshot.firstName.charAt(0)}
+              {report.studentSnapshot.otherName.charAt(0)}
+            </div>
+          )}
+        </div>
+
+        <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px 14px", alignContent: "start" }}>
+          {[
+            { label: "Student Name", value: `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName}` },
+            { label: "Admission No.", value: report.studentSnapshot.admissionNumber },
+            { label: "Class", value: report.className },
+            { label: "Academic Session", value: report.sessionName },
+            { label: "Term", value: `${report.termName.toUpperCase()} TERM` },
+            { label: "Date of Birth", value: formatDate(report.studentSnapshot.dateOfBirth) },
+            { label: "Gender", value: report.studentSnapshot.gender.charAt(0).toUpperCase() + report.studentSnapshot.gender.slice(1) },
+            { label: "Department", value: report.studentSnapshot.department !== "none" ? report.studentSnapshot.department.toUpperCase() : "N/A" },
+          ].map(({ label, value }) => (
+            <div key={label} style={{ padding: "2px 0" }}>
+              <span style={{ fontSize: 9.5, color: "#6b7280", display: "block", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.4 }}>{label}</span>
+              <span style={{ fontSize: 12.5, fontWeight: "600", color: "#111", lineHeight: 1.4, display: "block" }}>{value}</span>
+            </div>
+          ))}
+        </div>
+
+        <div
+          data-perf-box
+          style={{ flexShrink: 0, background: "#1e3a5f", borderRadius: 10, padding: "14px 16px", color: "white", textAlign: "center", minWidth: 115, display: "flex", flexDirection: "column" }}
+        >
+          <div style={{ fontSize: 32, fontWeight: "bold", color: "#f59e0b", lineHeight: 1, marginBottom: 3 }}>{avgScore}%</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginBottom: 3, lineHeight: 1.3 }}>Overall Score</div>
+          <div style={{ fontSize: 20, fontWeight: "bold", marginBottom: 3, lineHeight: 1.2 }}>{report.grade}</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", lineHeight: 1.3 }}>Grade</div>
+          <div style={{ marginTop: 8, paddingTop: 7, borderTop: "1px solid rgba(255,255,255,0.15)", fontSize: 11, lineHeight: 1.4 }}>
+            <span style={{ color: "#f59e0b", fontWeight: "bold" }}>{getOrdinal(report.position)}</span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 9.5 }}> / {report.totalStudentsInClass} students</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function SubjectsTable() {
+    return (
+      <div style={{ padding: "0 28px", flexShrink: 0 }}>
+        <h3 style={{ fontSize: 12, fontWeight: "bold", color: "#1e3a5f", padding: "10px 0 7px", borderBottom: "2px solid #1e3a5f", margin: 0, letterSpacing: "0.5px" }}>
+          ACADEMIC PERFORMANCE
+        </h3>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5, tableLayout: "fixed" }}>
+          <colgroup>
+            <col style={{ width: "30%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "16%" }} />
+          </colgroup>
+          <thead>
+            <tr style={{ background: "#f0f4f8" }}>
+              {[
+                { label: "SUBJECT", sub: "" },
+                { label: "TEST", sub: "(20/30)" },
+                { label: "EXAM", sub: "(60/70)" },
+                { label: "PRAC.", sub: "(20)" },
+                { label: "TOTAL", sub: "" },
+                { label: "GRADE", sub: "" },
+                { label: "REMARK", sub: "" },
+              ].map(({ label, sub }, i) => (
+                <th
+                  key={i}
+                  style={{ padding: "6px 5px", textAlign: i === 0 ? "left" : "center", fontSize: 9.5, color: "#374151", fontWeight: "700", borderBottom: "1px solid #e2e8f0", paddingLeft: i === 0 ? 8 : 5, lineHeight: 1.3, verticalAlign: "middle" }}
+                >
+                  {label}
+                  {sub && <div style={{ fontSize: 8.5, color: "#6b7280", fontWeight: "500" }}>{sub}</div>}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {report.subjects.map((subject: ISubjectScore, i) => (
+              <tr key={subject.subject} style={{ background: i % 2 === 0 ? "white" : "#fafbfc" }}>
+                <td style={{ padding: `${Math.max(4, (rowHeight - 18) / 2)}px 8px`, borderBottom: "1px solid #f0f4f8", fontWeight: "500", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", verticalAlign: "middle", lineHeight: 1.3 }}>
+                  {subject.subjectName}
+                </td>
+                <td style={{ padding: "4px 5px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle", lineHeight: 1.3 }}>{subject.testScore}</td>
+                <td style={{ padding: "4px 5px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle", lineHeight: 1.3 }}>{subject.examScore}</td>
+                <td style={{ padding: "4px 5px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle", lineHeight: 1.3, color: subject.hasPractical ? "#111" : "#ccc" }}>
+                  {subject.hasPractical ? subject.practicalScore : "—"}
+                </td>
+                <td style={{ padding: "4px 5px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle", lineHeight: 1.3, fontWeight: "bold", color: subject.totalScore < subject.maxTotalScore * 0.5 ? "#dc2626" : "#1e3a5f" }}>
+                  {subject.totalScore}/{subject.maxTotalScore}
+                </td>
+                <td style={{ padding: "4px 5px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle" }}>
+                  <span style={{
+                    display: "inline-block", padding: "1px 6px", borderRadius: 3, fontSize: 10, fontWeight: "bold", lineHeight: 1.5,
+                    background: subject.grade === "A" ? "#d1fae5" : subject.grade === "F" ? "#fee2e2" : subject.grade === "B" ? "#dbeafe" : "#fef3c7",
+                    color: subject.grade === "A" ? "#065f46" : subject.grade === "F" ? "#991b1b" : subject.grade === "B" ? "#1e40af" : "#92400e",
+                  }}>
+                    {subject.grade}
+                  </span>
+                </td>
+                <td style={{ padding: "4px 5px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle", fontSize: 10, lineHeight: 1.3, color: "#6b7280" }}>
+                  {subject.remark}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr style={{ background: "#1e3a5f", color: "white" }}>
+              <td colSpan={4} style={{ padding: "7px 8px", fontWeight: "bold", fontSize: 11.5, verticalAlign: "middle", lineHeight: 1.3 }}>TOTAL</td>
+              <td style={{ padding: "7px 5px", textAlign: "center", verticalAlign: "middle", fontWeight: "bold", fontSize: 12.5, lineHeight: 1.3, color: "#f59e0b" }}>
+                {report.totalObtained}/{report.totalObtainable}
+              </td>
+              <td style={{ padding: "7px 5px", textAlign: "center", verticalAlign: "middle", fontWeight: "bold", lineHeight: 1.3, color: "#f59e0b" }}>{report.grade}</td>
+              <td style={{ padding: "7px 5px", textAlign: "center", verticalAlign: "middle", fontSize: 11.5, lineHeight: 1.3, color: "rgba(255,255,255,0.85)" }}>{avgScore}%</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    );
+  }
+
+  function GradeScale() {
+    return (
+      <div style={{ padding: "8px 28px", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center", padding: "6px 10px", background: "#f8fafc", borderRadius: 7, border: "1px solid #e2e8f0" }}>
+          <span style={{ fontSize: 9.5, color: "#6b7280", marginRight: 3, fontWeight: "600", whiteSpace: "nowrap", lineHeight: 1.5 }}>Grade Scale:</span>
+          {[
+            { grade: "A", range: "70–100%", bg: "#d1fae5", text: "#065f46" },
+            { grade: "B", range: "60–69%", bg: "#dbeafe", text: "#1e40af" },
+            { grade: "C", range: "50–59%", bg: "#fef3c7", text: "#92400e" },
+            { grade: "D", range: "49–45%", bg: "#f3f4f6", text: "#374151" },
+            { grade: "E", range: "44–40%", bg: "#fde68a", text: "#78350f" },
+            { grade: "F", range: "0–39%", bg: "#fee2e2", text: "#991b1b" },
+          ].map((g) => (
+            <span key={g.grade} style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9.5, fontWeight: "600", background: g.bg, color: g.text, whiteSpace: "nowrap", lineHeight: 1.5 }}>
+              {g.grade}: {g.range}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function AttendanceAndComments() {
+    return (
+      <div style={{ padding: "0 28px 10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, flex: 1, minHeight: 0 }}>
+        {/* Attendance */}
+        <div style={{ background: "#f8fafc", borderRadius: 9, border: "1px solid #e2e8f0", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "12px 14px", flex: 1 }}>
+            <h4 style={{ fontSize: 11, fontWeight: "bold", color: "#1e3a5f", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.3 }}>
+              Attendance Record
+            </h4>
+            {[
+              { label: "School Days Open", value: report.attendance.schoolDaysOpen },
+              { label: "Days Present", value: report.attendance.daysPresent },
+              { label: "Days Absent", value: report.attendance.daysAbsent },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid #e8edf2" }}>
+                <span style={{ fontSize: 10.5, color: "#6b7280", lineHeight: 1.5 }}>{label}:</span>
+                <span style={{ fontSize: 11, fontWeight: "600", color: "#111", lineHeight: 1.5 }}>{value}</span>
+              </div>
+            ))}
+          </div>
+          <div
+            data-att-footer
+            style={{ padding: "7px 14px", background: "#1e3a5f", display: "flex", justifyContent: "space-between", flexShrink: 0 }}
+          >
+            <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.75)", lineHeight: "28px" }}>Attendance Rate:</span>
+            <span style={{ fontSize: 12, fontWeight: "bold", color: "#f59e0b", lineHeight: "28px" }}>
+              {report.attendance.attendancePercentage.toFixed(0)}%
+            </span>
+          </div>
+        </div>
+
+        {/* Comments */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ background: "#f8fafc", borderRadius: 9, padding: "12px 13px", border: "1px solid #e2e8f0", flex: 1 }}>
+            <h4 style={{ fontSize: 10.5, fontWeight: "bold", color: "#1e3a5f", margin: "0 0 5px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.3 }}>
+              Class Teacher&apos;s Comment
+            </h4>
+            <p style={{ fontSize: 11.5, color: "#374151", margin: 0, lineHeight: 1.5, fontStyle: "italic" }}>
+              {report.teacherComment ?? "No comment provided."}
+            </p>
+          </div>
+          <div style={{ background: "#f8fafc", borderRadius: 9, padding: "12px 13px", border: "1px solid #e2e8f0", flex: 1 }}>
+            <h4 style={{ fontSize: 10.5, fontWeight: "bold", color: "#1e3a5f", margin: "0 0 5px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.3 }}>
+              Principal&apos;s Comment
+            </h4>
+            <p style={{ fontSize: 11.5, color: "#374151", margin: 0, lineHeight: 1.5, fontStyle: "italic" }}>
+              {report.principalComment ?? "Keep up the good work!"}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function PromotionBanner() {
+    if (!isThirdTerm || !report.promotedToClass) return null;
+
+    const banners: Record<string, { bg: string; border: string; icon: string; title: string; subtitle: string; titleColor: string; subColor: string }> = {
+      "Pending Department Assignment": {
+        bg: "linear-gradient(135deg, #fffbeb, #fef3c7)", border: "#fde68a", icon: "⏳",
+        title: "DEPARTMENT ASSIGNMENT PENDING",
+        subtitle: "Your child has passed! Admin will assign your SSS 1 class and department shortly.",
+        titleColor: "#92400e", subColor: "#78350f",
+      },
+      "Graduated": {
+        bg: "linear-gradient(135deg, #d1fae5, #a7f3d0)", border: "#6ee7b7", icon: "🎓",
+        title: "CONGRATULATIONS — GRADUATED!",
+        subtitle: "Your child has successfully completed SSS 2. Well done!",
+        titleColor: "#065f46", subColor: "#065f46",
+      },
+      "Performance Under Review": {
+        bg: "linear-gradient(135deg, #fee2e2, #fecaca)", border: "#fca5a5", icon: "📋",
+        title: "PERFORMANCE UNDER REVIEW",
+        subtitle: "Please contact the school for further information.",
+        titleColor: "#991b1b", subColor: "#7f1d1d",
+      },
+    };
+
+    const config = banners[report.promotedToClass] ?? (report.isPromoted ? {
+      bg: "linear-gradient(135deg, #d1fae5, #a7f3d0)", border: "#6ee7b7", icon: "🎉",
+      title: `PROMOTED TO: ${report.promotedToClass}`,
+      subtitle: "Congratulations! Continue to excel in the next academic year.",
+      titleColor: "#065f46", subColor: "#065f46",
+    } : null);
+
+    if (!config) return null;
+
+    return (
+      <div style={{ padding: "0 28px 10px", flexShrink: 0 }}>
+        <div style={{ padding: "11px 15px", borderRadius: 9, background: config.bg, border: `1px solid ${config.border}`, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>{config.icon}</span>
+          <div>
+            <p style={{ fontSize: 12.5, fontWeight: "bold", color: config.titleColor, margin: 0, lineHeight: 1.4 }}>{config.title}</p>
+            <p style={{ fontSize: 10.5, color: config.subColor, margin: "2px 0 0", lineHeight: 1.4 }}>{config.subtitle}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function ResumptionDate() {
+    if (!report.nextTermResumptionDate) return null;
+    return (
+      <div style={{ padding: "0 28px 10px", flexShrink: 0 }}>
+        <div style={{ padding: "9px 15px", borderRadius: 7, background: "#fffbeb", border: "1px solid #fde68a", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 15, lineHeight: 1 }}>📅</span>
+          <div>
+            <span style={{ fontSize: 10.5, color: "#78350f", fontWeight: "600", textTransform: "uppercase", lineHeight: 1.5 }}>Next Term Resumption:</span>
+            <span style={{ fontSize: 12.5, color: "#92400e", fontWeight: "bold", marginLeft: 8, lineHeight: 1.5 }}>
+              {formatDate(report.nextTermResumptionDate)}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function PageFooter() {
+    return (
+      <div style={{ padding: "12px 28px", background: "#0a1628", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+        <div>
+          <p style={{ fontSize: 9.5, color: "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.5 }}>
+            Report generated on{" "}
+            {new Date().toLocaleDateString("en-NG", { day: "2-digit", month: "long", year: "numeric" })}
+          </p>
+          <p style={{ fontSize: 9.5, color: "rgba(255,255,255,0.3)", margin: "2px 0 0", lineHeight: 1.5 }}>
+            Report ID: {report._id} · Scan QR code to verify authenticity
+          </p>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-end", marginBottom: 4 }}>
+            {/* ── Fix: use base64 versions so html2canvas renders them correctly ── */}
+            {report.principalSignature && (
+              <img
+                src={signatureBase64 || report.principalSignature}
+                alt="Principal Signature"
+                style={{ height: 44, objectFit: "contain", display: "block", filter: "brightness(0) invert(1)" }}
+              />
+            )}
+            {report.schoolStamp && (
+              <img
+                src={stampBase64 || report.schoolStamp}
+                alt="School Stamp"
+                style={{ height: 44, objectFit: "contain", display: "block", filter: "brightness(0) invert(1)" }}
+              />
+            )}
+            {!report.principalSignature && !report.schoolStamp && (
+              <div style={{ width: 110, height: 1, background: "rgba(255,255,255,0.2)" }} />
+            )}
+          </div>
+          <p style={{ fontSize: 9.5, color: "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.5 }}>
+            Principal&apos;s Signature & Stamp
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Fix: correct TypeScript type for refProp ──────────────────────────────────
+  function A4Page({
+    children,
+    refProp,
+  }: {
+    children: React.ReactNode;
+    refProp: React.RefObject<HTMLDivElement | null>;
+  }) {
+    return (
+      <div
+        ref={refProp}
+        style={{
+          width: A4_W,
+          height: A4_H,
+          backgroundColor: "white",
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          color: "#111",
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div>
       {showActions && (
@@ -224,1000 +671,1615 @@ export default function ReportCardComponent({
             <Printer className="w-4 h-4" />
             Print
           </button>
+          {isTwoPage && (
+            <span className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium">
+              📄 2-page report ({report.subjects.length} subjects)
+            </span>
+          )}
         </div>
       )}
 
+      {/* ── Screen preview wrapper ── */}
       <div
         ref={wrapperRef}
         className="w-full overflow-hidden no-print-scale"
-        style={{ height: A4_H * scale }}
+        style={{ height: isTwoPage ? (A4_H * 2 + 16) * scale : A4_H * scale }}
       >
-        <div
-          style={{
-            transformOrigin: "top left",
-            transform: `scale(${scale})`,
-            width: A4_W,
-          }}
-        >
-          {/* ── Report Card ── */}
-          <div
-            ref={cardRef}
-            style={{
-              width: A4_W,
-              height: A4_H,
-              backgroundColor: "white",
-              fontFamily: "Georgia, 'Times New Roman', serif",
-              color: "#111",
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-          >
-            {/* ── HEADER ── */}
-            <div
-              style={{
-                background: "linear-gradient(135deg, #1e3a5f 0%, #0a1628 100%)",
-                color: "white",
-                padding: "16px 28px",
-                position: "relative",
-                overflow: "hidden",
-                flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: -40,
-                  right: -40,
-                  width: 150,
-                  height: 150,
-                  borderRadius: "50%",
-                  background: "rgba(245,158,11,0.08)",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: -20,
-                  left: -20,
-                  width: 100,
-                  height: 100,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.03)",
-                }}
-              />
+        <div style={{ transformOrigin: "top left", transform: `scale(${scale})`, width: A4_W }}>
 
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  position: "relative",
-                  zIndex: 1,
-                }}
-              >
-                {/* Logo */}
-                <div
-                  style={{
-                    flexShrink: 0,
-                    width: 100,
-                    height: 100,
-                  }}
-                >
-                  <img
-                    src={logoBase64 || SCHOOL_LOGO_URL}
-                    alt="School Logo"
-                    crossOrigin="anonymous"
-                    style={{
-                      width: 100,
-                      height: 100,
-                      objectFit: "contain",
-                      borderRadius: 10,
-                      display: "block",
-                    }}
-                  />
-                </div>
+          {/* ════════════ PAGE 1 ════════════ */}
+          <A4Page refProp={page1Ref}>
+            <PageHeader showQR />
+            <StudentInfoStrip />
+            <SubjectsTable />
 
-                {/* School Info */}
-                <div style={{ flex: 1, textAlign: "center", padding: "0 18px" }}>
-                  <h1
-                    style={{
-                      fontSize: 18,
-                      fontWeight: "900",
-                      margin: "0 0 3px",
-                      letterSpacing: "0.5px",
-                      textTransform: "uppercase",
-                      color: "white",
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    GOD&apos;S WAY MODEL GROUPS OF SCHOOLS
-                  </h1>
-                  <p
-                    style={{
-                      fontSize: 10,
-                      color: "rgba(255,255,255,0.5)",
-                      margin: "0 0 6px",
-                      letterSpacing: "2px",
-                    }}
-                  >
-                    SOWING THE SEED OF MERIT AND EXCELLENCE
-                  </p>
-                  <div
-                    style={{
-                      fontSize: 10.5,
-                      color: "rgba(255,255,255,0.6)",
-                      lineHeight: 1.75,
-                    }}
-                  >
-                    <p style={{ margin: 0 }}>
-                      📍 NO 12 SIYANBOLA STREET, OSOGBO, OSUN STATE
-                    </p>
-                    <p style={{ margin: 0 }}>
-                      📞 08069825847, 08067110930 &nbsp;|&nbsp; ✉️
-                      godswaygroupofschools@gmail.com
-                    </p>
-                  </div>
-                </div>
+            {!isTwoPage && (
+              <>
+                <GradeScale />
+                <AttendanceAndComments />
+                <PromotionBanner />
+                <ResumptionDate />
+              </>
+            )}
 
-                {/* QR */}
-                <div style={{ flexShrink: 0, textAlign: "center" }}>
-                  {qrDataUrl ? (
-                    <div
-                      style={{ background: "white", padding: 7, borderRadius: 8 }}
-                    >
-                      <img
-                        src={qrDataUrl}
-                        alt="QR Code"
-                        style={{ width: 86, height: 86, display: "block" }}
-                      />
-                      <p
-                        style={{
-                          fontSize: 9,
-                          color: "#555",
-                          margin: "3px 0 0",
-                          textAlign: "center",
-                        }}
-                      >
-                        Verify Report
-                      </p>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        width: 100,
-                        height: 100,
-                        background: "rgba(255,255,255,0.05)",
-                        borderRadius: 8,
-                        border: "1px dashed rgba(255,255,255,0.2)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 9,
-                          color: "rgba(255,255,255,0.3)",
-                          textAlign: "center",
-                          padding: 4,
-                        }}
-                      >
-                        QR on Download
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Title Bar */}
-              <div
-                style={{ marginTop: 12, display: "flex", justifyContent: "center" }}
-              >
-                <div
-                  style={{
-                    padding: "7px 20px",
-                    background: "rgba(245,158,11,0.15)",
-                    borderRadius: 8,
-                    border: "1px solid rgba(245,158,11,0.3)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 12,
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#f59e0b",
-                      fontSize: 12,
-                      fontWeight: "bold",
-                      letterSpacing: "0.5px",
-                      lineHeight: 1,
-                    }}
-                  >
-                    STUDENT REPORT CARD
-                  </span>
-                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, lineHeight: 1 }}>
-                    ·
-                  </span>
-                  <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 11, lineHeight: 1 }}>
-                    {report.termName.toUpperCase()} TERM &nbsp;·&nbsp;{" "}
-                    {report.sessionName} SESSION
+            {isTwoPage && (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                <div style={{ margin: "0 28px 12px", padding: "10px 16px", background: "#f0f4f8", borderRadius: 8, border: "1px dashed #cbd5e1", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 14, lineHeight: 1 }}>📋</span>
+                  <span style={{ fontSize: 10.5, color: "#475569", fontStyle: "italic" }}>
+                    Attendance record, teacher comments, and other details are continued on Page 2.
                   </span>
                 </div>
-              </div>
-            </div>
-
-            {/* ── STUDENT INFO ── */}
-            <div
-              style={{
-                padding: "12px 28px",
-                borderBottom: "2px solid #f0f4f8",
-                display: "flex",
-                gap: 14,
-                alignItems: "stretch",
-                flexShrink: 0,
-              }}
-            >
-              {/* Photo / Initials Avatar */}
-              <div style={{ flexShrink: 0 }}>
-                {report.studentSnapshot.profilePhoto ? (
-                  <img
-                    src={profilePhotoBase64 || report.studentSnapshot.profilePhoto}
-                    alt="Student"
-                    style={{
-                      width: 86,
-                      height: 86,
-                      objectFit: "cover",
-                      borderRadius: 10,
-                      border: "3px solid #1e3a5f",
-                      display: "block",
-                    }}
-                  />
-                ) : (
-                  // ── FIXED: use table-cell for vertical centering instead of flex ──
-                  <div
-                    data-avatar
-                    style={{
-                      width: 86,
-                      height: 86,
-                      borderRadius: 10,
-                      background: "#e8eff7",
-                      border: "3px solid #1e3a5f",
-                      display: "table-cell",
-                      verticalAlign: "middle",
-                      textAlign: "center",
-                      fontSize: 26,
-                      color: "#1e3a5f",
-                      fontWeight: "bold",
-                      boxSizing: "border-box",
-                    }}
-                  >
-                    {report.studentSnapshot.surname.charAt(0)}
-                    {report.studentSnapshot.firstName.charAt(0)}
-                    {report.studentSnapshot.otherName.charAt(0)}
-                  </div>
-                )}
-              </div>
-
-              {/* Details Grid */}
-              <div
-                style={{
-                  flex: 1,
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "1px 14px",
-                  alignContent: "start",
-                }}
-              >
-                {[
-                  {
-                    label: "Student Name",
-                    value: `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName}`,
-                  },
-                  {
-                    label: "Admission No.",
-                    value: report.studentSnapshot.admissionNumber,
-                  },
-                  { label: "Class", value: report.className },
-                  { label: "Academic Session", value: report.sessionName },
-                  { label: "Term", value: `${report.termName.toUpperCase()} TERM` },
-                  {
-                    label: "Date of Birth",
-                    value: formatDate(report.studentSnapshot.dateOfBirth),
-                  },
-                  {
-                    label: "Gender",
-                    value:
-                      report.studentSnapshot.gender.charAt(0).toUpperCase() +
-                      report.studentSnapshot.gender.slice(1),
-                  },
-                  {
-                    label: "Department",
-                    value:
-                      report.studentSnapshot.department !== "none"
-                        ? report.studentSnapshot.department.toUpperCase()
-                        : "N/A",
-                  },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{ padding: "2px 0" }}>
-                    <span
-                      style={{
-                        fontSize: 9.5,
-                        color: "#6b7280",
-                        display: "block",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {label}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 12.5,
-                        fontWeight: "600",
-                        color: "#111",
-                        lineHeight: 1.4,
-                        display: "block",
-                      }}
-                    >
-                      {value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* ── Performance Box — FIXED: removed justifyContent center, use paddingTop instead ── */}
-              <div
-                data-perf-box
-                style={{
-                  flexShrink: 0,
-                  background: "#1e3a5f",
-                  borderRadius: 10,
-                  padding: "14px 16px",
-                  color: "white",
-                  textAlign: "center",
-                  minWidth: 115,
-                  display: "flex",
-                  flexDirection: "column",
-                  // intentionally NO justifyContent: "center" — causes html2canvas shift
-                  // padding handles the vertical spacing instead
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 32,
-                    fontWeight: "bold",
-                    color: "#f59e0b",
-                    lineHeight: 1,
-                    marginBottom: 3,
-                  }}
-                >
-                  {avgScore}%
-                </div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: "rgba(255,255,255,0.5)",
-                    marginBottom: 3,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  Overall Score
-                </div>
-                <div style={{ fontSize: 20, fontWeight: "bold", marginBottom: 3, lineHeight: 1.2 }}>
-                  {report.grade}
-                </div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", lineHeight: 1.3 }}>
-                  Grade
-                </div>
-                <div
-                  style={{
-                    marginTop: 8,
-                    paddingTop: 7,
-                    borderTop: "1px solid rgba(255,255,255,0.15)",
-                    fontSize: 11,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  <span style={{ color: "#f59e0b", fontWeight: "bold" }}>
-                    {getOrdinal(report.position)}
-                  </span>
-                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 9.5 }}>
-                    {" "}/ {report.totalStudentsInClass} students
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── SCORES TABLE ── */}
-            <div style={{ padding: "0 28px", flexShrink: 0 }}>
-              <h3
-                style={{
-                  fontSize: 12,
-                  fontWeight: "bold",
-                  color: "#1e3a5f",
-                  padding: "10px 0 7px",
-                  borderBottom: "2px solid #1e3a5f",
-                  margin: 0,
-                  letterSpacing: "0.5px",
-                }}
-              >
-                ACADEMIC PERFORMANCE
-              </h3>
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontSize: 11.5,
-                  tableLayout: "fixed",
-                }}
-              >
-                <colgroup>
-                  <col style={{ width: "30%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "14%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "16%" }} />
-                </colgroup>
-                <thead>
-                  <tr style={{ background: "#f0f4f8" }}>
-                    {[
-                      { label: "SUBJECT", sub: "" },
-                      { label: "TEST", sub: "(20/30)" },
-                      { label: "EXAM", sub: "(60/70)" },
-                      { label: "PRAC.", sub: "(20)" },
-                      { label: "TOTAL", sub: "" },
-                      { label: "GRADE", sub: "" },
-                      { label: "REMARK", sub: "" },
-                    ].map(({ label, sub }, i) => (
-                      <th
-                        key={i}
-                        style={{
-                          padding: "6px 5px",
-                          textAlign: i === 0 ? "left" : "center",
-                          fontSize: 9.5,
-                          color: "#374151",
-                          fontWeight: "700",
-                          borderBottom: "1px solid #e2e8f0",
-                          paddingLeft: i === 0 ? 8 : 5,
-                          lineHeight: 1.3,
-                          verticalAlign: "middle",
-                        }}
-                      >
-                        {label}
-                        {sub && (
-                          <div
-                            style={{
-                              fontSize: 8.5,
-                              color: "#6b7280",
-                              fontWeight: "500",
-                            }}
-                          >
-                            {sub}
-                          </div>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.subjects.map((subject: ISubjectScore, i) => (
-                    <tr
-                      key={subject.subject}
-                      style={{ background: i % 2 === 0 ? "white" : "#fafbfc" }}
-                    >
-                      <td
-                        style={{
-                          padding: `${Math.max(4, (rowHeight - 18) / 2)}px 8px`,
-                          borderBottom: "1px solid #f0f4f8",
-                          fontWeight: "500",
-                          overflow: "hidden",
-                          whiteSpace: "nowrap",
-                          textOverflow: "ellipsis",
-                          verticalAlign: "middle",
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {subject.subjectName}
-                      </td>
-                      <td style={{ padding: "4px 5px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle", lineHeight: 1.3 }}>
-                        {subject.testScore}
-                      </td>
-                      <td style={{ padding: "4px 5px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle", lineHeight: 1.3 }}>
-                        {subject.examScore}
-                      </td>
-                      <td
-                        style={{
-                          padding: "4px 5px",
-                          borderBottom: "1px solid #f0f4f8",
-                          textAlign: "center",
-                          verticalAlign: "middle",
-                          lineHeight: 1.3,
-                          color: subject.hasPractical ? "#111" : "#ccc",
-                        }}
-                      >
-                        {subject.hasPractical ? subject.practicalScore : "—"}
-                      </td>
-                      <td
-                        style={{
-                          padding: "4px 5px",
-                          borderBottom: "1px solid #f0f4f8",
-                          textAlign: "center",
-                          verticalAlign: "middle",
-                          lineHeight: 1.3,
-                          fontWeight: "bold",
-                          color:
-                            subject.totalScore < subject.maxTotalScore * 0.5
-                              ? "#dc2626"
-                              : "#1e3a5f",
-                        }}
-                      >
-                        {subject.totalScore}/{subject.maxTotalScore}
-                      </td>
-                      <td style={{ padding: "4px 5px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle" }}>
-                        <span
-                          style={{
-                            display: "inline-block",
-                            padding: "1px 6px",
-                            borderRadius: 3,
-                            fontSize: 10,
-                            fontWeight: "bold",
-                            lineHeight: 1.5,
-                            background:
-                              subject.grade === "A"
-                                ? "#d1fae5"
-                                : subject.grade === "F"
-                                  ? "#fee2e2"
-                                  : subject.grade === "B"
-                                    ? "#dbeafe"
-                                    : "#fef3c7",
-                            color:
-                              subject.grade === "A"
-                                ? "#065f46"
-                                : subject.grade === "F"
-                                  ? "#991b1b"
-                                  : subject.grade === "B"
-                                    ? "#1e40af"
-                                    : "#92400e",
-                          }}
-                        >
-                          {subject.grade}
-                        </span>
-                      </td>
-                      <td
-                        style={{
-                          padding: "4px 5px",
-                          borderBottom: "1px solid #f0f4f8",
-                          textAlign: "center",
-                          verticalAlign: "middle",
-                          fontSize: 10,
-                          lineHeight: 1.3,
-                          color: "#6b7280",
-                        }}
-                      >
-                        {subject.remark}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr style={{ background: "#1e3a5f", color: "white" }}>
-                    <td colSpan={4} style={{ padding: "7px 8px", fontWeight: "bold", fontSize: 11.5, verticalAlign: "middle", lineHeight: 1.3 }}>
-                      TOTAL
-                    </td>
-                    <td
-                      style={{
-                        padding: "7px 5px",
-                        textAlign: "center",
-                        verticalAlign: "middle",
-                        fontWeight: "bold",
-                        fontSize: 12.5,
-                        lineHeight: 1.3,
-                        color: "#f59e0b",
-                      }}
-                    >
-                      {report.totalObtained}/{report.totalObtainable}
-                    </td>
-                    <td style={{ padding: "7px 5px", textAlign: "center", verticalAlign: "middle", fontWeight: "bold", lineHeight: 1.3, color: "#f59e0b" }}>
-                      {report.grade}
-                    </td>
-                    <td style={{ padding: "7px 5px", textAlign: "center", verticalAlign: "middle", fontSize: 11.5, lineHeight: 1.3, color: "rgba(255,255,255,0.85)" }}>
-                      {avgScore}%
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {/* ── GRADE SCALE ── */}
-            <div style={{ padding: "8px 28px", flexShrink: 0 }}>
-              <div
-                style={{
-                  display: "flex",
-                  gap: 4,
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  padding: "6px 10px",
-                  background: "#f8fafc",
-                  borderRadius: 7,
-                  border: "1px solid #e2e8f0",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 9.5,
-                    color: "#6b7280",
-                    marginRight: 3,
-                    fontWeight: "600",
-                    whiteSpace: "nowrap",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  Grade Scale:
-                </span>
-                {[
-                  { grade: "A", range: "70–100%", bg: "#d1fae5", text: "#065f46" },
-                  { grade: "B", range: "60–69%", bg: "#dbeafe", text: "#1e40af" },
-                  { grade: "C", range: "50–59%", bg: "#fef3c7", text: "#92400e" },
-                  { grade: "D", range: "49–45%", bg: "#f3f4f6", text: "#374151" },
-                  { grade: "E", range: "44–40%", bg: "#fde68a", text: "#78350f" },
-                  { grade: "F", range: "0–39%", bg: "#fee2e2", text: "#991b1b" },
-                ].map((g) => (
-                  <span
-                    key={g.grade}
-                    style={{
-                      padding: "2px 8px",
-                      borderRadius: 4,
-                      fontSize: 9.5,
-                      fontWeight: "600",
-                      background: g.bg,
-                      color: g.text,
-                      whiteSpace: "nowrap",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {g.grade}: {g.range}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* ── ATTENDANCE + COMMENTS ── */}
-            <div
-              style={{
-                padding: "0 28px 10px",
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 14,
-                flex: 1,
-                minHeight: 0,
-              }}
-            >
-              {/* Attendance */}
-              <div
-                style={{
-                  background: "#f8fafc",
-                  borderRadius: 9,
-                  border: "1px solid #e2e8f0",
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <div style={{ padding: "12px 14px", flex: 1 }}>
-                  <h4
-                    style={{
-                      fontSize: 11,
-                      fontWeight: "bold",
-                      color: "#1e3a5f",
-                      margin: "0 0 8px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    Attendance Record
-                  </h4>
-                  {[
-                    { label: "School Days Open", value: report.attendance.schoolDaysOpen },
-                    { label: "Days Present", value: report.attendance.daysPresent },
-                    { label: "Days Absent", value: report.attendance.daysAbsent },
-                  ].map(({ label, value }) => (
-                    <div
-                      key={label}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "4px 0",
-                        borderBottom: "1px solid #e8edf2",
-                      }}
-                    >
-                      <span style={{ fontSize: 10.5, color: "#6b7280", lineHeight: 1.5 }}>{label}:</span>
-                      <span style={{ fontSize: 11, fontWeight: "600", color: "#111", lineHeight: 1.5 }}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-                {/* ── FIXED: attendance footer — removed alignItems center, use lineHeight instead ── */}
-                <div
-                  data-att-footer
-                  style={{
-                    padding: "7px 14px",
-                    background: "#1e3a5f",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    // NO alignItems: "center" — use lineHeight on children instead
-                    flexShrink: 0,
-                  }}
-                >
-                  <span style={{ fontSize: 10.5, color: "rgba(255,255,255,0.75)", lineHeight: "28px" }}>
-                    Attendance Rate:
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: "bold", color: "#f59e0b", lineHeight: "28px" }}>
-                    {report.attendance.attendancePercentage.toFixed(0)}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Comments */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div
-                  style={{
-                    background: "#f8fafc",
-                    borderRadius: 9,
-                    padding: "12px 13px",
-                    border: "1px solid #e2e8f0",
-                    flex: 1,
-                  }}
-                >
-                  <h4
-                    style={{
-                      fontSize: 10.5,
-                      fontWeight: "bold",
-                      color: "#1e3a5f",
-                      margin: "0 0 5px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    Class Teacher&apos;s Comment
-                  </h4>
-                  <p
-                    style={{
-                      fontSize: 11.5,
-                      color: "#374151",
-                      margin: 0,
-                      lineHeight: 1.5,
-                      fontStyle: "italic",
-                    }}
-                  >
-                    {report.teacherComment ?? "No comment provided."}
-                  </p>
-                </div>
-                <div
-                  style={{
-                    background: "#f8fafc",
-                    borderRadius: 9,
-                    padding: "12px 13px",
-                    border: "1px solid #e2e8f0",
-                    flex: 1,
-                  }}
-                >
-                  <h4
-                    style={{
-                      fontSize: 10.5,
-                      fontWeight: "bold",
-                      color: "#1e3a5f",
-                      margin: "0 0 5px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    Principal&apos;s Comment
-                  </h4>
-                  <p
-                    style={{
-                      fontSize: 11.5,
-                      color: "#374151",
-                      margin: 0,
-                      lineHeight: 1.5,
-                      fontStyle: "italic",
-                    }}
-                  >
-                    {report.principalComment ?? "Keep up the good work!"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* ── PROMOTION STATUS (Third Term only) ── */}
-            {isThirdTerm && report.promotedToClass && (
-              <div style={{ padding: "0 28px 10px", flexShrink: 0 }}>
-                {report.promotedToClass === "Pending Department Assignment" ? (
-                  <div
-                    style={{
-                      padding: "11px 15px",
-                      borderRadius: 9,
-                      background: "linear-gradient(135deg, #fffbeb, #fef3c7)",
-                      border: "1px solid #fde68a",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                    }}
-                  >
-                    <span style={{ fontSize: 18, lineHeight: 1 }}>⏳</span>
-                    <div>
-                      <p style={{ fontSize: 12.5, fontWeight: "bold", color: "#92400e", margin: 0, lineHeight: 1.4 }}>
-                        DEPARTMENT ASSIGNMENT PENDING
-                      </p>
-                      <p style={{ fontSize: 10.5, color: "#78350f", margin: "2px 0 0", lineHeight: 1.4 }}>
-                        Your child has passed! Admin will assign your SSS 1 class and department shortly.
-                      </p>
-                    </div>
-                  </div>
-                ) : report.promotedToClass === "Graduated" ? (
-                  <div
-                    style={{
-                      padding: "11px 15px",
-                      borderRadius: 9,
-                      background: "linear-gradient(135deg, #d1fae5, #a7f3d0)",
-                      border: "1px solid #6ee7b7",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                    }}
-                  >
-                    <span style={{ fontSize: 18, lineHeight: 1 }}>🎓</span>
-                    <div>
-                      <p style={{ fontSize: 12.5, fontWeight: "bold", color: "#065f46", margin: 0, lineHeight: 1.4 }}>
-                        CONGRATULATIONS — GRADUATED!
-                      </p>
-                      <p style={{ fontSize: 10.5, color: "#065f46", margin: "2px 0 0", lineHeight: 1.4 }}>
-                        Your child has successfully completed SSS 2. Well done!
-                      </p>
-                    </div>
-                  </div>
-                ) : report.promotedToClass === "Performance Under Review" ? (
-                  <div
-                    style={{
-                      padding: "11px 15px",
-                      borderRadius: 9,
-                      background: "linear-gradient(135deg, #fee2e2, #fecaca)",
-                      border: "1px solid #fca5a5",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                    }}
-                  >
-                    <span style={{ fontSize: 18, lineHeight: 1 }}>📋</span>
-                    <div>
-                      <p style={{ fontSize: 12.5, fontWeight: "bold", color: "#991b1b", margin: 0, lineHeight: 1.4 }}>
-                        PERFORMANCE UNDER REVIEW
-                      </p>
-                      <p style={{ fontSize: 10.5, color: "#7f1d1d", margin: "2px 0 0", lineHeight: 1.4 }}>
-                        Please contact the school for further information.
-                      </p>
-                    </div>
-                  </div>
-                ) : report.isPromoted ? (
-                  <div
-                    style={{
-                      padding: "11px 15px",
-                      borderRadius: 9,
-                      background: "linear-gradient(135deg, #d1fae5, #a7f3d0)",
-                      border: "1px solid #6ee7b7",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                    }}
-                  >
-                    <span style={{ fontSize: 18, lineHeight: 1 }}>🎉</span>
-                    <div>
-                      <p style={{ fontSize: 12.5, fontWeight: "bold", color: "#065f46", margin: 0, lineHeight: 1.4 }}>
-                        PROMOTED TO: {report.promotedToClass}
-                      </p>
-                      <p style={{ fontSize: 10.5, color: "#065f46", margin: "2px 0 0", lineHeight: 1.4 }}>
-                        Congratulations! Continue to excel in the next academic year.
-                      </p>
-                    </div>
-                  </div>
-                ) : null}
+                <PageFooter />
               </div>
             )}
 
-            {/* ── NEXT TERM DATE ── */}
-            {report.nextTermResumptionDate && (
-              <div style={{ padding: "0 28px 10px", flexShrink: 0 }}>
-                <div
-                  style={{
-                    padding: "9px 15px",
-                    borderRadius: 7,
-                    background: "#fffbeb",
-                    border: "1px solid #fde68a",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <span style={{ fontSize: 15, lineHeight: 1 }}>📅</span>
+            {!isTwoPage && <PageFooter />}
+          </A4Page>
+
+          {/* ════════════ PAGE 2 (two-page only) ════════════ */}
+          {isTwoPage && (
+            <>
+              <div style={{ height: 16, background: "#e2e8f0" }} />
+              <A4Page refProp={page2Ref}>
+                <PageHeader showQR={false} />
+
+                {/* Mini student banner so page 2 is clearly identified */}
+                <div style={{ padding: "8px 28px", background: "#f0f4f8", borderBottom: "1px solid #e2e8f0", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
-                    <span style={{ fontSize: 10.5, color: "#78350f", fontWeight: "600", textTransform: "uppercase", lineHeight: 1.5 }}>
-                      Next Term Resumption:
+                    <span style={{ fontSize: 9.5, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.5px" }}>Student: </span>
+                    <span style={{ fontSize: 12, fontWeight: "700", color: "#1e3a5f" }}>
+                      {report.studentSnapshot.surname} {report.studentSnapshot.firstName} {report.studentSnapshot.otherName}
                     </span>
-                    <span style={{ fontSize: 12.5, color: "#92400e", fontWeight: "bold", marginLeft: 8, lineHeight: 1.5 }}>
-                      {formatDate(report.nextTermResumptionDate)}
-                    </span>
+                    <span style={{ fontSize: 10, color: "#6b7280", marginLeft: 10 }}>· {report.studentSnapshot.admissionNumber}</span>
                   </div>
+                  <span style={{ fontSize: 10, color: "#6b7280", fontStyle: "italic" }}>
+                    {report.className} · {report.termName.toUpperCase()} TERM
+                  </span>
                 </div>
-              </div>
-            )}
 
-            {/* ── FOOTER ── */}
-            <div
-              style={{
-                padding: "12px 28px",
-                background: "#0a1628",
-                color: "white",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexShrink: 0,
-              }}
-            >
-              <div>
-                <p style={{ fontSize: 9.5, color: "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.5 }}>
-                  Report generated on{" "}
-                  {new Date().toLocaleDateString("en-NG", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
-                <p style={{ fontSize: 9.5, color: "rgba(255,255,255,0.3)", margin: "2px 0 0", lineHeight: 1.5 }}>
-                  Report ID: {report._id} · Scan QR code to verify authenticity
-                </p>
-              </div>
+                <GradeScale />
+                <AttendanceAndComments />
+                <PromotionBanner />
+                <ResumptionDate />
+                <PageFooter />
+              </A4Page>
+            </>
+          )}
 
-              <div style={{ textAlign: "right" }}>
-                {report.principalSignature ? (
-                  <img
-                    src={report.principalSignature}
-                    alt="Principal Signature"
-                    style={{
-                      height: 44,
-                      objectFit: "contain",
-                      marginBottom: 4,
-                      display: "block",
-                      marginLeft: "auto",
-                      filter: "brightness(0) invert(1)",
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 110,
-                      height: 1,
-                      background: "rgba(255,255,255,0.2)",
-                      marginBottom: 4,
-                    }}
-                  />
-                )}
-                <p style={{ fontSize: 9.5, color: "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.5 }}>
-                  Principal&apos;s Signature
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
   );
 }
+
+
+
+
+
+// "use client";
+
+// import { useRef, useState, useEffect } from "react";
+// import { Download, Printer } from "lucide-react";
+// import QRCode from "qrcode";
+// import type { IReportCard, ISubjectScore } from "@/types";
+// import { TermName } from "@/types/enums";
+// import { formatDate, getOrdinal } from "@/lib/utils";
+
+// interface ReportCardProps {
+//   report: IReportCard & {
+//     sessionName: string;
+//     termName: TermName;
+//     className: string;
+//     principalSignature?: string | null;
+//     schoolStamp?: string | null;
+//   };
+//   showActions?: boolean;
+// }
+
+// const SCHOOL_LOGO_URL =
+//   "https://res.cloudinary.com/disxrmlco/image/upload/v1771881211/android-chrome-512x512_mc7kty.png";
+
+// const A4_W = 794;
+// const A4_H = 1123;
+
+// // ─── helper: recursively fix flex-centering on a cloned DOM node ───────────────
+// function fixFlexAlignment(el: HTMLElement) {
+//   const style = el.style;
+
+//   // If this element uses flex centering, convert to block + padding trick
+//   if (style.display === "flex" || style.display === "inline-flex") {
+//     const alignItems = style.alignItems;
+//     const justifyContent = style.justifyContent;
+//     const flexDirection = style.flexDirection || "row";
+//     const isColumn = flexDirection === "column";
+
+//     // For column flex containers centered on cross-axis (alignItems center)
+//     // html2canvas handles these worst — safest fix is to just let content flow naturally
+//     if (alignItems === "center") {
+//       style.alignItems = "flex-start";
+//     }
+//     if (justifyContent === "center" && isColumn) {
+//       style.justifyContent = "flex-start";
+//     }
+//   }
+
+//   // Recurse into children
+//   Array.from(el.children).forEach((child) =>
+//     fixFlexAlignment(child as HTMLElement),
+//   );
+// }
+// // ──────────────────────────────────────────────────────────────────────────────
+
+// export default function ReportCardComponent({
+//   report,
+//   showActions = true,
+// }: ReportCardProps) {
+//   const cardRef = useRef<HTMLDivElement>(null);
+//   const wrapperRef = useRef<HTMLDivElement>(null);
+//   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+//   const [isPrinting, setIsPrinting] = useState(false);
+//   const [profilePhotoBase64, setProfilePhotoBase64] = useState<string | null>(
+//     null,
+//   );
+//   const [logoBase64, setLogoBase64] = useState<string | null>(null);
+//   const [scale, setScale] = useState(1);
+
+//   useEffect(() => {
+//     function updateScale() {
+//       if (!wrapperRef.current) return;
+//       const available = wrapperRef.current.clientWidth;
+//       const newScale = Math.min(1, available / A4_W);
+//       setScale(newScale);
+//     }
+//     updateScale();
+//     const observer = new ResizeObserver(updateScale);
+//     if (wrapperRef.current) observer.observe(wrapperRef.current);
+//     return () => observer.disconnect();
+//   }, []);
+
+//   async function generateQR() {
+//     const verifyUrl = `${window.location.origin}/verify-report/${report._id}`;
+//     return QRCode.toDataURL(verifyUrl, { width: 100, margin: 1 });
+//   }
+
+//   async function convertImageToBase64(url: string): Promise<string> {
+//     try {
+//       const response = await fetch(url);
+//       const blob = await response.blob();
+//       return new Promise((resolve, reject) => {
+//         const reader = new FileReader();
+//         reader.onloadend = () => resolve(reader.result as string);
+//         reader.onerror = reject;
+//         reader.readAsDataURL(blob);
+//       });
+//     } catch {
+//       return "";
+//     }
+//   }
+
+//   async function handlePrint() {
+//     setIsPrinting(true);
+//     const [qr, logo] = await Promise.all([
+//       generateQR(),
+//       convertImageToBase64(SCHOOL_LOGO_URL),
+//     ]);
+//     setQrDataUrl(qr);
+//     setLogoBase64(logo);
+//     if (report.studentSnapshot.profilePhoto) {
+//       const base64 = await convertImageToBase64(
+//         report.studentSnapshot.profilePhoto,
+//       );
+//       setProfilePhotoBase64(base64);
+//     }
+//     await new Promise((r) => setTimeout(r, 500));
+//     window.print();
+//     setIsPrinting(false);
+//   }
+
+//   async function handleDownload() {
+//     setIsPrinting(true);
+
+//     const [qr, logo] = await Promise.all([
+//       generateQR(),
+//       convertImageToBase64(SCHOOL_LOGO_URL),
+//     ]);
+//     setQrDataUrl(qr);
+//     setLogoBase64(logo);
+
+//     if (report.studentSnapshot.profilePhoto) {
+//       const base64 = await convertImageToBase64(
+//         report.studentSnapshot.profilePhoto,
+//       );
+//       setProfilePhotoBase64(base64);
+//     }
+
+//     // Give React time to re-render with the new state values above
+//     await new Promise((r) => setTimeout(r, 600));
+
+//     const { jsPDF } = await import("jspdf");
+//     const { default: html2canvas } = await import("html2canvas");
+
+//     if (!cardRef.current) return;
+
+//     const canvas = await html2canvas(cardRef.current, {
+//       scale: 3,
+//       useCORS: true,
+//       allowTaint: false,
+//       logging: false,
+//       width: A4_W,
+//       height: A4_H,
+//       windowWidth: A4_W,
+//       imageTimeout: 0,
+//       foreignObjectRendering: false,
+//       // ── KEY FIX: patch flex-centering in the cloned DOM before html2canvas renders it
+//       onclone: (_doc, clonedEl) => {
+//         fixFlexAlignment(clonedEl);
+
+//         // Also explicitly fix the performance box (column flex, justifyContent center)
+//         // by giving it a fixed height and using padding to simulate centering
+//         const perfBox = clonedEl.querySelector<HTMLElement>("[data-perf-box]");
+//         if (perfBox) {
+//           perfBox.style.justifyContent = "flex-start";
+//           perfBox.style.paddingTop = "14px";
+//         }
+
+//         // Fix the initials avatar box
+//         const avatar = clonedEl.querySelector<HTMLElement>("[data-avatar]");
+//         if (avatar) {
+//           avatar.style.display = "table-cell";
+//           avatar.style.verticalAlign = "middle";
+//           avatar.style.textAlign = "center";
+//         }
+
+//         // Fix attendance rate footer bar
+//         const attFooter =
+//           clonedEl.querySelector<HTMLElement>("[data-att-footer]");
+//         if (attFooter) {
+//           attFooter.style.alignItems = "flex-start";
+//           attFooter.style.paddingTop = "5px";
+//           attFooter.style.paddingBottom = "5px";
+//         }
+//       },
+//     });
+
+//     const imgData = canvas.toDataURL("image/png");
+//     const pdf = new jsPDF({
+//       orientation: "portrait",
+//       unit: "mm",
+//       format: "a4",
+//       compress: true,
+//     });
+
+//     pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+//     pdf.save(
+//       `ReportCard_${report.studentSnapshot.admissionNumber}_${report.termName}_${report.sessionName}.pdf`,
+//     );
+//     setIsPrinting(false);
+//   }
+
+//   const isThirdTerm = report.termName === TermName.THIRD;
+//   const avgScore = report.percentage.toFixed(1);
+
+//   const FIXED_HEIGHT = 170 + 122 + 42 + 36 + 42 + 140 + 46 + 40;
+//   const conditionalHeight =
+//     (isThirdTerm ? 52 : 0) + (report.nextTermResumptionDate ? 46 : 0);
+//   const availableForRows = A4_H - FIXED_HEIGHT - conditionalHeight;
+//   const subjectCount = report.subjects.length;
+//   const rowHeight = Math.min(
+//     52,
+//     Math.max(24, Math.floor(availableForRows / Math.max(subjectCount, 1))),
+//   );
+
+//   return (
+//     <div>
+//       {showActions && (
+//         <div className="flex gap-3 mb-4 no-print">
+//           <button
+//             onClick={handleDownload}
+//             disabled={isPrinting}
+//             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1e3a5f] text-white text-sm font-medium hover:bg-[#152847] transition-colors disabled:opacity-50"
+//           >
+//             <Download className="w-4 h-4" />
+//             {isPrinting ? "Preparing..." : "Download PDF"}
+//           </button>
+//           <button
+//             onClick={handlePrint}
+//             disabled={isPrinting}
+//             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+//           >
+//             <Printer className="w-4 h-4" />
+//             Print
+//           </button>
+//         </div>
+//       )}
+
+//       <div
+//         ref={wrapperRef}
+//         className="w-full overflow-hidden no-print-scale"
+//         style={{ height: A4_H * scale }}
+//       >
+//         <div
+//           style={{
+//             transformOrigin: "top left",
+//             transform: `scale(${scale})`,
+//             width: A4_W,
+//           }}
+//         >
+//           {/* ── Report Card ── */}
+//           <div
+//             ref={cardRef}
+//             style={{
+//               width: A4_W,
+//               height: A4_H,
+//               backgroundColor: "white",
+//               fontFamily: "Georgia, 'Times New Roman', serif",
+//               color: "#111",
+//               boxSizing: "border-box",
+//               display: "flex",
+//               flexDirection: "column",
+//               overflow: "hidden",
+//             }}
+//           >
+//             {/* ── HEADER ── */}
+//             <div
+//               style={{
+//                 background: "linear-gradient(135deg, #1e3a5f 0%, #0a1628 100%)",
+//                 color: "white",
+//                 padding: "16px 28px",
+//                 position: "relative",
+//                 overflow: "hidden",
+//                 flexShrink: 0,
+//               }}
+//             >
+//               <div
+//                 style={{
+//                   position: "absolute",
+//                   top: -40,
+//                   right: -40,
+//                   width: 150,
+//                   height: 150,
+//                   borderRadius: "50%",
+//                   background: "rgba(245,158,11,0.08)",
+//                 }}
+//               />
+//               <div
+//                 style={{
+//                   position: "absolute",
+//                   bottom: -20,
+//                   left: -20,
+//                   width: 100,
+//                   height: 100,
+//                   borderRadius: "50%",
+//                   background: "rgba(255,255,255,0.03)",
+//                 }}
+//               />
+
+//               <div
+//                 style={{
+//                   display: "flex",
+//                   alignItems: "center",
+//                   justifyContent: "space-between",
+//                   position: "relative",
+//                   zIndex: 1,
+//                 }}
+//               >
+//                 {/* Logo */}
+//                 <div
+//                   style={{
+//                     flexShrink: 0,
+//                     width: 100,
+//                     height: 100,
+//                   }}
+//                 >
+//                   <img
+//                     src={logoBase64 || SCHOOL_LOGO_URL}
+//                     alt="School Logo"
+//                     crossOrigin="anonymous"
+//                     style={{
+//                       width: 100,
+//                       height: 100,
+//                       objectFit: "contain",
+//                       borderRadius: 10,
+//                       display: "block",
+//                     }}
+//                   />
+//                 </div>
+
+//                 {/* School Info */}
+//                 <div
+//                   style={{ flex: 1, textAlign: "center", padding: "0 18px" }}
+//                 >
+//                   <h1
+//                     style={{
+//                       fontSize: 18,
+//                       fontWeight: "900",
+//                       margin: "0 0 3px",
+//                       letterSpacing: "0.5px",
+//                       textTransform: "uppercase",
+//                       color: "white",
+//                       lineHeight: 1.2,
+//                     }}
+//                   >
+//                     GOD&apos;S WAY MODEL GROUPS OF SCHOOLS
+//                   </h1>
+//                   <p
+//                     style={{
+//                       fontSize: 10,
+//                       color: "rgba(255,255,255,0.5)",
+//                       margin: "0 0 6px",
+//                       letterSpacing: "2px",
+//                     }}
+//                   >
+//                     SOWING THE SEED OF MERIT AND EXCELLENCE
+//                   </p>
+//                   <div
+//                     style={{
+//                       fontSize: 10.5,
+//                       color: "rgba(255,255,255,0.6)",
+//                       lineHeight: 1.75,
+//                     }}
+//                   >
+//                     <p style={{ margin: 0 }}>
+//                       📍 NO 12 SIYANBOLA STREET, OSOGBO, OSUN STATE
+//                     </p>
+//                     <p style={{ margin: 0 }}>
+//                       📞 08069825847, 08067110930 &nbsp;|&nbsp; ✉️
+//                       godswaygroupofschools@gmail.com
+//                     </p>
+//                   </div>
+//                 </div>
+
+//                 {/* QR */}
+//                 <div style={{ flexShrink: 0, textAlign: "center" }}>
+//                   {qrDataUrl ? (
+//                     <div
+//                       style={{
+//                         background: "white",
+//                         padding: 7,
+//                         borderRadius: 8,
+//                       }}
+//                     >
+//                       <img
+//                         src={qrDataUrl}
+//                         alt="QR Code"
+//                         style={{ width: 86, height: 86, display: "block" }}
+//                       />
+//                       <p
+//                         style={{
+//                           fontSize: 9,
+//                           color: "#555",
+//                           margin: "3px 0 0",
+//                           textAlign: "center",
+//                         }}
+//                       >
+//                         Verify Report
+//                       </p>
+//                     </div>
+//                   ) : (
+//                     <div
+//                       style={{
+//                         width: 100,
+//                         height: 100,
+//                         background: "rgba(255,255,255,0.05)",
+//                         borderRadius: 8,
+//                         border: "1px dashed rgba(255,255,255,0.2)",
+//                         display: "flex",
+//                         alignItems: "center",
+//                         justifyContent: "center",
+//                       }}
+//                     >
+//                       <span
+//                         style={{
+//                           fontSize: 9,
+//                           color: "rgba(255,255,255,0.3)",
+//                           textAlign: "center",
+//                           padding: 4,
+//                         }}
+//                       >
+//                         QR on Download
+//                       </span>
+//                     </div>
+//                   )}
+//                 </div>
+//               </div>
+
+//               {/* Title Bar */}
+//               <div
+//                 style={{
+//                   marginTop: 12,
+//                   display: "flex",
+//                   justifyContent: "center",
+//                 }}
+//               >
+//                 <div
+//                   style={{
+//                     padding: "7px 20px",
+//                     background: "rgba(245,158,11,0.15)",
+//                     borderRadius: 8,
+//                     border: "1px solid rgba(245,158,11,0.3)",
+//                     display: "inline-flex",
+//                     alignItems: "center",
+//                     gap: 12,
+//                   }}
+//                 >
+//                   <span
+//                     style={{
+//                       color: "#f59e0b",
+//                       fontSize: 12,
+//                       fontWeight: "bold",
+//                       letterSpacing: "0.5px",
+//                       lineHeight: 1,
+//                     }}
+//                   >
+//                     STUDENT REPORT CARD
+//                   </span>
+//                   <span
+//                     style={{
+//                       color: "rgba(255,255,255,0.5)",
+//                       fontSize: 11,
+//                       lineHeight: 1,
+//                     }}
+//                   >
+//                     ·
+//                   </span>
+//                   <span
+//                     style={{
+//                       color: "rgba(255,255,255,0.65)",
+//                       fontSize: 11,
+//                       lineHeight: 1,
+//                     }}
+//                   >
+//                     {report.termName.toUpperCase()} TERM &nbsp;·&nbsp;{" "}
+//                     {report.sessionName} SESSION
+//                   </span>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* ── STUDENT INFO ── */}
+//             <div
+//               style={{
+//                 padding: "12px 28px",
+//                 borderBottom: "2px solid #f0f4f8",
+//                 display: "flex",
+//                 gap: 14,
+//                 alignItems: "stretch",
+//                 flexShrink: 0,
+//               }}
+//             >
+//               {/* Photo / Initials Avatar */}
+//               <div style={{ flexShrink: 0 }}>
+//                 {report.studentSnapshot.profilePhoto ? (
+//                   <img
+//                     src={
+//                       profilePhotoBase64 || report.studentSnapshot.profilePhoto
+//                     }
+//                     alt="Student"
+//                     style={{
+//                       width: 86,
+//                       height: 86,
+//                       objectFit: "cover",
+//                       borderRadius: 10,
+//                       border: "3px solid #1e3a5f",
+//                       display: "block",
+//                     }}
+//                   />
+//                 ) : (
+//                   // ── FIXED: use table-cell for vertical centering instead of flex ──
+//                   <div
+//                     data-avatar
+//                     style={{
+//                       width: 86,
+//                       height: 86,
+//                       borderRadius: 10,
+//                       background: "#e8eff7",
+//                       border: "3px solid #1e3a5f",
+//                       display: "table-cell",
+//                       verticalAlign: "middle",
+//                       textAlign: "center",
+//                       fontSize: 26,
+//                       color: "#1e3a5f",
+//                       fontWeight: "bold",
+//                       boxSizing: "border-box",
+//                     }}
+//                   >
+//                     {report.studentSnapshot.surname.charAt(0)}
+//                     {report.studentSnapshot.firstName.charAt(0)}
+//                     {report.studentSnapshot.otherName.charAt(0)}
+//                   </div>
+//                 )}
+//               </div>
+
+//               {/* Details Grid */}
+//               <div
+//                 style={{
+//                   flex: 1,
+//                   display: "grid",
+//                   gridTemplateColumns: "1fr 1fr",
+//                   gap: "1px 14px",
+//                   alignContent: "start",
+//                 }}
+//               >
+//                 {[
+//                   {
+//                     label: "Student Name",
+//                     value: `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName}`,
+//                   },
+//                   {
+//                     label: "Admission No.",
+//                     value: report.studentSnapshot.admissionNumber,
+//                   },
+//                   { label: "Class", value: report.className },
+//                   { label: "Academic Session", value: report.sessionName },
+//                   {
+//                     label: "Term",
+//                     value: `${report.termName.toUpperCase()} TERM`,
+//                   },
+//                   {
+//                     label: "Date of Birth",
+//                     value: formatDate(report.studentSnapshot.dateOfBirth),
+//                   },
+//                   {
+//                     label: "Gender",
+//                     value:
+//                       report.studentSnapshot.gender.charAt(0).toUpperCase() +
+//                       report.studentSnapshot.gender.slice(1),
+//                   },
+//                   {
+//                     label: "Department",
+//                     value:
+//                       report.studentSnapshot.department !== "none"
+//                         ? report.studentSnapshot.department.toUpperCase()
+//                         : "N/A",
+//                   },
+//                 ].map(({ label, value }) => (
+//                   <div key={label} style={{ padding: "2px 0" }}>
+//                     <span
+//                       style={{
+//                         fontSize: 9.5,
+//                         color: "#6b7280",
+//                         display: "block",
+//                         textTransform: "uppercase",
+//                         letterSpacing: "0.5px",
+//                         lineHeight: 1.4,
+//                       }}
+//                     >
+//                       {label}
+//                     </span>
+//                     <span
+//                       style={{
+//                         fontSize: 12.5,
+//                         fontWeight: "600",
+//                         color: "#111",
+//                         lineHeight: 1.4,
+//                         display: "block",
+//                       }}
+//                     >
+//                       {value}
+//                     </span>
+//                   </div>
+//                 ))}
+//               </div>
+
+//               {/* ── Performance Box — FIXED: removed justifyContent center, use paddingTop instead ── */}
+//               <div
+//                 data-perf-box
+//                 style={{
+//                   flexShrink: 0,
+//                   background: "#1e3a5f",
+//                   borderRadius: 10,
+//                   padding: "14px 16px",
+//                   color: "white",
+//                   textAlign: "center",
+//                   minWidth: 115,
+//                   display: "flex",
+//                   flexDirection: "column",
+//                   // intentionally NO justifyContent: "center" — causes html2canvas shift
+//                   // padding handles the vertical spacing instead
+//                 }}
+//               >
+//                 <div
+//                   style={{
+//                     fontSize: 32,
+//                     fontWeight: "bold",
+//                     color: "#f59e0b",
+//                     lineHeight: 1,
+//                     marginBottom: 3,
+//                   }}
+//                 >
+//                   {avgScore}%
+//                 </div>
+//                 <div
+//                   style={{
+//                     fontSize: 10,
+//                     color: "rgba(255,255,255,0.5)",
+//                     marginBottom: 3,
+//                     lineHeight: 1.3,
+//                   }}
+//                 >
+//                   Overall Score
+//                 </div>
+//                 <div
+//                   style={{
+//                     fontSize: 20,
+//                     fontWeight: "bold",
+//                     marginBottom: 3,
+//                     lineHeight: 1.2,
+//                   }}
+//                 >
+//                   {report.grade}
+//                 </div>
+//                 <div
+//                   style={{
+//                     fontSize: 10,
+//                     color: "rgba(255,255,255,0.5)",
+//                     lineHeight: 1.3,
+//                   }}
+//                 >
+//                   Grade
+//                 </div>
+//                 <div
+//                   style={{
+//                     marginTop: 8,
+//                     paddingTop: 7,
+//                     borderTop: "1px solid rgba(255,255,255,0.15)",
+//                     fontSize: 11,
+//                     lineHeight: 1.4,
+//                   }}
+//                 >
+//                   <span style={{ color: "#f59e0b", fontWeight: "bold" }}>
+//                     {getOrdinal(report.position)}
+//                   </span>
+//                   <span
+//                     style={{ color: "rgba(255,255,255,0.5)", fontSize: 9.5 }}
+//                   >
+//                     {" "}
+//                     / {report.totalStudentsInClass} students
+//                   </span>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* ── SCORES TABLE ── */}
+//             <div style={{ padding: "0 28px", flexShrink: 0 }}>
+//               <h3
+//                 style={{
+//                   fontSize: 12,
+//                   fontWeight: "bold",
+//                   color: "#1e3a5f",
+//                   padding: "10px 0 7px",
+//                   borderBottom: "2px solid #1e3a5f",
+//                   margin: 0,
+//                   letterSpacing: "0.5px",
+//                 }}
+//               >
+//                 ACADEMIC PERFORMANCE
+//               </h3>
+//               <table
+//                 style={{
+//                   width: "100%",
+//                   borderCollapse: "collapse",
+//                   fontSize: 11.5,
+//                   tableLayout: "fixed",
+//                 }}
+//               >
+//                 <colgroup>
+//                   <col style={{ width: "30%" }} />
+//                   <col style={{ width: "10%" }} />
+//                   <col style={{ width: "10%" }} />
+//                   <col style={{ width: "10%" }} />
+//                   <col style={{ width: "14%" }} />
+//                   <col style={{ width: "10%" }} />
+//                   <col style={{ width: "16%" }} />
+//                 </colgroup>
+//                 <thead>
+//                   <tr style={{ background: "#f0f4f8" }}>
+//                     {[
+//                       { label: "SUBJECT", sub: "" },
+//                       { label: "TEST", sub: "(20/30)" },
+//                       { label: "EXAM", sub: "(60/70)" },
+//                       { label: "PRAC.", sub: "(20)" },
+//                       { label: "TOTAL", sub: "" },
+//                       { label: "GRADE", sub: "" },
+//                       { label: "REMARK", sub: "" },
+//                     ].map(({ label, sub }, i) => (
+//                       <th
+//                         key={i}
+//                         style={{
+//                           padding: "6px 5px",
+//                           textAlign: i === 0 ? "left" : "center",
+//                           fontSize: 9.5,
+//                           color: "#374151",
+//                           fontWeight: "700",
+//                           borderBottom: "1px solid #e2e8f0",
+//                           paddingLeft: i === 0 ? 8 : 5,
+//                           lineHeight: 1.3,
+//                           verticalAlign: "middle",
+//                         }}
+//                       >
+//                         {label}
+//                         {sub && (
+//                           <div
+//                             style={{
+//                               fontSize: 8.5,
+//                               color: "#6b7280",
+//                               fontWeight: "500",
+//                             }}
+//                           >
+//                             {sub}
+//                           </div>
+//                         )}
+//                       </th>
+//                     ))}
+//                   </tr>
+//                 </thead>
+//                 <tbody>
+//                   {report.subjects.map((subject: ISubjectScore, i) => (
+//                     <tr
+//                       key={subject.subject}
+//                       style={{ background: i % 2 === 0 ? "white" : "#fafbfc" }}
+//                     >
+//                       <td
+//                         style={{
+//                           padding: `${Math.max(4, (rowHeight - 18) / 2)}px 8px`,
+//                           borderBottom: "1px solid #f0f4f8",
+//                           fontWeight: "500",
+//                           overflow: "hidden",
+//                           whiteSpace: "nowrap",
+//                           textOverflow: "ellipsis",
+//                           verticalAlign: "middle",
+//                           lineHeight: 1.3,
+//                         }}
+//                       >
+//                         {subject.subjectName}
+//                       </td>
+//                       <td
+//                         style={{
+//                           padding: "4px 5px",
+//                           borderBottom: "1px solid #f0f4f8",
+//                           textAlign: "center",
+//                           verticalAlign: "middle",
+//                           lineHeight: 1.3,
+//                         }}
+//                       >
+//                         {subject.testScore}
+//                       </td>
+//                       <td
+//                         style={{
+//                           padding: "4px 5px",
+//                           borderBottom: "1px solid #f0f4f8",
+//                           textAlign: "center",
+//                           verticalAlign: "middle",
+//                           lineHeight: 1.3,
+//                         }}
+//                       >
+//                         {subject.examScore}
+//                       </td>
+//                       <td
+//                         style={{
+//                           padding: "4px 5px",
+//                           borderBottom: "1px solid #f0f4f8",
+//                           textAlign: "center",
+//                           verticalAlign: "middle",
+//                           lineHeight: 1.3,
+//                           color: subject.hasPractical ? "#111" : "#ccc",
+//                         }}
+//                       >
+//                         {subject.hasPractical ? subject.practicalScore : "—"}
+//                       </td>
+//                       <td
+//                         style={{
+//                           padding: "4px 5px",
+//                           borderBottom: "1px solid #f0f4f8",
+//                           textAlign: "center",
+//                           verticalAlign: "middle",
+//                           lineHeight: 1.3,
+//                           fontWeight: "bold",
+//                           color:
+//                             subject.totalScore < subject.maxTotalScore * 0.5
+//                               ? "#dc2626"
+//                               : "#1e3a5f",
+//                         }}
+//                       >
+//                         {subject.totalScore}/{subject.maxTotalScore}
+//                       </td>
+//                       <td
+//                         style={{
+//                           padding: "4px 5px",
+//                           borderBottom: "1px solid #f0f4f8",
+//                           textAlign: "center",
+//                           verticalAlign: "middle",
+//                         }}
+//                       >
+//                         <span
+//                           style={{
+//                             display: "inline-block",
+//                             padding: "1px 6px",
+//                             borderRadius: 3,
+//                             fontSize: 10,
+//                             fontWeight: "bold",
+//                             lineHeight: 1.5,
+//                             background:
+//                               subject.grade === "A"
+//                                 ? "#d1fae5"
+//                                 : subject.grade === "F"
+//                                   ? "#fee2e2"
+//                                   : subject.grade === "B"
+//                                     ? "#dbeafe"
+//                                     : "#fef3c7",
+//                             color:
+//                               subject.grade === "A"
+//                                 ? "#065f46"
+//                                 : subject.grade === "F"
+//                                   ? "#991b1b"
+//                                   : subject.grade === "B"
+//                                     ? "#1e40af"
+//                                     : "#92400e",
+//                           }}
+//                         >
+//                           {subject.grade}
+//                         </span>
+//                       </td>
+//                       <td
+//                         style={{
+//                           padding: "4px 5px",
+//                           borderBottom: "1px solid #f0f4f8",
+//                           textAlign: "center",
+//                           verticalAlign: "middle",
+//                           fontSize: 10,
+//                           lineHeight: 1.3,
+//                           color: "#6b7280",
+//                         }}
+//                       >
+//                         {subject.remark}
+//                       </td>
+//                     </tr>
+//                   ))}
+//                 </tbody>
+//                 <tfoot>
+//                   <tr style={{ background: "#1e3a5f", color: "white" }}>
+//                     <td
+//                       colSpan={4}
+//                       style={{
+//                         padding: "7px 8px",
+//                         fontWeight: "bold",
+//                         fontSize: 11.5,
+//                         verticalAlign: "middle",
+//                         lineHeight: 1.3,
+//                       }}
+//                     >
+//                       TOTAL
+//                     </td>
+//                     <td
+//                       style={{
+//                         padding: "7px 5px",
+//                         textAlign: "center",
+//                         verticalAlign: "middle",
+//                         fontWeight: "bold",
+//                         fontSize: 12.5,
+//                         lineHeight: 1.3,
+//                         color: "#f59e0b",
+//                       }}
+//                     >
+//                       {report.totalObtained}/{report.totalObtainable}
+//                     </td>
+//                     <td
+//                       style={{
+//                         padding: "7px 5px",
+//                         textAlign: "center",
+//                         verticalAlign: "middle",
+//                         fontWeight: "bold",
+//                         lineHeight: 1.3,
+//                         color: "#f59e0b",
+//                       }}
+//                     >
+//                       {report.grade}
+//                     </td>
+//                     <td
+//                       style={{
+//                         padding: "7px 5px",
+//                         textAlign: "center",
+//                         verticalAlign: "middle",
+//                         fontSize: 11.5,
+//                         lineHeight: 1.3,
+//                         color: "rgba(255,255,255,0.85)",
+//                       }}
+//                     >
+//                       {avgScore}%
+//                     </td>
+//                   </tr>
+//                 </tfoot>
+//               </table>
+//             </div>
+
+//             {/* ── GRADE SCALE ── */}
+//             <div style={{ padding: "8px 28px", flexShrink: 0 }}>
+//               <div
+//                 style={{
+//                   display: "flex",
+//                   gap: 4,
+//                   flexWrap: "wrap",
+//                   alignItems: "center",
+//                   padding: "6px 10px",
+//                   background: "#f8fafc",
+//                   borderRadius: 7,
+//                   border: "1px solid #e2e8f0",
+//                 }}
+//               >
+//                 <span
+//                   style={{
+//                     fontSize: 9.5,
+//                     color: "#6b7280",
+//                     marginRight: 3,
+//                     fontWeight: "600",
+//                     whiteSpace: "nowrap",
+//                     lineHeight: 1.5,
+//                   }}
+//                 >
+//                   Grade Scale:
+//                 </span>
+//                 {[
+//                   {
+//                     grade: "A",
+//                     range: "70–100%",
+//                     bg: "#d1fae5",
+//                     text: "#065f46",
+//                   },
+//                   {
+//                     grade: "B",
+//                     range: "60–69%",
+//                     bg: "#dbeafe",
+//                     text: "#1e40af",
+//                   },
+//                   {
+//                     grade: "C",
+//                     range: "50–59%",
+//                     bg: "#fef3c7",
+//                     text: "#92400e",
+//                   },
+//                   {
+//                     grade: "D",
+//                     range: "49–45%",
+//                     bg: "#f3f4f6",
+//                     text: "#374151",
+//                   },
+//                   {
+//                     grade: "E",
+//                     range: "44–40%",
+//                     bg: "#fde68a",
+//                     text: "#78350f",
+//                   },
+//                   {
+//                     grade: "F",
+//                     range: "0–39%",
+//                     bg: "#fee2e2",
+//                     text: "#991b1b",
+//                   },
+//                 ].map((g) => (
+//                   <span
+//                     key={g.grade}
+//                     style={{
+//                       padding: "2px 8px",
+//                       borderRadius: 4,
+//                       fontSize: 9.5,
+//                       fontWeight: "600",
+//                       background: g.bg,
+//                       color: g.text,
+//                       whiteSpace: "nowrap",
+//                       lineHeight: 1.5,
+//                     }}
+//                   >
+//                     {g.grade}: {g.range}
+//                   </span>
+//                 ))}
+//               </div>
+//             </div>
+
+//             {/* ── ATTENDANCE + COMMENTS ── */}
+//             <div
+//               style={{
+//                 padding: "0 28px 10px",
+//                 display: "grid",
+//                 gridTemplateColumns: "1fr 1fr",
+//                 gap: 14,
+//                 flex: 1,
+//                 minHeight: 0,
+//               }}
+//             >
+//               {/* Attendance */}
+//               <div
+//                 style={{
+//                   background: "#f8fafc",
+//                   borderRadius: 9,
+//                   border: "1px solid #e2e8f0",
+//                   overflow: "hidden",
+//                   display: "flex",
+//                   flexDirection: "column",
+//                 }}
+//               >
+//                 <div style={{ padding: "12px 14px", flex: 1 }}>
+//                   <h4
+//                     style={{
+//                       fontSize: 11,
+//                       fontWeight: "bold",
+//                       color: "#1e3a5f",
+//                       margin: "0 0 8px",
+//                       textTransform: "uppercase",
+//                       letterSpacing: "0.5px",
+//                       lineHeight: 1.3,
+//                     }}
+//                   >
+//                     Attendance Record
+//                   </h4>
+//                   {[
+//                     {
+//                       label: "School Days Open",
+//                       value: report.attendance.schoolDaysOpen,
+//                     },
+//                     {
+//                       label: "Days Present",
+//                       value: report.attendance.daysPresent,
+//                     },
+//                     {
+//                       label: "Days Absent",
+//                       value: report.attendance.daysAbsent,
+//                     },
+//                   ].map(({ label, value }) => (
+//                     <div
+//                       key={label}
+//                       style={{
+//                         display: "flex",
+//                         justifyContent: "space-between",
+//                         padding: "4px 0",
+//                         borderBottom: "1px solid #e8edf2",
+//                       }}
+//                     >
+//                       <span
+//                         style={{
+//                           fontSize: 10.5,
+//                           color: "#6b7280",
+//                           lineHeight: 1.5,
+//                         }}
+//                       >
+//                         {label}:
+//                       </span>
+//                       <span
+//                         style={{
+//                           fontSize: 11,
+//                           fontWeight: "600",
+//                           color: "#111",
+//                           lineHeight: 1.5,
+//                         }}
+//                       >
+//                         {value}
+//                       </span>
+//                     </div>
+//                   ))}
+//                 </div>
+//                 {/* ── FIXED: attendance footer — removed alignItems center, use lineHeight instead ── */}
+//                 <div
+//                   data-att-footer
+//                   style={{
+//                     padding: "7px 14px",
+//                     background: "#1e3a5f",
+//                     display: "flex",
+//                     justifyContent: "space-between",
+//                     // NO alignItems: "center" — use lineHeight on children instead
+//                     flexShrink: 0,
+//                   }}
+//                 >
+//                   <span
+//                     style={{
+//                       fontSize: 10.5,
+//                       color: "rgba(255,255,255,0.75)",
+//                       lineHeight: "28px",
+//                     }}
+//                   >
+//                     Attendance Rate:
+//                   </span>
+//                   <span
+//                     style={{
+//                       fontSize: 12,
+//                       fontWeight: "bold",
+//                       color: "#f59e0b",
+//                       lineHeight: "28px",
+//                     }}
+//                   >
+//                     {report.attendance.attendancePercentage.toFixed(0)}%
+//                   </span>
+//                 </div>
+//               </div>
+
+//               {/* Comments */}
+//               <div
+//                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
+//               >
+//                 <div
+//                   style={{
+//                     background: "#f8fafc",
+//                     borderRadius: 9,
+//                     padding: "12px 13px",
+//                     border: "1px solid #e2e8f0",
+//                     flex: 1,
+//                   }}
+//                 >
+//                   <h4
+//                     style={{
+//                       fontSize: 10.5,
+//                       fontWeight: "bold",
+//                       color: "#1e3a5f",
+//                       margin: "0 0 5px",
+//                       textTransform: "uppercase",
+//                       letterSpacing: "0.5px",
+//                       lineHeight: 1.3,
+//                     }}
+//                   >
+//                     Class Teacher&apos;s Comment
+//                   </h4>
+//                   <p
+//                     style={{
+//                       fontSize: 11.5,
+//                       color: "#374151",
+//                       margin: 0,
+//                       lineHeight: 1.5,
+//                       fontStyle: "italic",
+//                     }}
+//                   >
+//                     {report.teacherComment ?? "No comment provided."}
+//                   </p>
+//                 </div>
+//                 <div
+//                   style={{
+//                     background: "#f8fafc",
+//                     borderRadius: 9,
+//                     padding: "12px 13px",
+//                     border: "1px solid #e2e8f0",
+//                     flex: 1,
+//                   }}
+//                 >
+//                   <h4
+//                     style={{
+//                       fontSize: 10.5,
+//                       fontWeight: "bold",
+//                       color: "#1e3a5f",
+//                       margin: "0 0 5px",
+//                       textTransform: "uppercase",
+//                       letterSpacing: "0.5px",
+//                       lineHeight: 1.3,
+//                     }}
+//                   >
+//                     Principal&apos;s Comment
+//                   </h4>
+//                   <p
+//                     style={{
+//                       fontSize: 11.5,
+//                       color: "#374151",
+//                       margin: 0,
+//                       lineHeight: 1.5,
+//                       fontStyle: "italic",
+//                     }}
+//                   >
+//                     {report.principalComment ?? "Keep up the good work!"}
+//                   </p>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* ── PROMOTION STATUS (Third Term only) ── */}
+//             {isThirdTerm && report.promotedToClass && (
+//               <div style={{ padding: "0 28px 10px", flexShrink: 0 }}>
+//                 {report.promotedToClass === "Pending Department Assignment" ? (
+//                   <div
+//                     style={{
+//                       padding: "11px 15px",
+//                       borderRadius: 9,
+//                       background: "linear-gradient(135deg, #fffbeb, #fef3c7)",
+//                       border: "1px solid #fde68a",
+//                       display: "flex",
+//                       alignItems: "center",
+//                       gap: 10,
+//                     }}
+//                   >
+//                     <span style={{ fontSize: 18, lineHeight: 1 }}>⏳</span>
+//                     <div>
+//                       <p
+//                         style={{
+//                           fontSize: 12.5,
+//                           fontWeight: "bold",
+//                           color: "#92400e",
+//                           margin: 0,
+//                           lineHeight: 1.4,
+//                         }}
+//                       >
+//                         DEPARTMENT ASSIGNMENT PENDING
+//                       </p>
+//                       <p
+//                         style={{
+//                           fontSize: 10.5,
+//                           color: "#78350f",
+//                           margin: "2px 0 0",
+//                           lineHeight: 1.4,
+//                         }}
+//                       >
+//                         Your child has passed! Admin will assign your SSS 1
+//                         class and department shortly.
+//                       </p>
+//                     </div>
+//                   </div>
+//                 ) : report.promotedToClass === "Graduated" ? (
+//                   <div
+//                     style={{
+//                       padding: "11px 15px",
+//                       borderRadius: 9,
+//                       background: "linear-gradient(135deg, #d1fae5, #a7f3d0)",
+//                       border: "1px solid #6ee7b7",
+//                       display: "flex",
+//                       alignItems: "center",
+//                       gap: 10,
+//                     }}
+//                   >
+//                     <span style={{ fontSize: 18, lineHeight: 1 }}>🎓</span>
+//                     <div>
+//                       <p
+//                         style={{
+//                           fontSize: 12.5,
+//                           fontWeight: "bold",
+//                           color: "#065f46",
+//                           margin: 0,
+//                           lineHeight: 1.4,
+//                         }}
+//                       >
+//                         CONGRATULATIONS — GRADUATED!
+//                       </p>
+//                       <p
+//                         style={{
+//                           fontSize: 10.5,
+//                           color: "#065f46",
+//                           margin: "2px 0 0",
+//                           lineHeight: 1.4,
+//                         }}
+//                       >
+//                         Your child has successfully completed SSS 2. Well done!
+//                       </p>
+//                     </div>
+//                   </div>
+//                 ) : report.promotedToClass === "Performance Under Review" ? (
+//                   <div
+//                     style={{
+//                       padding: "11px 15px",
+//                       borderRadius: 9,
+//                       background: "linear-gradient(135deg, #fee2e2, #fecaca)",
+//                       border: "1px solid #fca5a5",
+//                       display: "flex",
+//                       alignItems: "center",
+//                       gap: 10,
+//                     }}
+//                   >
+//                     <span style={{ fontSize: 18, lineHeight: 1 }}>📋</span>
+//                     <div>
+//                       <p
+//                         style={{
+//                           fontSize: 12.5,
+//                           fontWeight: "bold",
+//                           color: "#991b1b",
+//                           margin: 0,
+//                           lineHeight: 1.4,
+//                         }}
+//                       >
+//                         PERFORMANCE UNDER REVIEW
+//                       </p>
+//                       <p
+//                         style={{
+//                           fontSize: 10.5,
+//                           color: "#7f1d1d",
+//                           margin: "2px 0 0",
+//                           lineHeight: 1.4,
+//                         }}
+//                       >
+//                         Please contact the school for further information.
+//                       </p>
+//                     </div>
+//                   </div>
+//                 ) : report.isPromoted ? (
+//                   <div
+//                     style={{
+//                       padding: "11px 15px",
+//                       borderRadius: 9,
+//                       background: "linear-gradient(135deg, #d1fae5, #a7f3d0)",
+//                       border: "1px solid #6ee7b7",
+//                       display: "flex",
+//                       alignItems: "center",
+//                       gap: 10,
+//                     }}
+//                   >
+//                     <span style={{ fontSize: 18, lineHeight: 1 }}>🎉</span>
+//                     <div>
+//                       <p
+//                         style={{
+//                           fontSize: 12.5,
+//                           fontWeight: "bold",
+//                           color: "#065f46",
+//                           margin: 0,
+//                           lineHeight: 1.4,
+//                         }}
+//                       >
+//                         PROMOTED TO: {report.promotedToClass}
+//                       </p>
+//                       <p
+//                         style={{
+//                           fontSize: 10.5,
+//                           color: "#065f46",
+//                           margin: "2px 0 0",
+//                           lineHeight: 1.4,
+//                         }}
+//                       >
+//                         Congratulations! Continue to excel in the next academic
+//                         year.
+//                       </p>
+//                     </div>
+//                   </div>
+//                 ) : null}
+//               </div>
+//             )}
+
+//             {/* ── NEXT TERM DATE ── */}
+//             {report.nextTermResumptionDate && (
+//               <div style={{ padding: "0 28px 10px", flexShrink: 0 }}>
+//                 <div
+//                   style={{
+//                     padding: "9px 15px",
+//                     borderRadius: 7,
+//                     background: "#fffbeb",
+//                     border: "1px solid #fde68a",
+//                     display: "flex",
+//                     alignItems: "center",
+//                     gap: 8,
+//                   }}
+//                 >
+//                   <span style={{ fontSize: 15, lineHeight: 1 }}>📅</span>
+//                   <div>
+//                     <span
+//                       style={{
+//                         fontSize: 10.5,
+//                         color: "#78350f",
+//                         fontWeight: "600",
+//                         textTransform: "uppercase",
+//                         lineHeight: 1.5,
+//                       }}
+//                     >
+//                       Next Term Resumption:
+//                     </span>
+//                     <span
+//                       style={{
+//                         fontSize: 12.5,
+//                         color: "#92400e",
+//                         fontWeight: "bold",
+//                         marginLeft: 8,
+//                         lineHeight: 1.5,
+//                       }}
+//                     >
+//                       {formatDate(report.nextTermResumptionDate)}
+//                     </span>
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+
+//             {/* ── FOOTER ── */}
+//             <div
+//               style={{
+//                 padding: "12px 28px",
+//                 background: "#0a1628",
+//                 color: "white",
+//                 display: "flex",
+//                 justifyContent: "space-between",
+//                 alignItems: "center",
+//                 flexShrink: 0,
+//               }}
+//             >
+//               <div>
+//                 <p
+//                   style={{
+//                     fontSize: 9.5,
+//                     color: "rgba(255,255,255,0.4)",
+//                     margin: 0,
+//                     lineHeight: 1.5,
+//                   }}
+//                 >
+//                   Report generated on{" "}
+//                   {new Date().toLocaleDateString("en-NG", {
+//                     day: "2-digit",
+//                     month: "long",
+//                     year: "numeric",
+//                   })}
+//                 </p>
+//                 <p
+//                   style={{
+//                     fontSize: 9.5,
+//                     color: "rgba(255,255,255,0.3)",
+//                     margin: "2px 0 0",
+//                     lineHeight: 1.5,
+//                   }}
+//                 >
+//                   Report ID: {report._id} · Scan QR code to verify authenticity
+//                 </p>
+//               </div>
+
+//               <div style={{ textAlign: "right" }}>
+//                 <div
+//                   style={{
+//                     display: "flex",
+//                     alignItems: "center",
+//                     gap: 10,
+//                     justifyContent: "flex-end",
+//                     marginBottom: 4,
+//                   }}
+//                 >
+//                   {report.principalSignature && (
+//                     <img
+//                       src={report.principalSignature}
+//                       alt="Principal Signature"
+//                       style={{
+//                         height: 44,
+//                         objectFit: "contain",
+//                         display: "block",
+//                         filter: "brightness(0) invert(1)",
+//                       }}
+//                     />
+//                   )}
+//                   {report.schoolStamp && (
+//                     <img
+//                       src={report.schoolStamp}
+//                       alt="School Stamp"
+//                       style={{
+//                         height: 44,
+//                         objectFit: "contain",
+//                         display: "block",
+//                         filter: "brightness(0) invert(1)",
+//                       }}
+//                     />
+//                   )}
+//                   {!report.principalSignature && !report.schoolStamp && (
+//                     <div
+//                       style={{
+//                         width: 110,
+//                         height: 1,
+//                         background: "rgba(255,255,255,0.2)",
+//                       }}
+//                     />
+//                   )}
+//                 </div>
+//                 <p
+//                   style={{
+//                     fontSize: 9.5,
+//                     color: "rgba(255,255,255,0.4)",
+//                     margin: 0,
+//                     lineHeight: 1.5,
+//                   }}
+//                 >
+//                   Principal&apos;s Signature & Stamp
+//                 </p>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
 
 //THIS IS WORKING AND NOTHING IS WRONG WITH THIS FILE (IF ANYTHING BREAKS, I WILL REVERT TO THIS!)
 
@@ -1392,7 +2454,7 @@ export default function ReportCardComponent({
 //         </div>
 //       )}
 
-//       {/* 
+//       {/*
 //         Outer wrapper: full width, height collapses to the scaled card height.
 //         The card itself is always A4 but scaled down on small screens.
 //       */}

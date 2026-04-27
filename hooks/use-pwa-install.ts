@@ -1,0 +1,56 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+export function usePWAInstall() {
+  const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  // Derive these outside the effect — no setState needed
+  const ua = typeof window !== "undefined" ? window.navigator.userAgent : "";
+  const ios = /iphone|ipad|ipod/i.test(ua);
+  const isIOSSafari =
+    ios &&
+    /safari/i.test(ua) &&
+    !/crios|fxios|opios/i.test(ua);
+  const isStandalone =
+    typeof window !== "undefined" &&
+    window.matchMedia("(display-mode: standalone)").matches;
+
+  useEffect(() => {
+    // Already installed as standalone — nothing to show
+    if (isStandalone) return;
+
+    function handler(e: Event) {
+      e.preventDefault();
+      setPromptEvent(e as BeforeInstallPromptEvent);
+    }
+
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", () => setIsInstalled(true));
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
+  }, [isStandalone]);
+
+  async function triggerInstall() {
+    if (!promptEvent) return;
+    await promptEvent.prompt();
+    const { outcome } = await promptEvent.userChoice;
+    if (outcome === "accepted") setIsInstalled(true);
+    setPromptEvent(null);
+  }
+
+  return {
+    canInstall: !!promptEvent && !isInstalled && !isStandalone,
+    triggerInstall,
+    isInstalled: isInstalled || isStandalone,
+    isIOSSafari: isIOSSafari && !isStandalone,
+  };
+}
