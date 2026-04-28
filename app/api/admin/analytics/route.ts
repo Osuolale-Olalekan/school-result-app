@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 // import { auth } from "@/lib/auth";
 import { getSession } from "@/lib/session";
+import mongoose from "mongoose";
 
 import { connectDB } from "@/lib/db";
 import UserModel from "@/models/User";
@@ -28,6 +29,10 @@ export async function GET(): Promise<
 
   try {
     await connectDB();
+    const debugCount = await UserModel.countDocuments({ activeRole: UserRole.STUDENT });
+const debugRaw = await mongoose.connection.collection("users").countDocuments({ activeRole: "student" });
+console.log("UserModel count:", debugCount);
+console.log("Raw collection count:", debugRaw);
 
     const [
       totalStudents,
@@ -40,15 +45,15 @@ export async function GET(): Promise<
       approvedReports,
       recentAuditLogs,
     ] = await Promise.all([
-      UserModel.countDocuments({ role: UserRole.STUDENT }),
-      UserModel.countDocuments({ role: UserRole.TEACHER }),
-      UserModel.countDocuments({ role: UserRole.PARENT }),
+      UserModel.countDocuments({ activeRole: UserRole.STUDENT }),
+      UserModel.countDocuments({ activeRole: UserRole.TEACHER }),
+      UserModel.countDocuments({ activeRole: UserRole.PARENT }),
       UserModel.countDocuments({
-        role: UserRole.STUDENT,
+        activeRole: UserRole.STUDENT,
         studentStatus: StudentStatus.ACTIVE,
       }),
       UserModel.countDocuments({
-        role: UserRole.STUDENT,
+        activeRole: UserRole.STUDENT,
         studentStatus: { $ne: StudentStatus.GRADUATED },
       }),
       ClassModel.countDocuments(), // ← totalClasses should get this
@@ -70,7 +75,7 @@ export async function GET(): Promise<
     const studentsByClassRaw = await UserModel.aggregate([
       {
         $match: {
-          role: UserRole.STUDENT,
+          activeRole: UserRole.STUDENT,
           studentStatus: { $ne: StudentStatus.GRADUATED },
         },
       }, // ✅ add this
@@ -88,9 +93,23 @@ export async function GET(): Promise<
       { $sort: { _id: 1 } },
     ]);
 
+    console.log("JSS 1 raw:", JSON.stringify(studentsByClassRaw, null, 2));
+//     const jss1Only = await UserModel.find({ 
+//   activeRole: UserRole.STUDENT 
+// }).populate("currentClass", "name").select("surname firstName currentClass studentStatus").lean();
+
+// const jss1Filtered = jss1Only.filter((s) => 
+//   (s.currentClass as { name: string } | null)?.name === "JSS 1"
+// );
+
+// console.log("JSS 1 students:", JSON.stringify(jss1Filtered.map((s) => ({
+//   name: `${s.surname} ${s.firstName}`,
+//   status: s.studentStatus,
+// })), null, 2));
+
     // Students by status
     const studentsByStatusRaw = await UserModel.aggregate([
-      { $match: { role: UserRole.STUDENT } },
+      { $match: { activeRole: UserRole.STUDENT } },
       { $group: { _id: "$studentStatus", count: { $sum: 1 } } },
     ]);
 
