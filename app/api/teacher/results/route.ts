@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 // import { auth } from "@/lib/auth";
 import { getSession } from "@/lib/session";
+import mongoose from "mongoose";
+import { StudentStatus } from "@/types/enums";
 import { connectDB } from "@/lib/db";
 import ReportCardModel from "@/models/ReportCard";
 import ClassAssignmentModel from "@/models/ClassAssignment";
@@ -335,6 +337,24 @@ export async function PATCH(
   }
 }
 
+// async function recalculatePositions(
+//   classId: string,
+//   sessionId: string,
+//   termId: string,
+// ): Promise<void> {
+//   const reports = await ReportCardModel.find({
+//     class: classId,
+//     session: sessionId,
+//     term: termId,
+//   }).sort({ percentage: -1 });
+
+//   const totalStudents = reports.length;
+//   for (let i = 0; i < reports.length; i++) {
+//     reports[i].position = i + 1;
+//     reports[i].totalStudentsInClass = totalStudents;
+//     await reports[i].save();
+//   }
+// }
 async function recalculatePositions(
   classId: string,
   sessionId: string,
@@ -346,7 +366,13 @@ async function recalculatePositions(
     term: termId,
   }).sort({ percentage: -1 });
 
-  const totalStudents = reports.length;
+  // Count only active students in the class
+  const totalStudents = await UserModel.countDocuments({
+    $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
+    currentClass: new mongoose.Types.ObjectId(classId),
+    studentStatus: StudentStatus.ACTIVE,
+  });
+
   for (let i = 0; i < reports.length; i++) {
     reports[i].position = i + 1;
     reports[i].totalStudentsInClass = totalStudents;

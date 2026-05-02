@@ -29,10 +29,7 @@ export async function GET(): Promise<
 
   try {
     await connectDB();
-    const debugCount = await UserModel.countDocuments({ activeRole: UserRole.STUDENT });
-const debugRaw = await mongoose.connection.collection("users").countDocuments({ activeRole: "student" });
-console.log("UserModel count:", debugCount);
-console.log("Raw collection count:", debugRaw);
+ 
 
     const [
       totalStudents,
@@ -93,7 +90,6 @@ console.log("Raw collection count:", debugRaw);
       { $sort: { _id: 1 } },
     ]);
 
-    console.log("JSS 1 raw:", JSON.stringify(studentsByClassRaw, null, 2));
 //     const jss1Only = await UserModel.find({ 
 //   activeRole: UserRole.STUDENT 
 // }).populate("currentClass", "name").select("surname firstName currentClass studentStatus").lean();

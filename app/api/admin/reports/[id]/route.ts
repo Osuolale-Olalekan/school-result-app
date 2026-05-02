@@ -1,5 +1,6 @@
 // This route handles both GET and PATCH requests for a specific report card by ID with Ai auto comments
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/db";
 import "@/lib/registerModels";
@@ -397,6 +398,7 @@ export async function GET(
     const report = await ReportCardModel.findById(id)
       .populate("submittedBy", "surname firstName otherName")
       .populate("approvedBy", "surname firstName otherName")
+      .populate("class", "name section")
       .lean();
 
     if (!report) {
@@ -406,7 +408,47 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, data: report });
+    // Recalculate totalStudentsInClass live
+    const cls = report.class as { _id: { toString(): string } } | null;
+    const cId = cls?._id?.toString();
+    let totalStudentsInClass = report.totalStudentsInClass;
+
+    if (cId) {
+      totalStudentsInClass = await UserModel.countDocuments({
+        $or: [
+          { activeRole: UserRole.STUDENT },
+          { role: UserRole.STUDENT },
+        ],
+        currentClass: new mongoose.Types.ObjectId(cId),
+        studentStatus: StudentStatus.ACTIVE,
+      });
+    }
+
+    // ── Hydrate latest profile photo from student document ──────────────
+    const freshStudent = await StudentModel.findById(
+  (report as unknown as { student: string }).student
+)
+  .select("profilePhoto")
+  .lean();
+
+const typedReport = report as Record<string, unknown>;
+const snapshot = typedReport.studentSnapshot as Record<string, unknown>;
+
+const freshPhoto = (freshStudent as unknown as { profilePhoto?: string })?.profilePhoto;
+
+if (freshPhoto) {
+  typedReport.studentSnapshot = {
+    ...snapshot,
+    profilePhoto: freshPhoto,
+  };
+}
+    // ────────────────────────────────────────────────────────────────────
+
+
+    return NextResponse.json({
+      success: true,
+      data: { ...report, totalStudentsInClass },
+    });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Internal server error" },
@@ -414,6 +456,53 @@ export async function GET(
     );
   }
 }
+// export async function GET(
+//   request: NextRequest,
+//   { params }: RouteParams,
+// ): Promise<NextResponse<ApiResponse<object>>> {
+//   const { id } = await params;
+//   const session = await getSession();
+//   if (!session?.user || session.user.activeRole !== UserRole.ADMIN) {
+//     return NextResponse.json(
+//       { success: false, error: "Unauthorized" },
+//       { status: 401 },
+//     );
+//   }
+
+//   try {
+//     await connectDB();
+//     const report = await ReportCardModel.findById(id)
+//       .populate("submittedBy", "surname firstName otherName")
+//       .populate("approvedBy", "surname firstName otherName")
+//       .lean();
+
+//     if (!report) {
+//       return NextResponse.json(
+//         { success: false, error: "Report not found" },
+//         { status: 404 },
+//       );
+//     }
+
+//     return NextResponse.json({ success: true, data: report });
+//   } catch (error) {
+//     return NextResponse.json(
+//       { success: false, error: "Internal server error" },
+//       { status: 500 },
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Note: The GET handler is included to allow fetching the report details, which can be useful for the admin to review the report before taking action.
 // import { NextRequest, NextResponse } from "next/server";

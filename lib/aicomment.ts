@@ -21,7 +21,7 @@ interface CommentInput {
 }
 
 export async function generateAIPrincipalComment(
-  input: CommentInput
+  input: CommentInput,
 ): Promise<string> {
   const {
     studentName,
@@ -35,27 +35,23 @@ export async function generateAIPrincipalComment(
   } = input;
 
   const subjectSummary = subjects
-    .map((s) => `${s.subjectName}: ${s.totalScore}/${s.maxTotalScore} (${s.grade})`)
+    .map(
+      (s) =>
+        `${s.subjectName}: ${s.totalScore}/${s.maxTotalScore} (${s.grade})`,
+    )
     .join(", ");
 
-  const prompt = `You are a school principal writing a brief, formal end-of-term comment on a student's report card.
+  const prompt = `Write a 2-sentence school principal's report card comment. Be formal and concise.
 
-Student: ${studentName}
-Class: ${className}
-Term: ${termName} Term
-Overall Score: ${percentage.toFixed(1)}%
-Position in Class: ${position} out of ${totalStudentsInClass}
-Overall Grade: ${grade}
-Subject Scores: ${subjectSummary}
+Facts: ${studentName}, ${className}, ${termName} term, ${percentage.toFixed(1)}%, position ${position} of ${totalStudentsInClass}, grade ${grade}, subjects: ${subjectSummary}.
 
-Write a single short paragraph (2–3 sentences) as a principal's comment. 
-- Be encouraging but honest
-- Reference their performance level (excellent, good, needs improvement, etc.)
-- Mention one or two notable strengths or areas to improve based on the subject scores
-- Use formal, professional school report language
-- Do NOT use the student's name more than once
-- Do NOT start with "I" 
-- Return only the comment text, nothing else`;
+Rules:
+- Exactly 2 sentences, no more
+- Under 15 words total
+- Do not start with "I"
+- Use student name only once
+- End with encouragement
+- Return only the comment text`;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -63,7 +59,7 @@ Write a single short paragraph (2–3 sentences) as a principal's comment.
   }
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: {
@@ -72,15 +68,15 @@ Write a single short paragraph (2–3 sentences) as a principal's comment.
       body: JSON.stringify({
         contents: [
           {
-            parts: [{ text: prompt }],
+            parts: [{ text: prompt + "\n\nComment:" }],
           },
         ],
         generationConfig: {
-          maxOutputTokens: 200,
-          temperature: 0.7,
+          maxOutputTokens: 500,
+          temperature: 0.5,
         },
       }),
-    }
+    },
   );
 
   if (!response.ok) {

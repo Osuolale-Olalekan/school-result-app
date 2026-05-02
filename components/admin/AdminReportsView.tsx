@@ -782,7 +782,7 @@ export default function AdminReportsView() {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: "15",
+        limit: "1000",
         sessionId: selectedSession,
         termId: selectedTerm,
         ...(selectedClass && { classId: selectedClass }),

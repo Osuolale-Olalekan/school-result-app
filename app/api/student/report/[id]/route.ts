@@ -14,12 +14,15 @@ interface RouteParams {
 
 export async function GET(
   _request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteParams,
 ): Promise<NextResponse<ApiResponse<object>>> {
   const { id } = await params;
   const session = await getSession();
   if (!session?.user || session.user.activeRole !== UserRole.STUDENT) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
   try {
@@ -32,7 +35,10 @@ export async function GET(
       .lean();
 
     if (!report) {
-      return NextResponse.json({ success: false, error: "Report not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Report not found" },
+        { status: 404 },
+      );
     }
 
     const typedReport = report as typeof report & {
@@ -44,12 +50,18 @@ export async function GET(
 
     // Must be approved
     if (typedReport.status !== ReportStatus.APPROVED) {
-      return NextResponse.json({ success: false, error: "Report not available" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Report not available" },
+        { status: 403 },
+      );
     }
 
     // Must belong to the logged-in student
     if (typedReport.student.toString() !== session.user.id) {
-      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Access denied" },
+        { status: 403 },
+      );
     }
 
     const sessionObjId = (typedReport.session as { _id: unknown })?._id;
@@ -76,22 +88,42 @@ export async function GET(
     if (!reportCardPayment || !schoolFeesPayment) {
       return NextResponse.json(
         { success: false, error: "Payment required to view this report card" },
-        { status: 402 }
+        { status: 402 },
       );
     }
 
     // Fetch principal signature
-    const schoolSettings = await SchoolSettingsModel.findOne().lean() as { principalSignature?: string } | null;
+    const schoolSettings = (await SchoolSettingsModel.findOne().lean()) as {
+      principalSignature?: string;
+      schoolStamp?: string;
+    } | null;
+
+     // ── Hydrate latest profile photo from student document ────────────────
+    const StudentModel = (await import("@/models/Student")).default;
+    const freshStudent = await StudentModel.findById(typedReport.student.toString())
+      .select("profilePhoto")
+      .lean();
+
+    const freshPhoto = (freshStudent as unknown as { profilePhoto?: string })?.profilePhoto;
+    const snapshot = report.studentSnapshot as Record<string, unknown>;
 
     return NextResponse.json({
       success: true,
       data: {
         ...report,
+        studentSnapshot: freshPhoto
+          ? { ...snapshot, profilePhoto: freshPhoto }
+          : snapshot,
         principalSignature: schoolSettings?.principalSignature ?? null,
+        schoolStamp: schoolSettings?.schoolStamp ?? null,
       },
     });
+
   } catch (error) {
     console.error("Student report detail error:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

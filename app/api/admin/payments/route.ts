@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/db";
 import "@/lib/registerModels";
+import UserModel from "@/models/User";
 import ReportCardModel from "@/models/ReportCard";
 import PaymentRecordModel from "@/models/PaymentRecord";
 import { AuditAction, PaymentStatus, UserRole } from "@/types/enums";
@@ -186,15 +187,34 @@ export async function POST(
       );
     }
 
-    await createAuditLog({
-      actorId: session.user.id,
-      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
-      actorRole: UserRole.ADMIN,
-      action: AuditAction.PAYMENT_UPDATE,
-      entity: "Payment",
-      entityId: body.studentId,
-      description: `Marked payment as ${body.status} for student ${body.studentId}`,
-    });
+    // await createAuditLog({
+    //   actorId: session.user.id,
+    //   actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
+    //   actorRole: UserRole.ADMIN,
+    //   action: AuditAction.PAYMENT_UPDATE,
+    //   entity: "Payment",
+    //   entityId: body.studentId,
+    //   description: `Marked payment as ${body.status} for student ${body.studentId}`,
+    // });
+    // ── Fetch student name for audit log ─────────────────────────────
+const student = await UserModel.findById(body.studentId)
+  .select("surname firstName otherName")
+  .lean() as { surname: string; firstName: string; otherName: string } | null;
+
+const studentName = student
+  ? `${student.surname} ${student.firstName} ${student.otherName}`
+  : body.studentId;
+// ─────────────────────────────────────────────────────────────────
+
+await createAuditLog({
+  actorId: session.user.id,
+  actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
+  actorRole: UserRole.ADMIN,
+  action: AuditAction.PAYMENT_UPDATE,
+  entity: "Payment",
+  entityId: body.studentId,
+  description: `Marked ${body.type === "report_card" ? "report card" : "school fees"} payment as ${body.status} for ${studentName}`,
+});
 
     return NextResponse.json({
       success: true,
