@@ -894,14 +894,14 @@ function StudentCard({
       const { grade, color } = getGradeFromPercentage(percentage);
 
       return (
-        <div className="text-right hidden sm:block">
-          <p className={`text-sm font-bold ${color}`}>
-            {percentage.toFixed(1)}% · {grade}
-          </p>
-          <p className="text-xs text-gray-400">
-            {totalObtained}/{totalObtainable}
-          </p>
-        </div>
+        <div className="text-right">
+  <p className={`text-xs sm:text-sm font-bold ${color}`}>
+    {percentage.toFixed(1)}% · {grade}
+  </p>
+  <p className="text-xs text-gray-400">
+    {totalObtained}/{totalObtainable}
+  </p>
+</div>
       );
     })()}
 
