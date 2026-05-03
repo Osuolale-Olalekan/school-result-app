@@ -660,6 +660,8 @@ interface ReportSummary {
   percentage: number;
   position: number;
   totalStudentsInClass: number;
+  totalStudentsInDept: number;
+  overallPosition: number;
   submittedAt?: string;
   submittedBy: { surname: string; firstName: string; otherName: string };
   paymentStatus: string;
@@ -678,9 +680,19 @@ interface ReportSummary {
   }>;
 }
 
-interface Session { _id: string; name: string; terms: Term[] }
-interface Term { _id: string; name: string }
-interface Class { _id: string; name: string }
+interface Session {
+  _id: string;
+  name: string;
+  terms: Term[];
+}
+interface Term {
+  _id: string;
+  name: string;
+}
+interface Class {
+  _id: string;
+  name: string;
+}
 
 const STATUS_CONFIG = {
   [ReportStatus.DRAFT]: {
@@ -738,7 +750,9 @@ export default function AdminReportsView() {
   const [actionLoading, setActionLoading] = useState(false);
 
   // Preview modal
-  const [previewReport, setPreviewReport] = useState<ReportSummary | null>(null);
+  const [previewReport, setPreviewReport] = useState<ReportSummary | null>(
+    null,
+  );
   const [previewLoading, setPreviewLoading] = useState(false);
 
   // Load sessions on mount
@@ -816,7 +830,10 @@ export default function AdminReportsView() {
     setPreviewReport(null);
     try {
       const res = await fetch(`/api/admin/reports/${reportId}`);
-      const json = (await res.json()) as { success: boolean; data?: ReportSummary };
+      const json = (await res.json()) as {
+        success: boolean;
+        data?: ReportSummary;
+      };
       if (json.success && json.data) {
         setPreviewReport(json.data);
       } else {
@@ -841,10 +858,16 @@ export default function AdminReportsView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: actionModal.type,
-          ...(actionModal.type === "decline" ? { declineReason } : { principalComment }),
+          ...(actionModal.type === "decline"
+            ? { declineReason }
+            : { principalComment }),
         }),
       });
-      const json = (await res.json()) as { success: boolean; message?: string; error?: string };
+      const json = (await res.json()) as {
+        success: boolean;
+        message?: string;
+        error?: string;
+      };
       if (json.success) {
         toast.success(json.message ?? "Report updated successfully");
         setActionModal(null);
@@ -864,8 +887,12 @@ export default function AdminReportsView() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-2xl font-bold text-gray-900">Report Cards</h1>
-        <p className="text-gray-500 text-sm">Review and approve teacher-submitted report cards</p>
+        <h1 className="font-display text-2xl font-bold text-gray-900">
+          Report Cards
+        </h1>
+        <p className="text-gray-500 text-sm">
+          Review and approve teacher-submitted report cards
+        </p>
       </div>
 
       {/* ── Filters ── */}
@@ -894,7 +921,9 @@ export default function AdminReportsView() {
               >
                 <option value="">Select session...</option>
                 {sessions.map((s) => (
-                  <option key={s._id} value={s._id}>{s.name}</option>
+                  <option key={s._id} value={s._id}>
+                    {s.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -927,7 +956,9 @@ export default function AdminReportsView() {
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">
                 Class{" "}
-                <span className="text-gray-400 font-normal">(optional — all classes if blank)</span>
+                <span className="text-gray-400 font-normal">
+                  (optional — all classes if blank)
+                </span>
               </label>
               <select
                 value={selectedClass}
@@ -943,25 +974,33 @@ export default function AdminReportsView() {
                   {classesLoading ? "Loading classes..." : "All classes"}
                 </option>
                 {classes.map((c) => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div className="flex items-end">
               <button
-                onClick={() => { setPage(1); fetchReports(); }}
+                onClick={() => {
+                  setPage(1);
+                  fetchReports();
+                }}
                 disabled={!selectedSession || !selectedTerm || loading}
                 className="w-full px-5 py-2 rounded-xl bg-[#1e3a5f] text-white text-sm font-semibold hover:bg-[#152847] disabled:opacity-50 transition-colors"
               >
                 {loading ? "Loading..." : "Load Reports"}
               </button>
+            
             </div>
           </div>
 
           {/* Active filter summary */}
           {hasSearched && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="text-xs text-gray-400">Showing reports for:</span>
+              <span className="text-xs text-gray-400">
+                Showing reports for:
+              </span>
               <span className="px-2 py-0.5 bg-[#1e3a5f]/10 text-[#1e3a5f] text-xs rounded-full font-medium">
                 {selectedSessionData?.name}
               </span>
@@ -984,7 +1023,10 @@ export default function AdminReportsView() {
               {STATUS_TABS.map((tab) => (
                 <button
                   key={tab.value}
-                  onClick={() => { setStatusFilter(tab.value); setPage(1); }}
+                  onClick={() => {
+                    setStatusFilter(tab.value);
+                    setPage(1);
+                  }}
                   className={`flex-1 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                     statusFilter === tab.value
                       ? "bg-[#1e3a5f] text-white shadow-sm"
@@ -1004,7 +1046,9 @@ export default function AdminReportsView() {
         {!hasSearched ? (
           <div className="text-center py-16 text-gray-400">
             <Filter className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="font-medium text-gray-500">Select a session and term to load reports</p>
+            <p className="font-medium text-gray-500">
+              Select a session and term to load reports
+            </p>
             <p className="text-xs mt-1">Use the filters above to get started</p>
           </div>
         ) : (
@@ -1013,12 +1057,24 @@ export default function AdminReportsView() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-50">
-                    <th className="text-left px-4 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Student</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Class</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Term / Session</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Score</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">Submitted By</th>
+                    <th className="text-left px-4 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Student
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Class
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">
+                      Term / Session
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Score
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Status
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell">
+                      Submitted By
+                    </th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -1035,7 +1091,10 @@ export default function AdminReportsView() {
                     ))
                   ) : reports.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-12 text-gray-400">
+                      <td
+                        colSpan={7}
+                        className="text-center py-12 text-gray-400"
+                      >
                         <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
                         <p>No report cards found for this selection</p>
                       </td>
@@ -1044,32 +1103,66 @@ export default function AdminReportsView() {
                     reports.map((report) => {
                       const statusCfg = STATUS_CONFIG[report.status];
                       return (
-                        <tr key={report._id} className="hover:bg-gray-50/50 transition-colors">
+                        <tr
+                          key={report._id}
+                          className="hover:bg-gray-50/50 transition-colors"
+                        >
                           <td className="px-4 sm:px-5 py-3.5">
                             <p className="font-medium text-gray-900">
-                              {report.studentSnapshot.surname} {report.studentSnapshot.firstName} {report.studentSnapshot.otherName}
+                              {report.studentSnapshot.surname}{" "}
+                              {report.studentSnapshot.firstName}{" "}
+                              {report.studentSnapshot.otherName}
                             </p>
-                            <p className="text-xs text-gray-400">{report.studentSnapshot.admissionNumber}</p>
+                            <p className="text-xs text-gray-400">
+                              {report.studentSnapshot.admissionNumber}
+                            </p>
                           </td>
-                          <td className="px-4 py-3.5 text-gray-600">{report.className}</td>
+                          <td className="px-4 py-3.5 text-gray-600">
+                            {report.className}
+                          </td>
                           <td className="px-4 py-3.5 hidden sm:table-cell">
-                            <p className="text-gray-600 capitalize">{report.termName} term</p>
-                            <p className="text-xs text-gray-400">{report.sessionName}</p>
+                            <p className="text-gray-600 capitalize">
+                              {report.termName} term
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {report.sessionName}
+                            </p>
                           </td>
                           <td className="px-4 py-3.5">
-                            <span className="font-bold text-[#1e3a5f]">{report.percentage.toFixed(1)}%</span>
-                            <span className="text-xs text-gray-400 ml-1">({report.position}/{report.totalStudentsInClass})</span>
+                            <span className="font-bold text-[#1e3a5f]">
+                              {report.percentage.toFixed(1)}%
+                            </span>
+                            <span className="text-xs text-gray-400 ml-1">
+                              ({report.position}/
+                              {report.totalStudentsInDept ||
+                                report.totalStudentsInClass}
+                              )
+                            </span>
+                            {report.totalStudentsInDept &&
+                              report.totalStudentsInDept !==
+                                report.totalStudentsInClass && (
+                                <p className="text-xs text-gray-400">
+                                  {report.overallPosition ?? report.position}/
+                                  {report.totalStudentsInClass} overall
+                                </p>
+                              )}
                           </td>
                           <td className="px-4 py-3.5">
-                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusCfg.color}`}>
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusCfg.color}`}
+                            >
                               <statusCfg.icon className="w-3 h-3" />
                               {statusCfg.label}
                             </span>
                           </td>
                           <td className="px-4 py-3.5 hidden md:table-cell text-xs text-gray-500">
-                            {report.submittedBy.surname} {report.submittedBy.firstName} {report.submittedBy.otherName}
+                            {report.submittedBy.surname}{" "}
+                            {report.submittedBy.firstName}{" "}
+                            {report.submittedBy.otherName}
                             {report.submittedAt && (
-                              <p className="text-gray-400">{formatDateTime(report.submittedAt)}</p>
+                              <p className="text-gray-400">
+                                {formatDateTime(report.submittedAt)}
+                              </p>
                             )}
                           </td>
                           <td className="px-4 py-3.5">
@@ -1084,13 +1177,23 @@ export default function AdminReportsView() {
                               {report.status === ReportStatus.SUBMITTED && (
                                 <>
                                   <button
-                                    onClick={() => setActionModal({ report, type: "approve" })}
+                                    onClick={() =>
+                                      setActionModal({
+                                        report,
+                                        type: "approve",
+                                      })
+                                    }
                                     className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium hover:bg-emerald-200 transition-colors"
                                   >
                                     Approve
                                   </button>
                                   <button
-                                    onClick={() => setActionModal({ report, type: "decline" })}
+                                    onClick={() =>
+                                      setActionModal({
+                                        report,
+                                        type: "decline",
+                                      })
+                                    }
                                     className="px-2.5 py-1 rounded-lg bg-red-100 text-red-700 text-xs font-medium hover:bg-red-200 transition-colors"
                                   >
                                     Decline
@@ -1134,8 +1237,15 @@ export default function AdminReportsView() {
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h3 className="font-display text-lg font-bold text-gray-900">Report Card Preview</h3>
-              <button onClick={closePreview} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+              <h3 className="font-display text-lg font-bold text-gray-900">
+                Report Card Preview
+              </h3>
+              <button
+                onClick={closePreview}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+              >
+                ✕
+              </button>
             </div>
 
             {previewLoading ? (
@@ -1143,118 +1253,206 @@ export default function AdminReportsView() {
                 <div className="w-8 h-8 border-2 border-[#1e3a5f] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                 <p className="text-gray-400 text-sm">Loading report...</p>
               </div>
-            ) : previewReport && (
-              <div className="p-6 space-y-5">
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Student</p>
-                    <p className="font-semibold text-gray-900">
-                      {previewReport.studentSnapshot.surname} {previewReport.studentSnapshot.firstName} {previewReport.studentSnapshot.otherName}
-                    </p>
-                    <p className="text-xs text-gray-500">{previewReport.studentSnapshot.admissionNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Class</p>
-                    <p className="font-semibold text-gray-900">{previewReport.className}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Term / Session</p>
-                    <p className="font-semibold text-gray-900 capitalize">{previewReport.termName} Term</p>
-                    <p className="text-xs text-gray-500">{previewReport.sessionName}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Overall Performance</p>
-                    <p className="font-bold text-[#1e3a5f] text-xl">{previewReport.percentage.toFixed(1)}%</p>
-                    <p className="text-xs text-gray-500">{previewReport.position}/{previewReport.totalStudentsInClass} in class</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${STATUS_CONFIG[previewReport.status].color}`}>
-                    {previewReport.status}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    Submitted by {previewReport.submittedBy.surname} {previewReport.submittedBy.firstName} {previewReport.submittedBy.otherName}
-                    {previewReport.submittedAt && ` · ${formatDateTime(previewReport.submittedAt)}`}
-                  </span>
-                </div>
-
-                {Array.isArray(previewReport.subjects) && previewReport.subjects.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Subject Scores</h4>
-                    <div className="overflow-x-auto rounded-xl border border-gray-100">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-gray-50">
-                            <th className="text-left px-4 py-2.5 text-xs text-gray-500 font-semibold">Subject</th>
-                            <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">Test</th>
-                            <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">Exam</th>
-                            <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">Practical</th>
-                            <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">Total</th>
-                            <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">Grade</th>
-                            <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">Remark</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                          {previewReport.subjects.map((s) => (
-                            <tr key={s.subject} className="hover:bg-gray-50/50">
-                              <td className="px-4 py-2.5 font-medium text-gray-700">{s.subjectName}</td>
-                              <td className="px-3 py-2.5 text-center text-gray-600">{s.testScore}</td>
-                              <td className="px-3 py-2.5 text-center text-gray-600">{s.examScore}</td>
-                              <td className="px-3 py-2.5 text-center text-gray-400">
-                                {s.hasPractical ? s.practicalScore : "—"}
-                              </td>
-                              <td className="px-3 py-2.5 text-center font-bold text-[#1e3a5f]">
-                                {s.totalScore}/{s.maxTotalScore}
-                              </td>
-                              <td className="px-3 py-2.5 text-center">
-                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                                  s.grade === "A" ? "bg-emerald-100 text-emerald-700" :
-                                  s.grade === "F" ? "bg-red-100 text-red-700" :
-                                  "bg-amber-100 text-amber-700"
-                                }`}>
-                                  {s.grade}
-                                </span>
-                              </td>
-                              <td className="px-3 py-2.5 text-center text-xs text-gray-500">{s.remark}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+            ) : (
+              previewReport && (
+                <div className="p-6 space-y-5">
+                  <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                        Student
+                      </p>
+                      <p className="font-semibold text-gray-900">
+                        {previewReport.studentSnapshot.surname}{" "}
+                        {previewReport.studentSnapshot.firstName}{" "}
+                        {previewReport.studentSnapshot.otherName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {previewReport.studentSnapshot.admissionNumber}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                        Class
+                      </p>
+                      <p className="font-semibold text-gray-900">
+                        {previewReport.className}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                        Term / Session
+                      </p>
+                      <p className="font-semibold text-gray-900 capitalize">
+                        {previewReport.termName} Term
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {previewReport.sessionName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                        Overall Performance
+                      </p>
+                      <p className="font-bold text-[#1e3a5f] text-xl">
+                        {previewReport.percentage.toFixed(1)}%
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {previewReport.position}/
+                        {previewReport.totalStudentsInDept ||
+                          previewReport.totalStudentsInClass}{" "}
+                        {previewReport.totalStudentsInDept &&
+                        previewReport.totalStudentsInDept !==
+                          previewReport.totalStudentsInClass
+                          ? "in department"
+                          : "in class"}
+                      </p>
+                      {previewReport.totalStudentsInDept &&
+                        previewReport.totalStudentsInDept !==
+                          previewReport.totalStudentsInClass && (
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {previewReport.overallPosition ??
+                              previewReport.position}
+                            /{previewReport.totalStudentsInClass} overall
+                            students
+                          </p>
+                        )}
                     </div>
                   </div>
-                )}
 
-                {previewReport.teacherComment && (
-                  <div className="bg-blue-50 rounded-xl p-4">
-                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Teacher&apos;s Comment</p>
-                    <p className="text-sm text-blue-900 italic">{previewReport.teacherComment}</p>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${STATUS_CONFIG[previewReport.status].color}`}
+                    >
+                      {previewReport.status}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      Submitted by {previewReport.submittedBy.surname}{" "}
+                      {previewReport.submittedBy.firstName}{" "}
+                      {previewReport.submittedBy.otherName}
+                      {previewReport.submittedAt &&
+                        ` · ${formatDateTime(previewReport.submittedAt)}`}
+                    </span>
                   </div>
-                )}
 
-                {previewReport.status === ReportStatus.SUBMITTED && (
-                  <div className="flex gap-3 pt-2 border-t border-gray-100">
-                    <button
-                      onClick={() => {
-                        setActionModal({ report: previewReport, type: "approve" });
-                        closePreview();
-                      }}
-                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActionModal({ report: previewReport, type: "decline" });
-                        closePreview();
-                      }}
-                      className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors"
-                    >
-                      Decline
-                    </button>
-                  </div>
-                )}
-              </div>
+                  {Array.isArray(previewReport.subjects) &&
+                    previewReport.subjects.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                          Subject Scores
+                        </h4>
+                        <div className="overflow-x-auto rounded-xl border border-gray-100">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-gray-50">
+                                <th className="text-left px-4 py-2.5 text-xs text-gray-500 font-semibold">
+                                  Subject
+                                </th>
+                                <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">
+                                  Test
+                                </th>
+                                <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">
+                                  Exam
+                                </th>
+                                <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">
+                                  Practical
+                                </th>
+                                <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">
+                                  Total
+                                </th>
+                                <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">
+                                  Grade
+                                </th>
+                                <th className="px-3 py-2.5 text-xs text-gray-500 font-semibold text-center">
+                                  Remark
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                              {previewReport.subjects.map((s) => (
+                                <tr
+                                  key={s.subject}
+                                  className="hover:bg-gray-50/50"
+                                >
+                                  <td className="px-4 py-2.5 font-medium text-gray-700">
+                                    {s.subjectName}
+                                  </td>
+                                  <td className="px-3 py-2.5 text-center text-gray-600">
+                                    {s.testScore}
+                                  </td>
+                                  <td className="px-3 py-2.5 text-center text-gray-600">
+                                    {s.examScore}
+                                  </td>
+                                  <td className="px-3 py-2.5 text-center text-gray-400">
+                                    {s.hasPractical ? s.practicalScore : "—"}
+                                  </td>
+                                  <td className="px-3 py-2.5 text-center font-bold text-[#1e3a5f]">
+                                    {s.totalScore}/{s.maxTotalScore}
+                                  </td>
+                                  <td className="px-3 py-2.5 text-center">
+                                    <span
+                                      className={`px-2 py-0.5 rounded text-xs font-bold ${
+                                        s.grade === "A"
+                                          ? "bg-emerald-100 text-emerald-700"
+                                          : s.grade === "F"
+                                            ? "bg-red-100 text-red-700"
+                                            : "bg-amber-100 text-amber-700"
+                                      }`}
+                                    >
+                                      {s.grade}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2.5 text-center text-xs text-gray-500">
+                                    {s.remark}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                  {previewReport.teacherComment && (
+                    <div className="bg-blue-50 rounded-xl p-4">
+                      <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                        Teacher&apos;s Comment
+                      </p>
+                      <p className="text-sm text-blue-900 italic">
+                        {previewReport.teacherComment}
+                      </p>
+                    </div>
+                  )}
+
+                  {previewReport.status === ReportStatus.SUBMITTED && (
+                    <div className="flex gap-3 pt-2 border-t border-gray-100">
+                      <button
+                        onClick={() => {
+                          setActionModal({
+                            report: previewReport,
+                            type: "approve",
+                          });
+                          closePreview();
+                        }}
+                        className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActionModal({
+                            report: previewReport,
+                            type: "decline",
+                          });
+                          closePreview();
+                        }}
+                        className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
             )}
           </div>
         </div>
@@ -1266,11 +1464,16 @@ export default function AdminReportsView() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
             <div className="p-6">
               <h3 className="font-display text-lg font-bold text-gray-900 mb-1">
-                {actionModal.type === "approve" ? "Approve Report Card" : "Decline Report Card"}
+                {actionModal.type === "approve"
+                  ? "Approve Report Card"
+                  : "Decline Report Card"}
               </h3>
               <p className="text-sm text-gray-500 mb-4">
-                {actionModal.report.studentSnapshot.surname} {actionModal.report.studentSnapshot.firstName} {actionModal.report.studentSnapshot.otherName} —{" "}
-                {actionModal.report.className} — {actionModal.report.termName} term
+                {actionModal.report.studentSnapshot.surname}{" "}
+                {actionModal.report.studentSnapshot.firstName}{" "}
+                {actionModal.report.studentSnapshot.otherName} —{" "}
+                {actionModal.report.className} — {actionModal.report.termName}{" "}
+                term
               </p>
 
               {actionModal.type === "approve" ? (
@@ -1303,14 +1506,21 @@ export default function AdminReportsView() {
 
               <div className="flex gap-3 mt-5">
                 <button
-                  onClick={() => { setActionModal(null); setDeclineReason(""); setPrincipalComment(""); }}
+                  onClick={() => {
+                    setActionModal(null);
+                    setDeclineReason("");
+                    setPrincipalComment("");
+                  }}
                   className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAction}
-                  disabled={actionLoading || (actionModal.type === "decline" && !declineReason.trim())}
+                  disabled={
+                    actionLoading ||
+                    (actionModal.type === "decline" && !declineReason.trim())
+                  }
                   className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-50 ${
                     actionModal.type === "approve"
                       ? "bg-emerald-600 hover:bg-emerald-700"
@@ -1319,7 +1529,9 @@ export default function AdminReportsView() {
                 >
                   {actionLoading
                     ? "Processing..."
-                    : actionModal.type === "approve" ? "Approve" : "Decline"}
+                    : actionModal.type === "approve"
+                      ? "Approve"
+                      : "Decline"}
                 </button>
               </div>
             </div>

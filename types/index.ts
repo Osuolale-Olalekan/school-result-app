@@ -185,7 +185,9 @@ export interface IReportCard extends BaseDocument {
   totalObtained: number;
   percentage: number;
   position: number;
+  overallPosition: number;
   totalStudentsInClass: number;
+  totalStudentsInDept: number;
   grade: string;
   teacherComment?: string;
   principalComment?: string;

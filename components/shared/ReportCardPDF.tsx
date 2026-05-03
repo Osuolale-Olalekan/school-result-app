@@ -1298,7 +1298,6 @@
 
 
 
-
 "use client";
 
 import React from "react";
@@ -1323,6 +1322,8 @@ export interface ReportCardPDFProps {
     className: string;
     principalSignature?: string | null;
     schoolStamp?: string | null;
+    totalStudentsInDept?: number; // <-- ADDED: may not exist on older reports
+    overallPosition?: number; // <-- ADDED: may not exist on older reports
   };
 }
 
@@ -1354,6 +1355,32 @@ function gradeColor(g: string) {
   if (g === "F") return "#991b1b";
   return "#92400e";
 }
+
+// Returns the correct denominator for position display.
+// For SS students with a department, uses totalStudentsInDept.
+// For Primary/JSS (department === "none" or missing), falls back to totalStudentsInClass.
+// function resolvePositionDenominator(report: ReportCardPDFProps["report"]): number {
+//   const dept = report.studentSnapshot?.department;
+//   const hasDept = dept && dept !== "none";
+//   const deptCount = report.totalStudentsInDept;
+
+//   if (hasDept && deptCount && deptCount > 0 && deptCount !== report.totalStudentsInClass) {
+//     return deptCount;
+//   }
+//   return report.totalStudentsInClass;
+// }
+
+// Returns the label shown below the position (e.g. "in dept" vs "in class")
+// function resolvePositionLabel(report: ReportCardPDFProps["report"]): string {
+//   const dept = report.studentSnapshot?.department;
+//   const hasDept = dept && dept !== "none";
+//   const deptCount = report.totalStudentsInDept;
+
+//   if (hasDept && deptCount && deptCount > 0 && deptCount !== report.totalStudentsInClass) {
+//     return "in dept";
+//   }
+//   return "students";
+// }
 
 async function toBase64(url: string): Promise<string> {
   try {
@@ -1637,6 +1664,20 @@ function StudentInfoStrip({ report, profilePhotoBase64, avgScore }: {
     report.studentSnapshot.firstName.charAt(0) +
     report.studentSnapshot.otherName.charAt(0);
 
+  // ── Resolve position denominator and label ──────────────────────
+  // SS students: show position out of department count (e.g. 2/16)
+  // Primary/JSS: show position out of class count (e.g. 3/25) — same as before
+  // const positionDenominator = resolvePositionDenominator(report);
+  // const positionLabel       = resolvePositionLabel(report);
+  const hasDeptRanking =
+  (report.totalStudentsInDept ?? 0) > 0 &&
+  report.totalStudentsInDept !== report.totalStudentsInClass;
+
+const deptLabel = report.studentSnapshot.department !== "none"
+  ? report.studentSnapshot.department.toUpperCase()
+  : "DEPT";
+  // ────────────────────────────────────────────────────────────────
+
   return (
     <View style={S.studentStrip}>
       {profilePhotoBase64
@@ -1653,17 +1694,47 @@ function StudentInfoStrip({ report, profilePhotoBase64, avgScore }: {
       </View>
 
       <View style={S.perfBox}>
-        <Text style={S.perfScore}>{avgScore}%</Text>
-        <Text style={S.perfLabel}>Overall Score</Text>
-        <Text style={S.perfGrade}>{report.grade}</Text>
-        <Text style={S.perfLabel}>Grade</Text>
-        <View style={S.perfDivider} />
-        <View style={{ flexDirection: "row", alignItems: "baseline" }}>
-          <Text style={S.perfPosition}>{getOrdinal(report.position)}</Text>
-          <Text style={S.perfPosSub}> / {report.totalStudentsInClass}</Text>
-        </View>
-        <Text style={[S.perfPosSub, { marginTop: 1 }]}>students</Text>
+  <Text style={S.perfScore}>{avgScore}%</Text>
+  <Text style={S.perfLabel}>Overall Score</Text>
+  <Text style={S.perfGrade}>{report.grade}</Text>
+  <Text style={S.perfLabel}>Grade</Text>
+  <View style={S.perfDivider} />
+
+  {hasDeptRanking ? (
+    // ── Two rows: dept position + overall position ──────────────
+    <>
+      {/* Dept position */}
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center" }}>
+        <Text style={S.perfPosition}>{getOrdinal(report.position)}</Text>
+        <Text style={S.perfPosSub}> / {report.totalStudentsInDept}</Text>
       </View>
+      <Text style={[S.perfPosSub, { marginTop: 1 }]}>{deptLabel} DEPT.</Text>
+
+      {/* Thin separator */}
+      <View style={{ width: "100%", height: 1, backgroundColor: "rgba(255,255,255,0.08)", marginVertical: 3 }} />
+
+      {/* Overall position */}
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center" }}>
+        <Text style={[S.perfPosition, { fontSize: 8, color: "rgba(255,255,255,0.75)" }]}>
+          {getOrdinal((report as unknown as { overallPosition?: number }).overallPosition ?? report.position)}
+        </Text>
+        <Text style={[S.perfPosSub, { color: "rgba(255,255,255,0.4)" }]}>
+          {" "}/ {report.totalStudentsInClass}
+        </Text>
+      </View>
+      <Text style={[S.perfPosSub, { marginTop: 1, color: "rgba(255,255,255,0.3)" }]}>OVERALL STUDENTS</Text>
+    </>
+  ) : (
+    // ── Single row: overall only (Primary / JSS) ───────────────
+    <>
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center" }}>
+        <Text style={S.perfPosition}>{getOrdinal(report.position)}</Text>
+        <Text style={S.perfPosSub}> / {report.totalStudentsInClass}</Text>
+      </View>
+      <Text style={[S.perfPosSub, { marginTop: 1 }]}>students</Text>
+    </>
+  )}
+</View>
     </View>
   );
 }
@@ -1855,7 +1926,6 @@ function AttendanceAndComments({ report }: { report: ReportCardPDFProps["report"
 }
 
 // ─── PromotionBanner ──────────────────────────────────────────────
-// ─── PromotionBanner ──────────────────────────────────────────────
 function PromotionBanner({ report }: { report: ReportCardPDFProps["report"] }) {
   if (report.termName !== TermName.THIRD || !report.promotedToClass) return null;
 
@@ -1896,7 +1966,6 @@ function PromotionBanner({ report }: { report: ReportCardPDFProps["report"] }) {
   return (
     <View style={S.promotionWrap}>
       <View style={[S.promotionBox, { backgroundColor: cfg.bg, border: `1 solid ${cfg.border}` }]}>
-        {/* Colored label badge instead of emoji */}
         <View style={{ backgroundColor: cfg.labelBg, borderRadius: 4, paddingVertical: 3, paddingHorizontal: 6 }}>
           <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: "#ffffff" }}>
             {cfg.label}
@@ -1917,7 +1986,6 @@ function ResumptionDate({ report }: { report: ReportCardPDFProps["report"] }) {
   return (
     <View style={S.resumptionWrap}>
       <View style={S.resumptionBox}>
-        {/* Colored dot instead of emoji */}
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#f59e0b" }} />
         <Text style={S.resumptionLabel}>Next Term Resumption:</Text>
         <Text style={S.resumptionValue}>{formatDate(report.nextTermResumptionDate)}</Text>
@@ -1949,7 +2017,6 @@ function PageFooter({ report, signatureBase64, stampBase64 }: {
           {stampBase64     ? <Image src={stampBase64}     style={S.footerSigImg} /> : null}
           {!signatureBase64 && !stampBase64 && <View style={S.footerSigLine} />}
         </View>
-        {/* <Text style={S.footerSigLabel}>Principal's Signature & Stamp</Text> */}
       </View>
     </View>
   );

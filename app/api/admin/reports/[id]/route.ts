@@ -20,7 +20,6 @@ import { createAuditLog } from "@/lib/audit";
 import { createNotification } from "@/lib/notifications";
 import { sendReportDeclinedEmail, sendReportAvailableEmail } from "@/lib/email";
 import { CLASS_PROGRESSION } from "@/lib/promotion";
-// import { generateAIPrincipalComment } from "@/lib/ai-comment"; // ← NEW
 import { generateAIPrincipalComment } from "@/lib/aicomment";
 import type { ApiResponse } from "@/types";
 
@@ -120,6 +119,52 @@ async function handlePromotion(
   };
 }
 
+// ── Helper: resolve the correct totalStudentsInDept for a report ──────────────
+// This mirrors the logic in recalculatePositions and the admin reports GET route.
+// A class uses department-based ranking only when it has students in 2+ groups
+// (at least one meaningful department + possibly a "none" group).
+async function resolveDeptCount(
+  classId: string,
+  department: string,
+  totalInClass: number,
+): Promise<number> {
+  // Check how many distinct departments exist in this class
+  const distinctDepts = await UserModel.distinct("department", {
+    $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
+    currentClass: new mongoose.Types.ObjectId(classId),
+    studentStatus: StudentStatus.ACTIVE,
+  });
+
+  const meaningfulDepts = (distinctDepts as (string | null | undefined)[]).filter(
+    (d) => d && d !== "none",
+  );
+
+  // If only one group (all "none" → Primary/JSS), return the full class count
+  const shouldSplitByDept =
+    meaningfulDepts.length >= 1 &&
+    (distinctDepts.length > 1 || meaningfulDepts.length >= 1);
+
+  if (!shouldSplitByDept) {
+    return totalInClass;
+  }
+
+  // Count active students in this class with this specific department
+  const deptQuery =
+    department === "none"
+      ? { $in: [null, "none", undefined] }
+      : department;
+
+  const count = await UserModel.countDocuments({
+    $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
+    currentClass: new mongoose.Types.ObjectId(classId),
+    studentStatus: StudentStatus.ACTIVE,
+    department: deptQuery,
+  });
+
+  return count;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function PATCH(
   request: NextRequest,
   { params }: RouteParams,
@@ -175,6 +220,25 @@ export async function PATCH(
         session.user.id as unknown as typeof report.approvedBy;
       report.approvedAt = new Date();
 
+      // ── Resolve the correct dept count for AI comment ─────────────────
+      const classId = report.class?.toString() ?? "";
+      const department = report.studentSnapshot?.department ?? "none";
+
+      // Get live class-wide count first
+      const totalInClass = classId
+        ? await UserModel.countDocuments({
+            $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
+            currentClass: new mongoose.Types.ObjectId(classId),
+            studentStatus: StudentStatus.ACTIVE,
+          })
+        : report.totalStudentsInClass;
+
+      // Then resolve dept count (falls back to totalInClass for Primary/JSS)
+      const totalInDept = classId
+        ? await resolveDeptCount(classId, department, totalInClass)
+        : report.totalStudentsInDept ?? report.totalStudentsInClass;
+      // ─────────────────────────────────────────────────────────────────
+
       // ── AI Comment Logic ──────────────────────────────────────────────
       // If admin provided a comment → use it as-is.
       // If not → auto-generate one using AI based on the student's results.
@@ -188,7 +252,8 @@ export async function PATCH(
             termName: report.termName,
             percentage: report.percentage,
             position: report.position,
-            totalStudentsInClass: report.totalStudentsInClass,
+            totalStudentsInClass: totalInClass,
+            totalStudentsInDept: totalInDept, // <-- now correctly passed
             grade: report.grade,
             subjects: report.subjects.map((s) => ({
               subjectName: s.subjectName,
@@ -206,7 +271,7 @@ export async function PATCH(
       }
       // ─────────────────────────────────────────────────────────────────
 
-      // ── Promotion logic — only on 3rd term ──
+      // ── Promotion logic — only on 3rd term ───────────────────────────
       const isThirdTerm = report.termName === TermName.THIRD;
 
       if (isThirdTerm) {
@@ -408,46 +473,60 @@ export async function GET(
       );
     }
 
-    // Recalculate totalStudentsInClass live
+    // ── Recalculate totalStudentsInClass and totalStudentsInDept live ────
     const cls = report.class as { _id: { toString(): string } } | null;
     const cId = cls?._id?.toString();
+    const snap = report.studentSnapshot as { department?: string } | undefined;
+    const department = snap?.department ?? "none";
+
     let totalStudentsInClass = report.totalStudentsInClass;
+    let totalStudentsInDept = (report as unknown as { totalStudentsInDept?: number }).totalStudentsInDept ?? 0;
 
     if (cId) {
       totalStudentsInClass = await UserModel.countDocuments({
-        $or: [
-          { activeRole: UserRole.STUDENT },
-          { role: UserRole.STUDENT },
-        ],
+        $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
         currentClass: new mongoose.Types.ObjectId(cId),
         studentStatus: StudentStatus.ACTIVE,
       });
+
+      // Resolve dept count (falls back to class count for Primary/JSS)
+      totalStudentsInDept = await resolveDeptCount(
+        cId,
+        department,
+        totalStudentsInClass,
+      );
     }
-
-    // ── Hydrate latest profile photo from student document ──────────────
-    const freshStudent = await StudentModel.findById(
-  (report as unknown as { student: string }).student
-)
-  .select("profilePhoto")
-  .lean();
-
-const typedReport = report as Record<string, unknown>;
-const snapshot = typedReport.studentSnapshot as Record<string, unknown>;
-
-const freshPhoto = (freshStudent as unknown as { profilePhoto?: string })?.profilePhoto;
-
-if (freshPhoto) {
-  typedReport.studentSnapshot = {
-    ...snapshot,
-    profilePhoto: freshPhoto,
-  };
-}
     // ────────────────────────────────────────────────────────────────────
 
+    // ── Hydrate latest profile photo from student document ───────────────
+    const freshStudent = await StudentModel.findById(
+      (report as unknown as { student: string }).student
+    )
+      .select("profilePhoto")
+      .lean();
+
+    const typedReport = report as Record<string, unknown>;
+    const snapshot = typedReport.studentSnapshot as Record<string, unknown>;
+    const freshPhoto = (freshStudent as unknown as { profilePhoto?: string })?.profilePhoto;
+
+    if (freshPhoto) {
+      typedReport.studentSnapshot = {
+        ...snapshot,
+        profilePhoto: freshPhoto,
+      };
+    }
+    // ────────────────────────────────────────────────────────────────────
 
     return NextResponse.json({
       success: true,
-      data: { ...report, totalStudentsInClass },
+      data: {
+        ...report,
+        studentSnapshot: typedReport.studentSnapshot,
+        totalStudentsInClass,
+        totalStudentsInDept, // <-- now included in GET response
+         overallPosition: (report as unknown as { overallPosition?: number }).overallPosition ?? report.position,
+
+      },
     });
   } catch (error) {
     return NextResponse.json(

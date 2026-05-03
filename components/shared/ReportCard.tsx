@@ -3,7 +3,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Download, Printer } from "lucide-react";
 import { downloadReportCardPDF } from "./ReportCardPDF";
-import { Text } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import type { IReportCard, ISubjectScore } from "@/types";
 import { TermName } from "@/types/enums";
@@ -25,17 +24,16 @@ const SCHOOL_LOGO_URL =
 
 const A4_W = 794;
 const A4_H = 1123;
-const TWO_PAGE_THRESHOLD = 24; // raised — more subjects fit now
+const TWO_PAGE_THRESHOLD = 24;
 
-// ─── Fixed section heights (tightened) ───────────────────────────────────────
-const HEADER_H = 140;         // was 170
-const STUDENT_STRIP_H = 100;  // was 122
-const TABLE_TITLE_H = 28;     // was 36
-const TABLE_HEADER_H = 36;    // was 42
-const TABLE_FOOTER_H = 30;    // was 36
-const GRADE_SCALE_H = 38;     // was 46
-const ATTENDANCE_COMMENTS_H = 136; // was 160
-const FOOTER_H = 48;          // was 62
+const HEADER_H = 140;
+const STUDENT_STRIP_H = 100;
+const TABLE_TITLE_H = 28;
+const TABLE_HEADER_H = 36;
+const TABLE_FOOTER_H = 30;
+const GRADE_SCALE_H = 38;
+const ATTENDANCE_COMMENTS_H = 136;
+const FOOTER_H = 48;
 
 const FIXED_TOTAL =
   HEADER_H +
@@ -106,6 +104,18 @@ export default function ReportCardComponent({
   const isThirdTerm = report.termName === TermName.THIRD;
   const avgScore = report.percentage.toFixed(1);
 
+  // ── Determine whether this report uses department-based ranking ───────────
+  // A report uses dept ranking when totalStudentsInDept differs from totalStudentsInClass.
+  // For Primary/JSS these are always equal so only one position row shows.
+  const hasDeptRanking =
+    report.totalStudentsInDept > 0 &&
+    report.totalStudentsInDept !== report.totalStudentsInClass;
+
+  const deptLabel = report.studentSnapshot.department !== "none"
+    ? report.studentSnapshot.department.toUpperCase()
+    : "DEPT";
+  // ─────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     function updateScale() {
       if (!wrapperRef.current) return;
@@ -169,39 +179,6 @@ export default function ReportCardComponent({
     setIsPrinting(false);
   }
 
-  // async function handleDownload() {
-  //   setIsPrinting(true);
-  //   await prepareAssets();
-  //   const { jsPDF } = await import("jspdf");
-  //   const { default: html2canvas } = await import("html2canvas");
-  //   const canvasOptions = {
-  //     scale: 3,
-  //     useCORS: true,
-  //     allowTaint: false,
-  //     logging: false,
-  //     width: A4_W,
-  //     height: A4_H,
-  //     windowWidth: A4_W,
-  //     windowHeight: A4_H,
-  //     imageTimeout: 0,
-  //     foreignObjectRendering: false,
-  //     onclone: patchClone,
-  //   };
-  //   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
-  //   if (page1Ref.current) {
-  //     const canvas1 = await html2canvas(page1Ref.current, canvasOptions);
-  //     pdf.addImage(canvas1.toDataURL("image/png"), "PNG", 0, 0, 210, 297);
-  //   }
-  //   if (isTwoPage && page2Ref.current) {
-  //     pdf.addPage();
-  //     const canvas2 = await html2canvas(page2Ref.current, canvasOptions);
-  //     pdf.addImage(canvas2.toDataURL("image/png"), "PNG", 0, 0, 210, 297);
-  //   }
-  //   pdf.save(
-  //     `ReportCard_${report.studentSnapshot.admissionNumber}_${report.termName}_${report.sessionName}.pdf`,
-  //   );
-  //   setIsPrinting(false);
-  // }
   async function handleDownload() {
     setIsPrinting(true);
     try {
@@ -211,14 +188,13 @@ export default function ReportCardComponent({
     }
   }
 
-  // ── Row height calculation ────────────────────────────────────────────────
   const conditionalH =
     (isThirdTerm ? 44 : 0) + (report.nextTermResumptionDate ? 38 : 0);
 
   const availableForRows = A4_H - FIXED_TOTAL - conditionalH;
 
   const singlePageRowHeight = Math.min(
-    26, // tighter hard cap
+    26,
     Math.max(20, Math.floor(availableForRows / Math.max(report.subjects.length, 1))),
   );
 
@@ -239,7 +215,7 @@ export default function ReportCardComponent({
         style={{
           background: "linear-gradient(135deg, #1e3a5f 0%, #0a1628 100%)",
           color: "white",
-          padding: "11px 24px",      // was 16px 28px
+          padding: "11px 24px",
           position: "relative",
           overflow: "hidden",
           flexShrink: 0,
@@ -249,8 +225,7 @@ export default function ReportCardComponent({
         <div style={{ position: "absolute", bottom: -20, left: -20, width: 90, height: 90, borderRadius: "50%", background: "rgba(255,255,255,0.03)" }} />
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
-          {/* Logo */}
-          <div style={{ flexShrink: 0, width: 80, height: 80 }}>   {/* was 100×100 */}
+          <div style={{ flexShrink: 0, width: 80, height: 80 }}>
             <img
               src={logoBase64 || SCHOOL_LOGO_URL}
               alt="School Logo"
@@ -259,7 +234,6 @@ export default function ReportCardComponent({
             />
           </div>
 
-          {/* School Info */}
           <div style={{ flex: 1, textAlign: "center", padding: "0 14px" }}>
             <h1 style={{ fontSize: 16, fontWeight: "900", margin: "0 0 2px", letterSpacing: "0.5px", textTransform: "uppercase", color: "white", lineHeight: 1.2 }}>
               GOD&apos;S WAY MODEL GROUPS OF SCHOOLS
@@ -273,7 +247,6 @@ export default function ReportCardComponent({
             </div>
           </div>
 
-          {/* QR */}
           <div style={{ flexShrink: 0, textAlign: "center" }}>
             {showQR ? (
               qrDataUrl ? (
@@ -294,7 +267,6 @@ export default function ReportCardComponent({
           </div>
         </div>
 
-        {/* Title Bar */}
         <div style={{ marginTop: 8, display: "flex", justifyContent: "center" }}>
           <div style={{ padding: "5px 18px", background: "rgba(245,158,11,0.15)", borderRadius: 7, border: "1px solid rgba(245,158,11,0.3)", display: "inline-flex", alignItems: "center", gap: 10 }}>
             <span style={{ color: "#f59e0b", fontSize: 11, fontWeight: "bold", letterSpacing: "0.5px", lineHeight: 1 }}>STUDENT REPORT CARD</span>
@@ -350,18 +322,101 @@ export default function ReportCardComponent({
           ))}
         </div>
 
-        {/* Performance box */}
+        {/* ── Performance box ───────────────────────────────────────────────────
+            Shows score, grade, and positions.
+            - For SS students (hasDeptRanking = true):
+                Row 1: dept position  e.g. "2nd / 16  SCIENCE"
+                Row 2: overall position e.g. "5th / 31  OVERALL"
+            - For Primary / JSS (hasDeptRanking = false):
+                Single row: overall position e.g. "3rd / 25  students"
+        ─────────────────────────────────────────────────────────────────────── */}
         <div
           data-perf-box
-          style={{ flexShrink: 0, background: "#1e3a5f", borderRadius: 8, padding: "10px 14px", color: "white", textAlign: "center", minWidth: 105, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}
+          style={{
+            flexShrink: 0,
+            background: "#1e3a5f",
+            borderRadius: 8,
+            padding: "10px 14px",
+            color: "white",
+            textAlign: "center",
+            minWidth: 110,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
         >
           <div style={{ fontSize: 28, fontWeight: "bold", color: "#f59e0b", lineHeight: 1, marginBottom: 2 }}>{avgScore}%</div>
           <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", marginBottom: 2, lineHeight: 1.3 }}>Overall Score</div>
           <div style={{ fontSize: 18, fontWeight: "bold", marginBottom: 2, lineHeight: 1.2 }}>{report.grade}</div>
           <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", lineHeight: 1.3 }}>Grade</div>
-          <div style={{ marginTop: 6, paddingTop: 5, borderTop: "1px solid rgba(255,255,255,0.15)", fontSize: 10, lineHeight: 1.4 }}>
-            <span style={{ color: "#f59e0b", fontWeight: "bold" }}>{getOrdinal(report.position)}</span>
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}> / {report.totalStudentsInClass} students</span>
+
+          <div style={{ marginTop: 6, paddingTop: 5, borderTop: "1px solid rgba(255,255,255,0.15)", width: "100%" }}>
+
+            {hasDeptRanking ? (
+              // ── Two rows: dept position + overall position ──────────────────
+              <>
+                {/* Dept position row */}
+                <div style={{ marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 2 }}>
+                    <span style={{ color: "#f59e0b", fontWeight: "bold", fontSize: 13 }}>
+                      {getOrdinal(report.position)}
+                    </span>
+                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}>
+                      {" "}/ {report.totalStudentsInDept}
+                    </span>
+                  </div>
+                  <div style={{
+                    fontSize: 7.5,
+                    color: "rgba(255,255,255,0.35)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    lineHeight: 1.3,
+                  }}>
+                    {deptLabel} DEPT.
+                  </div>
+                </div>
+
+                {/* Thin separator */}
+                <div style={{ height: 1, background: "rgba(255,255,255,0.08)", marginBottom: 4 }} />
+
+                {/* Overall position row */}
+                <div>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 2 }}>
+                    <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: "bold", fontSize: 11 }}>
+                      {getOrdinal(report.overallPosition ?? report.position)}
+                    </span>
+                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 9 }}>
+                      {" "}/ {report.totalStudentsInClass}
+                    </span>
+                  </div>
+                  <div style={{
+                    fontSize: 7.5,
+                    color: "rgba(255,255,255,0.3)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    lineHeight: 1.3,
+                  }}>
+                    OVERALL STUDENTS
+                  </div>
+                </div>
+              </>
+            ) : (
+              // ── Single row: overall position only (Primary / JSS) ───────────
+              <div>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 2 }}>
+                  <span style={{ color: "#f59e0b", fontWeight: "bold", fontSize: 13 }}>
+                    {getOrdinal(report.position)}
+                  </span>
+                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 9 }}>
+                    {" "}/ {report.totalStudentsInClass}
+                  </span>
+                </div>
+                <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", lineHeight: 1.3 }}>
+                  students
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -481,7 +536,6 @@ export default function ReportCardComponent({
         flexShrink: 0,
         height: ATTENDANCE_COMMENTS_H,
       }}>
-        {/* Attendance */}
         <div style={{ background: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0", overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "7px 12px", flex: 1, overflow: "hidden" }}>
             <h4 style={{ fontSize: 10, fontWeight: "bold", color: "#1e3a5f", margin: "0 0 5px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.2 }}>
@@ -509,13 +563,11 @@ export default function ReportCardComponent({
           </div>
         </div>
 
-        {/* Comments — NO line-clamp, let them wrap naturally */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6, overflow: "hidden" }}>
           <div style={{ background: "#f8fafc", borderRadius: 8, padding: "7px 11px", border: "1px solid #e2e8f0", flex: 1, overflow: "hidden" }}>
             <h4 style={{ fontSize: 9.5, fontWeight: "bold", color: "#1e3a5f", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.2 }}>
               Class Teacher&apos;s Comment
             </h4>
-            {/* ↓ overflow:hidden + no clamp — full text shows, box clips cleanly */}
             <p style={{ fontSize: 10.5, color: "#374151", margin: 0, lineHeight: 1.5, fontStyle: "italic", overflow: "hidden" }}>
               {report.teacherComment ?? "No comment provided."}
             </p>
@@ -604,9 +656,6 @@ export default function ReportCardComponent({
             Report generated on{" "}
             {new Date().toLocaleDateString("en-NG", { day: "2-digit", month: "long", year: "numeric" })}
           </p>
-          {/* <p style={{ fontSize: 8.5, color: "rgba(255,255,255,0.3)", margin: "1px 0 0", lineHeight: 1.4 }}>
-            Report ID: {report._id} · Scan QR code to verify authenticity
-          </p> */}
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end", marginBottom: 3 }}>
@@ -622,9 +671,6 @@ export default function ReportCardComponent({
               <div style={{ width: 100, height: 1, background: "rgba(255,255,255,0.2)" }} />
             )}
           </div>
-          {/* <p style={{ fontSize: 7.5, color: "rgba(255,255,255,0.4)", margin: 0, lineHeight: 1.4 }}>
-            Proprietress&apos;s Signature & Stamp
-          </p> */}
         </div>
       </div>
     );
@@ -680,7 +726,6 @@ export default function ReportCardComponent({
       >
         <div style={{ transformOrigin: "top left", transform: `scale(${scale})`, width: A4_W }}>
 
-          {/* PAGE 1 */}
           <A4Page refProp={page1Ref}>
             <PageHeader showQR />
             <StudentInfoStrip />
@@ -710,7 +755,6 @@ export default function ReportCardComponent({
             {!isTwoPage && <PageFooter />}
           </A4Page>
 
-          {/* PAGE 2 */}
           {isTwoPage && (
             <>
               <div style={{ height: 16, background: "#e2e8f0" }} />

@@ -4,8 +4,9 @@ import { connectDB } from "@/lib/db";
 import "@/lib/registerModels";
 import ReportCardModel from "@/models/ReportCard";
 import UserModel from "@/models/User";
+import mongoose from "mongoose";
+import { StudentStatus, PaymentStatus, ReportStatus, UserRole } from "@/types/enums";
 import SchoolSettingsModel from "@/models/SchoolSettings";
-import { PaymentStatus, ReportStatus, UserRole } from "@/types/enums";
 import type { ApiResponse } from "@/types";
 
 interface RouteParams {
@@ -79,13 +80,13 @@ export async function GET(
       );
     }
 
-    // Fetch principal signature from school settings
+    // ── School settings ───────────────────────────────────────────────────
     const schoolSettings = (await SchoolSettingsModel.findOne().lean()) as {
       principalSignature?: string;
       schoolStamp?: string;
     } | null;
 
-     // ── Hydrate latest profile photo from student document ────────────────
+    // ── Hydrate latest profile photo ──────────────────────────────────────
     const StudentModel = (await import("@/models/Student")).default;
     const freshStudent = await StudentModel.findById(typedReport.student.toString())
       .select("profilePhoto")
@@ -93,6 +94,46 @@ export async function GET(
 
     const freshPhoto = (freshStudent as unknown as { profilePhoto?: string })?.profilePhoto;
     const snapshot = report.studentSnapshot as Record<string, unknown>;
+
+    // ── Resolve live student counts ───────────────────────────────────────
+    const cls = report.class as { _id: { toString(): string } } | null;
+    const cId = cls?._id?.toString();
+    const dept = (snapshot?.department as string) ?? "none";
+
+    let totalStudentsInClass = report.totalStudentsInClass ?? 0;
+    let totalStudentsInDept = (report as unknown as { totalStudentsInDept?: number }).totalStudentsInDept ?? 0;
+    const overallPosition = (report as unknown as { overallPosition?: number }).overallPosition ?? report.position;
+
+    if (cId) {
+      totalStudentsInClass = await UserModel.countDocuments({
+        $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
+        currentClass: new mongoose.Types.ObjectId(cId),
+        studentStatus: StudentStatus.ACTIVE,
+      });
+
+      const distinctDepts = await UserModel.distinct("department", {
+        $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
+        currentClass: new mongoose.Types.ObjectId(cId),
+        studentStatus: StudentStatus.ACTIVE,
+      });
+      const meaningfulDepts = (distinctDepts as (string | null | undefined)[]).filter(
+        (d) => d && d !== "none"
+      );
+      const shouldSplit = meaningfulDepts.length >= 1 && distinctDepts.length > 1;
+
+      if (shouldSplit) {
+        const deptQuery = dept === "none" ? { $in: [null, "none", undefined] } : dept;
+        totalStudentsInDept = await UserModel.countDocuments({
+          $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
+          currentClass: new mongoose.Types.ObjectId(cId),
+          studentStatus: StudentStatus.ACTIVE,
+          department: deptQuery,
+        });
+      } else {
+        totalStudentsInDept = totalStudentsInClass;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────
 
     return NextResponse.json({
       success: true,
@@ -103,8 +144,12 @@ export async function GET(
           : snapshot,
         principalSignature: schoolSettings?.principalSignature ?? null,
         schoolStamp: schoolSettings?.schoolStamp ?? null,
+        totalStudentsInClass,
+        totalStudentsInDept,
+        overallPosition,
       },
     });
+
   } catch (error) {
     console.error("Get report error:", error);
     return NextResponse.json(

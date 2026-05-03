@@ -22,6 +22,8 @@ interface ReportSummary {
   grade?: string;
   position?: number;
   totalStudentsInClass?: number;
+  totalStudentsInDept?: number;
+  overallPosition?: number;
   isLocked: boolean;
   session: { _id: string; name: string };
   term: { _id: string; name: string };
@@ -338,7 +340,9 @@ export default function ParentReportsView() {
                     </p>
                     {!report.isLocked && report.percentage !== undefined && (
                       <p className="text-xs text-gray-400 mt-0.5">
-                        Score: {report.percentage.toFixed(1)}% · Grade: {report.grade} · Position: {report.position}/{report.totalStudentsInClass}
+                        Score: {report.percentage.toFixed(1)}% · Grade: {report.grade} · Position: {report.position}/{report.totalStudentsInDept || report.totalStudentsInClass}
+{report.totalStudentsInDept && report.totalStudentsInDept !== report.totalStudentsInClass
+  ? " (dept)" : ""}
                       </p>
                     )}
                     {report.isLocked && (

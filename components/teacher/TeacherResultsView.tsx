@@ -144,60 +144,7 @@ useEffect(() => {
   return [];
 }
 
-  // async function fetchDrafts(
-  //   classId: string,
-  //   sessionId: string,
-  //   termId: string,
-  // ) {
-  //   if (!termId) return;
-  //   const res = await fetch(
-  //     `/api/teacher/results?classId=${classId}&termId=${termId}`,
-  //   );
-  //   const json = (await res.json()) as {
-  //     success: boolean;
-  //     data?: Array<{
-  //       _id: string;
-  //       student: string;
-  //       subjects: SubjectScore[];
-  //       attendance: {
-  //         schoolDaysOpen: number;
-  //         daysPresent: number;
-  //         daysAbsent: number;
-  //       };
-  //       teacherComment?: string;
-  //       status: ReportStatus;
-  //       declineReason?: string;
-  //     }>;
-  //   };
-
-  //   if (json.success && json.data) {
-  //     const loadedDrafts: Record<string, ReportDraft> = {};
-  //     const loadedIds: string[] = [];
-  //     for (const report of json.data) {
-  //       const studentId =
-  //         typeof report.student === "string"
-  //           ? report.student
-  //           : String(report.student);
-  //       loadedDrafts[studentId] = {
-  //         studentId: report.student,
-  //         scores: report.subjects.map((s) => ({ ...s })),
-  //         attendance: report.attendance,
-  //         teacherComment: report.teacherComment ?? "",
-  //         status: report.status,
-  //         declineReason: report.declineReason,
-  //       };
-  //       // ← Only track IDs for reports that can still be submitted
-  //       if (
-  //         report.status === ReportStatus.DRAFT ||
-  //         report.status === ReportStatus.DECLINED
-  //       ) {
-  //         loadedIds.push(report._id);
-  //       }
-  //     }
-  //     setDrafts(loadedDrafts);
-  //     setSavedReportIds(loadedIds); // ← approved IDs never enter this list
-  //   }
-  // }
+  
 
   // ── fetchDrafts — add freshStudents param, fix closing braces ──
 async function fetchDrafts(
@@ -826,6 +773,15 @@ interface StudentCardProps {
   onSave: () => void;
 }
 
+function getGradeFromPercentage(percentage: number): { grade: string; color: string } {
+  if (percentage >= 70) return { grade: "A", color: "text-emerald-600" };
+  if (percentage >= 60) return { grade: "B", color: "text-blue-600" };
+  if (percentage >= 50) return { grade: "C", color: "text-amber-600" };
+  if (percentage >= 45) return { grade: "D", color: "text-orange-500" };
+  if (percentage >= 40) return { grade: "E", color: "text-orange-600" };
+  return { grade: "F", color: "text-red-600" };
+}
+
 function StudentCard({
   student,
   draft,
@@ -899,36 +855,64 @@ function StudentCard({
       }`}
     >
       <button
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-        onClick={onToggle}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-              isDeclined
-                ? "bg-red-100 text-red-700"
-                : "bg-purple-100 text-purple-700"
-            }`}
-          >
-            {student.surname?.charAt(0) ?? "?"}
-            {student.firstName?.charAt(0) ?? "?"}
-          </div>
-          <div className="text-left">
-            <p className="font-medium text-gray-900 text-sm">
-              {student.surname} {student.firstName}
-            </p>
-            <p className="text-xs text-gray-400">{student.admissionNumber}</p>
-          </div>
+  className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+  onClick={onToggle}
+>
+  <div className="flex items-center gap-3">
+    <div
+      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+        isDeclined
+          ? "bg-red-100 text-red-700"
+          : "bg-purple-100 text-purple-700"
+      }`}
+    >
+      {student.surname?.charAt(0) ?? "?"}
+      {student.firstName?.charAt(0) ?? "?"}
+    </div>
+    <div className="text-left">
+      <p className="font-medium text-gray-900 text-sm">
+        {student.surname} {student.firstName}
+      </p>
+      <p className="text-xs text-gray-400">{student.admissionNumber}</p>
+    </div>
+  </div>
+
+  <div className="flex items-center gap-3">
+    {/* ── Score summary — shown when draft exists ── */}
+    {draft && (() => {
+      const totalObtained = draft.scores.reduce(
+        (sum, s) => sum + s.testScore + s.examScore + (s.hasPractical ? s.practicalScore : 0),
+        0
+      );
+      const totalObtainable = draft.scores.reduce(
+        (sum, s) => sum + 100,
+        0
+      );
+      const percentage = totalObtainable > 0
+        ? (totalObtained / totalObtainable) * 100
+        : 0;
+      const { grade, color } = getGradeFromPercentage(percentage);
+
+      return (
+        <div className="text-right hidden sm:block">
+          <p className={`text-sm font-bold ${color}`}>
+            {percentage.toFixed(1)}% · {grade}
+          </p>
+          <p className="text-xs text-gray-400">
+            {totalObtained}/{totalObtainable}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          {statusBadge()}
-          {isExpanded ? (
-            <ChevronUp className="w-4 h-4 text-gray-400" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
-          )}
-        </div>
-      </button>
+      );
+    })()}
+
+    {statusBadge()}
+    {isExpanded ? (
+      <ChevronUp className="w-4 h-4 text-gray-400" />
+    ) : (
+      <ChevronDown className="w-4 h-4 text-gray-400" />
+    )}
+  </div>
+</button>
 
       {isExpanded && draft && (
         <div className="border-t border-gray-50 p-4 space-y-4">
