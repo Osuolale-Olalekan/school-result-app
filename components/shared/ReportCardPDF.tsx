@@ -1917,7 +1917,7 @@ function AttendanceAndComments({ report }: { report: ReportCardPDFProps["report"
           <Text style={S.commentText}>{report.teacherComment ?? "No comment provided."}</Text>
         </View>
         <View style={S.commentBox}>
-          <Text style={S.commentTitle}>Principal's Comment</Text>
+          <Text style={S.commentTitle}>Proprietress's Comment</Text>
           <Text style={S.commentText}>{report.principalComment ?? "Keep up the good work!"}</Text>
         </View>
       </View>

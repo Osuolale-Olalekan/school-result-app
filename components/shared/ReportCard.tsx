@@ -574,7 +574,7 @@ export default function ReportCardComponent({
           </div>
           <div style={{ background: "#f8fafc", borderRadius: 8, padding: "7px 11px", border: "1px solid #e2e8f0", flex: 1, overflow: "hidden" }}>
             <h4 style={{ fontSize: 9.5, fontWeight: "bold", color: "#1e3a5f", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.2 }}>
-              Principal&apos;s Comment
+              Proprietress&apos;s Comment
             </h4>
             <p style={{ fontSize: 10.5, color: "#374151", margin: 0, lineHeight: 1.5, fontStyle: "italic", wordBreak: "break-word" }}>
               {report.principalComment ?? "Keep up the good work!"}
