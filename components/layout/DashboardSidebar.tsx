@@ -63,6 +63,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Audit Logs", href: "/admin/audit-logs", icon: ClipboardList },
   { label: "Settings", href: "/admin/settings", icon: Settings },
   { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
+   { label: "School Calendar", href: "/admin/school-calendar", icon: CalendarDays },
   { label: "Behaviour", href: "/admin/behaviour", icon: ShieldAlert },
   { label: "Assignments", href: "/admin/assignments",   icon: BookOpen },
   { label: "Notifications", href: "/notifications", icon: Bell },

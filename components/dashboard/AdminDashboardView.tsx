@@ -455,13 +455,30 @@
 
 import { useEffect, useState } from "react";
 import {
-  GraduationCap, Users, BookOpen, FileText, CreditCard,
-  CheckCircle, Clock, TrendingUp, ArrowUpRight, Activity,
-  BarChart2, Zap,
+  GraduationCap,
+  Users,
+  BookOpen,
+  FileText,
+  CreditCard,
+  CheckCircle,
+  Clock,
+  TrendingUp,
+  ArrowUpRight,
+  Activity,
+  BarChart2,
+  Zap,
 } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import type { AdminAnalytics } from "@/types";
 
@@ -469,7 +486,11 @@ import type { AdminAnalytics } from "@/types";
 const PIE_COLORS = ["#f59e0b", "#3b82f6", "#10b981", "#8b5cf6", "#f43f5e"];
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
-function LightTooltip({ active, payload, label }: {
+function LightTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
   payload?: { color?: string; name?: string; value?: number }[];
   label?: string;
@@ -480,7 +501,8 @@ function LightTooltip({ active, payload, label }: {
       {label && <p className="mb-1 text-gray-400">{label}</p>}
       {payload.map((p, i) => (
         <p key={i} className="font-medium text-gray-700">
-          {p.name ?? "Value"}: <strong className="text-gray-900">{p.value}</strong>
+          {p.name ?? "Value"}:{" "}
+          <strong className="text-gray-900">{p.value}</strong>
         </p>
       ))}
     </div>
@@ -489,19 +511,24 @@ function LightTooltip({ active, payload, label }: {
 
 // ─── Accent definitions ───────────────────────────────────────────────────────
 const ACCENTS = {
-  amber:   { iconBg: "bg-amber-500",   subColor: "text-amber-500"   },
-  blue:    { iconBg: "bg-blue-500",    subColor: "text-blue-500"    },
+  amber: { iconBg: "bg-amber-500", subColor: "text-amber-500" },
+  blue: { iconBg: "bg-blue-500", subColor: "text-blue-500" },
   emerald: { iconBg: "bg-emerald-500", subColor: "text-emerald-500" },
-  purple:  { iconBg: "bg-purple-500",  subColor: "text-purple-500"  },
-  orange:  { iconBg: "bg-orange-500",  subColor: "text-orange-500"  },
-  navy:    { iconBg: "bg-[#1e3a5f]",   subColor: "text-gray-500"    },
+  purple: { iconBg: "bg-purple-500", subColor: "text-purple-500" },
+  orange: { iconBg: "bg-orange-500", subColor: "text-orange-500" },
+  navy: { iconBg: "bg-[#1e3a5f]", subColor: "text-gray-500" },
 };
 
 type AccentKey = keyof typeof ACCENTS;
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({
-  icon: Icon, label, value, sub, accentKey, loading,
+  icon: Icon,
+  label,
+  value,
+  sub,
+  accentKey,
+  loading,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -522,13 +549,21 @@ function StatCard({
             </>
           ) : (
             <>
-              <div className="text-2xl font-bold font-display text-gray-900">{value}</div>
+              <div className="text-2xl font-bold font-display text-gray-900">
+                {value}
+              </div>
               <div className="text-sm text-gray-500 mt-0.5">{label}</div>
-              {sub && <div className={`text-xs mt-0.5 font-medium ${a.subColor}`}>{sub}</div>}
+              {sub && (
+                <div className={`text-xs mt-0.5 font-medium ${a.subColor}`}>
+                  {sub}
+                </div>
+              )}
             </>
           )}
         </div>
-        <div className={`w-10 h-10 rounded-xl ${a.iconBg} flex items-center justify-center flex-shrink-0`}>
+        <div
+          className={`w-10 h-10 rounded-xl ${a.iconBg} flex items-center justify-center flex-shrink-0`}
+        >
           <Icon className="w-5 h-5 text-white" />
         </div>
       </div>
@@ -537,9 +572,17 @@ function StatCard({
 }
 
 // ─── Chart card ───────────────────────────────────────────────────────────────
-function ChartCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function ChartCard({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-100 ${className}`}>
+    <div
+      className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-100 ${className}`}
+    >
       {children}
     </div>
   );
@@ -547,7 +590,10 @@ function ChartCard({ children, className = "" }: { children: React.ReactNode; cl
 
 // ─── Section header ───────────────────────────────────────────────────────────
 function SectionHeader({
-  icon: Icon, title, action, iconClassName = "text-amber-500",
+  icon: Icon,
+  title,
+  action,
+  iconClassName = "text-amber-500",
 }: {
   icon: React.ComponentType<{ className?: string }>;
   title: string;
@@ -587,40 +633,87 @@ export default function AdminDashboardView() {
       .finally(() => setLoading(false));
   }, []);
 
-  const reportStatusData = analytics?.reportsByStatus.map((item) => ({
-    name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-    value: item.count,
-  })) ?? [];
+  const reportStatusData =
+    analytics?.reportsByStatus.map((item) => ({
+      name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+      value: item.count,
+    })) ?? [];
 
   const totalReports = reportStatusData.reduce((s, d) => s + d.value, 0);
 
   return (
     <div className="space-y-6 animate-fade-in">
-
       {/* ── Header ── */}
       <div>
-        <h1 className="font-display text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Welcome back! Here&apos;s what&apos;s happening today.</p>
+        <h1 className="font-display text-2xl font-bold text-gray-900">
+          Admin Dashboard
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">
+          Welcome back! Here&apos;s what&apos;s happening today.
+        </p>
       </div>
 
       {/* ── Primary stat cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={GraduationCap} label="Total Students"  value={analytics?.totalStudents ?? 0} sub={`${analytics?.activeStudents ?? 0} active`} accentKey="amber"   loading={loading} />
-        <StatCard icon={Users}         label="Teachers"         value={analytics?.totalTeachers ?? 0} accentKey="blue"    loading={loading} />
-        <StatCard icon={Users}         label="Parents"          value={analytics?.totalParents ?? 0}  accentKey="emerald" loading={loading} />
-        <StatCard icon={BookOpen}      label="Classes"          value={analytics?.totalClasses ?? 0}  accentKey="purple"  loading={loading} />
+        <StatCard
+          icon={GraduationCap}
+          label="Total Students"
+          value={analytics?.totalStudents ?? 0}
+          sub={`${analytics?.activeStudents ?? 0} active`}
+          accentKey="amber"
+          loading={loading}
+        />
+        <StatCard
+          icon={Users}
+          label="Teachers"
+          value={analytics?.totalTeachers ?? 0}
+          accentKey="blue"
+          loading={loading}
+        />
+        <StatCard
+          icon={Users}
+          label="Parents"
+          value={analytics?.totalParents ?? 0}
+          accentKey="emerald"
+          loading={loading}
+        />
+        <StatCard
+          icon={BookOpen}
+          label="Classes"
+          value={analytics?.totalClasses ?? 0}
+          accentKey="purple"
+          loading={loading}
+        />
       </div>
 
       {/* ── Secondary stat cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard icon={Clock}       label="Pending Reviews"  value={analytics?.pendingReports ?? 0}        accentKey="orange"  loading={loading} />
-        <StatCard icon={CheckCircle} label="Approved Reports" value={analytics?.approvedReports ?? 0}       accentKey="emerald" loading={loading} />
-        <StatCard icon={CreditCard}  label="Payments Cleared" value={analytics?.paymentStats.paid ?? 0} sub={`${analytics?.paymentStats.unpaid ?? 0} pending`} accentKey="navy" loading={loading} />
+        <StatCard
+          icon={Clock}
+          label="Pending Reviews"
+          value={analytics?.pendingReports ?? 0}
+          accentKey="orange"
+          loading={loading}
+        />
+        <StatCard
+          icon={CheckCircle}
+          label="Approved Reports"
+          value={analytics?.approvedReports ?? 0}
+          accentKey="emerald"
+          loading={loading}
+        />
+        <StatCard
+          icon={CreditCard}
+          label="Payments Cleared"
+          value={analytics?.paymentStats.paid ?? 0}
+          sub={`${analytics?.paymentStats.unpaid ?? 0} pending`}
+          accentKey="navy"
+          loading={loading}
+        />
       </div>
 
       {/* ── Charts ── */}
       <div className="grid lg:grid-cols-5 gap-6">
-
         {/* Bar chart — 3 cols */}
         <div className="lg:col-span-3">
           <ChartCard>
@@ -634,7 +727,11 @@ export default function AdminDashboardView() {
                   barSize={26}
                   margin={{ left: -20 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#f0f0f0"
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="className"
                     tick={{ fontSize: 11, fill: "#9ca3af" }}
@@ -646,8 +743,16 @@ export default function AdminDashboardView() {
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip content={<LightTooltip />} cursor={{ fill: "rgba(245,158,11,0.06)" }} />
-                  <Bar dataKey="count" fill="#f59e0b" radius={[5, 5, 0, 0]} name="Students" />
+                  <Tooltip
+                    content={<LightTooltip />}
+                    cursor={{ fill: "rgba(245,158,11,0.06)" }}
+                  />
+                  <Bar
+                    dataKey="count"
+                    fill="#f59e0b"
+                    radius={[5, 5, 0, 0]}
+                    name="Students"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -657,7 +762,11 @@ export default function AdminDashboardView() {
         {/* Pie chart — 2 cols */}
         <div className="lg:col-span-2">
           <ChartCard className="flex flex-col">
-            <SectionHeader icon={FileText} title="Reports by Status" iconClassName="text-blue-500" />
+            <SectionHeader
+              icon={FileText}
+              title="Reports by Status"
+              iconClassName="text-blue-500"
+            />
             {loading ? (
               <div className="h-52 bg-gray-50 rounded-xl animate-pulse" />
             ) : reportStatusData.length === 0 ? (
@@ -672,13 +781,19 @@ export default function AdminDashboardView() {
                     <PieChart>
                       <Pie
                         data={reportStatusData}
-                        cx="50%" cy="50%"
-                        innerRadius={44} outerRadius={68}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={44}
+                        outerRadius={68}
                         dataKey="value"
                         paddingAngle={3}
                       >
                         {reportStatusData.map((_, i) => (
-                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="transparent" />
+                          <Cell
+                            key={i}
+                            fill={PIE_COLORS[i % PIE_COLORS.length]}
+                            stroke="transparent"
+                          />
                         ))}
                       </Pie>
                       <Tooltip content={<LightTooltip />} />
@@ -686,7 +801,9 @@ export default function AdminDashboardView() {
                   </ResponsiveContainer>
                   {/* Centre label */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-lg font-bold text-gray-900">{totalReports}</span>
+                    <span className="text-lg font-bold text-gray-900">
+                      {totalReports}
+                    </span>
                     <span className="text-[9px] text-gray-400">total</span>
                   </div>
                 </div>
@@ -695,12 +812,21 @@ export default function AdminDashboardView() {
                     <div key={item.name} className="flex items-center gap-2">
                       <div
                         className="w-2 h-2 rounded-full flex-shrink-0"
-                        style={{ background: PIE_COLORS[i % PIE_COLORS.length] }}
+                        style={{
+                          background: PIE_COLORS[i % PIE_COLORS.length],
+                        }}
                       />
-                      <span className="text-xs text-gray-500 flex-1">{item.name}</span>
-                      <span className="text-xs font-bold text-gray-900">{item.value}</span>
+                      <span className="text-xs text-gray-500 flex-1">
+                        {item.name}
+                      </span>
+                      <span className="text-xs font-bold text-gray-900">
+                        {item.value}
+                      </span>
                       <span className="text-[10px] text-gray-400">
-                        {totalReports > 0 ? Math.round((item.value / totalReports) * 100) : 0}%
+                        {totalReports > 0
+                          ? Math.round((item.value / totalReports) * 100)
+                          : 0}
+                        %
                       </span>
                     </div>
                   ))}
@@ -748,9 +874,12 @@ export default function AdminDashboardView() {
                   <TrendingUp className="w-4 h-4 text-amber-500" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-800 font-medium truncate">{log.description}</p>
+                  <p className="text-sm text-gray-800 font-medium truncate">
+                    {log.description}
+                  </p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {log.actorName} · {new Date(log.createdAt).toLocaleString("en-NG")}
+                    {log.actorName} ·{" "}
+                    {new Date(log.createdAt).toLocaleString("en-NG")}
                   </p>
                 </div>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 capitalize flex-shrink-0 mt-0.5">

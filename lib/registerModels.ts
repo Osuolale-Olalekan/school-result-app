@@ -15,3 +15,5 @@ import "@/models/BehaviourRecord"
 import "@/models/Assignment"
 import "@/models/Submission"
 import "@/models/TimeTable"
+import "@/models/AttendanceRecord"
+import "@/models/SchoolCalendar";
