@@ -50,7 +50,9 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Sessions", href: "/admin/sessions", icon: Calendar },
   { label: "Classes", href: "/admin/classes", icon: BookOpen },
+  { label: "Attendance", href: "/admin/attendance", icon: CalendarDays },
   { label: "Subjects", href: "/admin/subjects", icon: BookMarked },
+  { label: "Subject Schedules", href: "/admin/subject-schedule", icon: FileText },
   {
     label: "Class Assignments",
     href: "/admin/class-assignments",

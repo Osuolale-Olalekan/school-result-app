@@ -17,3 +17,5 @@ import "@/models/Submission"
 import "@/models/TimeTable"
 import "@/models/AttendanceRecord"
 import "@/models/SchoolCalendar";
+import "@/models/AttendanceAlert";
+import "@/models/TermSubjectConfig";
