@@ -403,7 +403,7 @@ export default function ParentReportsView() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 text-base">Unlock Report Card</h3>
-                  <p className="text-xs text-gray-500 capitalize">
+                  <p className="text-xs text-black capitalize">
                     {paymentModal.report.termName} Term · {paymentModal.report.className}
                   </p>
                 </div>
@@ -424,18 +424,18 @@ export default function ParentReportsView() {
                   <div className="bg-gray-50 rounded-xl p-4 mb-5 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Report Card Access Fee</span>
-                      <span className="font-semibold">₦{REPORT_CARD_FEE.toLocaleString()}</span>
+                      <span className="font-semibold text-blue-950">₦{REPORT_CARD_FEE.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Term</span>
-                      <span className="font-medium capitalize">{paymentModal.report.termName} Term</span>
+                      <span className="font-medium capitalize text-blue-950">{paymentModal.report.termName} Term</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Session</span>
-                      <span className="font-medium">{paymentModal.report.sessionName ?? paymentModal.report.session.name}</span>
+                      <span className="font-medium text-blue-950">{paymentModal.report.sessionName ?? paymentModal.report.session.name}</span>
                     </div>
                     <div className="border-t border-gray-200 pt-2 flex justify-between">
-                      <span className="font-semibold">Total</span>
+                      <span className="font-semibold text-black">Total</span>
                       <span className="font-bold text-[#1e3a5f]">₦{REPORT_CARD_FEE.toLocaleString()}</span>
                     </div>
                   </div>
