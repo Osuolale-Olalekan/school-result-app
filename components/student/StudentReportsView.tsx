@@ -233,36 +233,7 @@ export default function StudentReportsView() {
                 key={report._id}
                 className="p-3 sm:p-5 flex items-start sm:items-center gap-3 sm:gap-4 hover:bg-gray-50/50 transition-colors"
               >
-                <div className="flex-shrink-0 mt-0.5 sm:mt-0">
-                  {report.isLocked ? (
-                    !report.reportCardPaid ? (
-                      <button
-                        onClick={() =>
-                          setPaymentModal({ report, step: "confirm" })
-                        }
-                        className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
-                      >
-                        <CreditCard className="w-3 h-3" />
-                        Pay ₦{REPORT_CARD_FEE.toLocaleString()}
-                      </button>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-blue-50 text-blue-500 text-xs font-medium">
-                        <Lock className="w-3 h-3" />
-                        <span className="hidden sm:inline">Awaiting fees</span>
-                      </span>
-                    )
-                  ) : (
-                    <button
-                      onClick={() => viewReport(report._id)}
-                      disabled={loadingReport}
-                      className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-[#1e3a5f] text-white text-xs font-medium hover:bg-[#152847] transition-colors disabled:opacity-50"
-                    >
-                      <Eye className="w-3 h-3" />
-                      View
-                    </button>
-                  )}
-                </div>
-
+                {/* ── Text content only, no button here ── */}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 capitalize text-sm sm:text-base leading-snug">
                     {report.term?.name} Term
@@ -300,9 +271,10 @@ export default function StudentReportsView() {
                           ⚠ School fees not confirmed
                         </p>
                       )}
-                      {!report.reportCardPaid && (
+                      {report.schoolFeesPaid && !report.reportCardPaid && (
                         <p className="text-xs text-gray-400">
-                          Pay ₦{REPORT_CARD_FEE.toLocaleString()} to unlock Report card
+                          Pay ₦{REPORT_CARD_FEE.toLocaleString()} to unlock
+                          Report card
                         </p>
                       )}
                       {report.reportCardPaid && !report.schoolFeesPaid && (
@@ -315,27 +287,9 @@ export default function StudentReportsView() {
                   )}
                 </div>
 
+                {/* ── Single action button, right side only ── */}
                 <div className="flex-shrink-0 mt-0.5 sm:mt-0">
-                  {report.isLocked ? (
-                    // Only show Pay button if school fees are confirmed
-                    // and only the report card fee is outstanding
-                    report.schoolFeesPaid && !report.reportCardPaid ? (
-                      <button
-                        onClick={() =>
-                          setPaymentModal({ report, step: "confirm" })
-                        }
-                        className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
-                      >
-                        <CreditCard className="w-3 h-3" />
-                        Pay ₦{REPORT_CARD_FEE.toLocaleString()}
-                      </button>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-gray-100 text-gray-400 text-xs font-medium">
-                        <Lock className="w-3 h-3" />
-                        <span className="hidden sm:inline">Locked</span>
-                      </span>
-                    )
-                  ) : (
+                  {!report.isLocked ? (
                     <button
                       onClick={() => viewReport(report._id)}
                       disabled={loadingReport}
@@ -344,6 +298,21 @@ export default function StudentReportsView() {
                       <Eye className="w-3 h-3" />
                       View
                     </button>
+                  ) : report.schoolFeesPaid && !report.reportCardPaid ? (
+                    <button
+                      onClick={() =>
+                        setPaymentModal({ report, step: "confirm" })
+                      }
+                      className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
+                    >
+                      <CreditCard className="w-3 h-3" />
+                      Pay ₦{REPORT_CARD_FEE.toLocaleString()}
+                    </button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-gray-100 text-gray-400 text-xs font-medium">
+                      <Lock className="w-3 h-3" />
+                      <span className="hidden sm:inline">Locked</span>
+                    </span>
                   )}
                 </div>
               </div>
