@@ -50,8 +50,12 @@ export async function GET(
 
     const query: Record<string, unknown> = {
       student: studentId,
-      status: ReportStatus.APPROVED,
+      $or: [
+        { status: ReportStatus.APPROVED },
+        { status: ReportStatus.DRAFT, approvedAt: { $exists: true } },
+      ],
     };
+    
     if (sessionId) query.session = sessionId;
     if (termId) query.term = termId;
 
@@ -72,6 +76,23 @@ export async function GET(
           term: { _id: unknown };
           class: { _id: unknown; name?: string };
         };
+
+        if (report.status === ReportStatus.DRAFT) {
+                  return {
+                    _id: report._id,
+                    student: report.student,
+                    session: report.session,
+                    term: report.term,
+                    termName: (report.term as { name?: string })?.name,
+                    sessionName: (report.session as { name?: string })?.name,
+                    className: (report.class as { name?: string })?.name,
+                    status: report.status,
+                    isLocked: false,
+                    underReview: true,
+                    reportCardPaid: false,
+                    schoolFeesPaid: false,
+                  };
+                }
 
         const sessionObjId = (report.session as { _id: unknown })?._id;
         const termObjId = (report.term as { _id: unknown })?._id;

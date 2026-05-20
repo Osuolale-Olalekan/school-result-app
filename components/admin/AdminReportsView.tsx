@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -115,11 +114,12 @@ export default function AdminReportsView() {
   // Action modal
   const [actionModal, setActionModal] = useState<{
     report: ReportSummary;
-    type: "approve" | "decline";
+    type: "approve" | "decline" | "revoke";
   } | null>(null);
   const [declineReason, setDeclineReason] = useState("");
   const [principalComment, setPrincipalComment] = useState("");
-  const [generatingPrincipalComment, setGeneratingPrincipalComment] = useState(false);
+  const [generatingPrincipalComment, setGeneratingPrincipalComment] =
+    useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Preview modal
@@ -231,9 +231,9 @@ export default function AdminReportsView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: actionModal.type,
-          ...(actionModal.type === "decline"
-            ? { declineReason }
-            : { principalComment }),
+          ...(actionModal.type === "decline" && { declineReason }),
+          ...(actionModal.type === "approve" && { principalComment }),
+          ...(actionModal.type === "revoke" && { revokeReason: declineReason }),
         }),
       });
       const json = (await res.json()) as {
@@ -258,26 +258,26 @@ export default function AdminReportsView() {
   }
 
   async function suggestPrincipalComment(reportId: string) {
-  setGeneratingPrincipalComment(true);
-  try {
-    const res = await fetch(`/api/admin/reports/${reportId}/ai-comment`);
-    const json = (await res.json()) as {
-      success: boolean;
-      data?: { comment: string };
-      error?: string;
-    };
-    if (json.success && json.data?.comment) {
-      setPrincipalComment(json.data.comment);
-      toast.success("AI comment generated — feel free to edit it");
-    } else {
-      toast.error(json.error ?? "Could not generate comment");
+    setGeneratingPrincipalComment(true);
+    try {
+      const res = await fetch(`/api/admin/reports/${reportId}/ai-comment`);
+      const json = (await res.json()) as {
+        success: boolean;
+        data?: { comment: string };
+        error?: string;
+      };
+      if (json.success && json.data?.comment) {
+        setPrincipalComment(json.data.comment);
+        toast.success("AI comment generated — feel free to edit it");
+      } else {
+        toast.error(json.error ?? "Could not generate comment");
+      }
+    } catch {
+      toast.error("Failed to reach AI service");
+    } finally {
+      setGeneratingPrincipalComment(false);
     }
-  } catch {
-    toast.error("Failed to reach AI service");
-  } finally {
-    setGeneratingPrincipalComment(false);
   }
-}
 
   return (
     <div className="space-y-5">
@@ -386,7 +386,6 @@ export default function AdminReportsView() {
               >
                 {loading ? "Loading..." : "Load Reports"}
               </button>
-            
             </div>
           </div>
 
@@ -594,6 +593,17 @@ export default function AdminReportsView() {
                                     Decline
                                   </button>
                                 </>
+                              )}
+                              {/* New revoke button — only for APPROVED reports */}
+                              {report.status === ReportStatus.APPROVED && (
+                                <button
+                                  onClick={() =>
+                                    setActionModal({ report, type: "revoke" })
+                                  }
+                                  className="px-2.5 py-1 rounded-lg bg-orange-100 text-orange-700 text-xs font-medium hover:bg-orange-200 transition-colors"
+                                >
+                                  Revoke
+                                </button>
                               )}
                             </div>
                           </td>
@@ -871,35 +881,59 @@ export default function AdminReportsView() {
                 term
               </p>
 
+              {actionModal.type === "revoke" && (
+                <div>
+                  <p className="text-sm text-amber-700 bg-amber-50 rounded-xl p-3 mb-3">
+                    ⚠️ This will reset the report to <strong>Draft</strong> so
+                    the teacher can correct scores and re-submit. The
+                    student/parent will lose access until it is re-approved.
+                  </p>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reason for Revoking *
+                  </label>
+                  <textarea
+                    value={declineReason}
+                    onChange={(e) => setDeclineReason(e.target.value)}
+                    rows={3}
+                    placeholder="e.g. Score entry error for Mathematics — please correct and re-submit"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-orange-400 resize-none"
+                  />
+                </div>
+              )}
+
               {actionModal.type === "approve" ? (
-               <div>
-    <div className="flex items-center justify-between mb-2">
-      <label className="block text-sm font-medium text-gray-700">
-        Principal&apos;s Comment (optional)
-      </label>
-      {!principalComment.trim() && (
-        <button
-          onClick={() => suggestPrincipalComment(actionModal.report._id)}
-          disabled={generatingPrincipalComment}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 disabled:opacity-50 transition-colors"
-        >
-          <Sparkles className="w-3 h-3" />
-          {generatingPrincipalComment ? "Generating..." : "AI Suggest"}
-        </button>
-      )}
-    </div>
-    <textarea
-      value={principalComment}
-      onChange={(e) => setPrincipalComment(e.target.value)}
-      rows={3}
-      placeholder={
-        generatingPrincipalComment
-          ? "Generating comment..."
-          : "Add a comment from the principal..."
-      }
-      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-emerald-400 resize-none"
-    />
-  </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Principal&apos;s Comment (optional)
+                    </label>
+                    {!principalComment.trim() && (
+                      <button
+                        onClick={() =>
+                          suggestPrincipalComment(actionModal.report._id)
+                        }
+                        disabled={generatingPrincipalComment}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        {generatingPrincipalComment
+                          ? "Generating..."
+                          : "AI Suggest"}
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    value={principalComment}
+                    onChange={(e) => setPrincipalComment(e.target.value)}
+                    rows={3}
+                    placeholder={
+                      generatingPrincipalComment
+                        ? "Generating comment..."
+                        : "Add a comment from the principal..."
+                    }
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-emerald-400 resize-none"
+                  />
+                </div>
               ) : (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -935,14 +969,18 @@ export default function AdminReportsView() {
                   className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-50 ${
                     actionModal.type === "approve"
                       ? "bg-emerald-600 hover:bg-emerald-700"
-                      : "bg-red-600 hover:bg-red-700"
+                      : actionModal.type === "revoke"
+                        ? "bg-orange-600 hover:bg-orange-700"
+                        : "bg-red-600 hover:bg-red-700"
                   }`}
                 >
                   {actionLoading
                     ? "Processing..."
                     : actionModal.type === "approve"
                       ? "Approve"
-                      : "Decline"}
+                      : actionModal.type === "revoke"
+                        ? "Revoke to Draft"
+                        : "Decline"}
                 </button>
               </div>
             </div>

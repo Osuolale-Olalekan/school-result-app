@@ -120,15 +120,11 @@ async function handlePromotion(
 }
 
 // ── Helper: resolve the correct totalStudentsInDept for a report ──────────────
-// This mirrors the logic in recalculatePositions and the admin reports GET route.
-// A class uses department-based ranking only when it has students in 2+ groups
-// (at least one meaningful department + possibly a "none" group).
 async function resolveDeptCount(
   classId: string,
   department: string,
   totalInClass: number,
 ): Promise<number> {
-  // Check how many distinct departments exist in this class
   const distinctDepts = await UserModel.distinct("department", {
     $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
     currentClass: new mongoose.Types.ObjectId(classId),
@@ -139,7 +135,6 @@ async function resolveDeptCount(
     (d) => d && d !== "none",
   );
 
-  // If only one group (all "none" → Primary/JSS), return the full class count
   const shouldSplitByDept =
     meaningfulDepts.length >= 1 &&
     (distinctDepts.length > 1 || meaningfulDepts.length >= 1);
@@ -148,7 +143,6 @@ async function resolveDeptCount(
     return totalInClass;
   }
 
-  // Count active students in this class with this specific department
   const deptQuery =
     department === "none"
       ? { $in: [null, "none", undefined] }
@@ -180,11 +174,13 @@ export async function PATCH(
 
   try {
     await connectDB();
-    const { action, declineReason, principalComment } =
+
+    const { action, declineReason, principalComment, revokeReason } =
       (await request.json()) as {
-        action: "approve" | "decline";
+        action: "approve" | "decline" | "revoke";
         declineReason?: string;
         principalComment?: string;
+        revokeReason?: string;
       };
 
     const report = await ReportCardModel.findById(id).populate(
@@ -199,13 +195,6 @@ export async function PATCH(
       );
     }
 
-    if (report.status !== ReportStatus.SUBMITTED) {
-      return NextResponse.json(
-        { success: false, error: "Only submitted reports can be reviewed" },
-        { status: 400 },
-      );
-    }
-
     const submittedBy = report.submittedBy as unknown as {
       _id: string;
       surname: string;
@@ -214,17 +203,23 @@ export async function PATCH(
       email: string;
     };
 
+    // ── APPROVE ───────────────────────────────────────────────────────────────
     if (action === "approve") {
+      if (report.status !== ReportStatus.SUBMITTED) {
+        return NextResponse.json(
+          { success: false, error: "Only submitted reports can be approved" },
+          { status: 400 },
+        );
+      }
+
       report.status = ReportStatus.APPROVED;
-      report.approvedBy =
-        session.user.id as unknown as typeof report.approvedBy;
+      report.approvedBy = session.user.id as unknown as typeof report.approvedBy;
       report.approvedAt = new Date();
 
-      // ── Resolve the correct dept count for AI comment ─────────────────
+      // ── Resolve dept count ──────────────────────────────────────────────
       const classId = report.class?.toString() ?? "";
       const department = report.studentSnapshot?.department ?? "none";
 
-      // Get live class-wide count first
       const totalInClass = classId
         ? await UserModel.countDocuments({
             $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
@@ -233,15 +228,12 @@ export async function PATCH(
           })
         : report.totalStudentsInClass;
 
-      // Then resolve dept count (falls back to totalInClass for Primary/JSS)
       const totalInDept = classId
         ? await resolveDeptCount(classId, department, totalInClass)
         : report.totalStudentsInDept ?? report.totalStudentsInClass;
-      // ─────────────────────────────────────────────────────────────────
+      // ───────────────────────────────────────────────────────────────────
 
-      // ── AI Comment Logic ──────────────────────────────────────────────
-      // If admin provided a comment → use it as-is.
-      // If not → auto-generate one using AI based on the student's results.
+      // ── AI Comment ─────────────────────────────────────────────────────
       if (principalComment?.trim()) {
         report.principalComment = principalComment.trim();
       } else {
@@ -253,7 +245,7 @@ export async function PATCH(
             percentage: report.percentage,
             position: report.position,
             totalStudentsInClass: totalInClass,
-            totalStudentsInDept: totalInDept, // <-- now correctly passed
+            totalStudentsInDept: totalInDept,
             grade: report.grade,
             subjects: report.subjects.map((s) => ({
               subjectName: s.subjectName,
@@ -264,14 +256,12 @@ export async function PATCH(
           });
           report.principalComment = aiComment;
         } catch (aiError) {
-          // AI comment generation failed — log it but don't block approval
           console.error("[AI Comment] Failed to generate comment:", aiError);
-          // Leave principalComment empty rather than crashing the approval
         }
       }
-      // ─────────────────────────────────────────────────────────────────
+      // ───────────────────────────────────────────────────────────────────
 
-      // ── Promotion logic — only on 3rd term ───────────────────────────
+      // ── Promotion logic — only on 3rd term ─────────────────────────────
       const isThirdTerm = report.termName === TermName.THIRD;
 
       if (isThirdTerm) {
@@ -317,9 +307,10 @@ export async function PATCH(
       });
 
       // Notify parents
-      const studentWithParents = await UserModel.findById(
-        report.student,
-      ).populate("parents", "surname firstName otherName email");
+      const studentWithParents = await UserModel.findById(report.student).populate(
+        "parents",
+        "surname firstName otherName email",
+      );
 
       if (studentWithParents) {
         const parents = (
@@ -342,11 +333,8 @@ export async function PATCH(
               notifMessage += " Performance is under review.";
             } else if (report.promotedToClass === "Graduated") {
               notifMessage += " 🎓 Your child has graduated!";
-            } else if (
-              report.promotedToClass === "Pending Department Assignment"
-            ) {
-              notifMessage +=
-                " Department assignment pending before promotion.";
+            } else if (report.promotedToClass === "Pending Department Assignment") {
+              notifMessage += " Department assignment pending before promotion.";
             } else if (report.isPromoted) {
               notifMessage += ` Promoted to ${report.promotedToClass}.`;
             }
@@ -387,7 +375,69 @@ export async function PATCH(
         data: report,
         message: "Report approved",
       });
+
+    // ── REVOKE ────────────────────────────────────────────────────────────────
+    } else if (action === "revoke") {
+      if (
+        report.status !== ReportStatus.APPROVED &&
+        report.status !== ReportStatus.DECLINED
+      ) {
+        return NextResponse.json(
+          { success: false, error: "Only approved or declined reports can be revoked" },
+          { status: 400 },
+        );
+      }
+
+      if (!revokeReason?.trim()) {
+        return NextResponse.json(
+          { success: false, error: "A reason for revoking is required" },
+          { status: 400 },
+        );
+      }
+
+      report.status = ReportStatus.DRAFT;
+      report.declineReason = `[REVOKED BY ADMIN] ${revokeReason.trim()}`;
+      report.approvedBy = undefined;
+      report.approvedAt = undefined;
+      report.principalComment = undefined;
+      report.isPromoted = undefined;
+      report.promotedToClass = undefined;
+      await report.save();
+
+      // Notify the teacher who submitted it
+      await createNotification({
+        recipientId: submittedBy._id.toString(),
+        recipientRole: UserRole.TEACHER,
+        type: NotificationType.REPORT_DECLINED,
+        title: "Report Card Revoked for Correction",
+        message: `Report for ${report.className} (${report.termName} term) has been revoked by admin for correction. Reason: ${revokeReason}`,
+        link: `/teacher/results`,
+      });
+
+      await createAuditLog({
+        actorId: session.user.id,
+        actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
+        actorRole: UserRole.ADMIN,
+        action: AuditAction.UPDATE,
+        entity: "ReportCard",
+        entityId: id,
+        description: `Revoked approved report to DRAFT: ${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} — ${report.className} ${report.termName}. Reason: ${revokeReason}`,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Report revoked to draft. Teacher can now correct and re-submit.",
+      });
+
+    // ── DECLINE ───────────────────────────────────────────────────────────────
     } else if (action === "decline") {
+      if (report.status !== ReportStatus.SUBMITTED) {
+        return NextResponse.json(
+          { success: false, error: "Only submitted reports can be declined" },
+          { status: 400 },
+        );
+      }
+
       if (!declineReason?.trim()) {
         return NextResponse.json(
           { success: false, error: "Decline reason is required" },
@@ -489,7 +539,6 @@ export async function GET(
         studentStatus: StudentStatus.ACTIVE,
       });
 
-      // Resolve dept count (falls back to class count for Primary/JSS)
       totalStudentsInDept = await resolveDeptCount(
         cId,
         department,
@@ -500,7 +549,7 @@ export async function GET(
 
     // ── Hydrate latest profile photo from student document ───────────────
     const freshStudent = await StudentModel.findById(
-      (report as unknown as { student: string }).student
+      (report as unknown as { student: string }).student,
     )
       .select("profilePhoto")
       .lean();
@@ -523,9 +572,8 @@ export async function GET(
         ...report,
         studentSnapshot: typedReport.studentSnapshot,
         totalStudentsInClass,
-        totalStudentsInDept, // <-- now included in GET response
-         overallPosition: (report as unknown as { overallPosition?: number }).overallPosition ?? report.position,
-
+        totalStudentsInDept,
+        overallPosition: (report as unknown as { overallPosition?: number }).overallPosition ?? report.position,
       },
     });
   } catch (error) {

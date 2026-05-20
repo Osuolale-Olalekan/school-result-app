@@ -12,7 +12,10 @@ export async function GET(
 ): Promise<NextResponse<ApiResponse<object[]>>> {
   const session = await getSession();
   if (!session?.user || session.user.activeRole !== UserRole.STUDENT) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
   try {
@@ -26,10 +29,14 @@ export async function GET(
 
     const query: Record<string, unknown> = {
       student: studentId,
-      status: ReportStatus.APPROVED,
+      $or: [
+        { status: ReportStatus.APPROVED },
+        { status: ReportStatus.DRAFT, approvedAt: { $exists: true } },
+      ],
     };
     if (sessionId) query.session = sessionId;
     if (termId) query.term = termId;
+
 
     const reports = await ReportCardModel.find(query)
       .populate("session", "name startYear endYear")
@@ -47,6 +54,23 @@ export async function GET(
           session: { _id: unknown };
           term: { _id: unknown };
         };
+
+        if (report.status === ReportStatus.DRAFT) {
+          return {
+            _id: report._id,
+            student: report.student,
+            session: report.session,
+            term: report.term,
+            termName: (report.term as { name?: string })?.name,
+            sessionName: (report.session as { name?: string })?.name,
+            className: (report.class as { name?: string })?.name,
+            status: report.status,
+            isLocked: false,
+            underReview: true,
+            reportCardPaid: false,
+            schoolFeesPaid: false,
+          };
+        }
 
         const sessionObjId = (report.session as { _id: unknown })?._id;
         const termObjId = (report.term as { _id: unknown })?._id;
@@ -92,12 +116,15 @@ export async function GET(
           reportCardPaid: true,
           schoolFeesPaid: true,
         };
-      })
+      }),
     );
 
     return NextResponse.json({ success: true, data: safeReports });
   } catch (error) {
     console.error("Student reports error:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

@@ -30,6 +30,7 @@ interface ReportSummary {
   termName?: TermName;
   sessionName?: string;
   className?: string;
+  underReview?: boolean;
 }
 
 interface FullReport extends IReportCard {
@@ -162,8 +163,11 @@ export default function StudentReportsView() {
     }
   }
 
-  const unlockedCount = reports.filter((r) => !r.isLocked).length;
+  const unlockedCount = reports.filter(
+    (r) => !r.isLocked && !r.underReview,
+  ).length;
   const lockedCount = reports.filter((r) => r.isLocked).length;
+  const underReviewCount = reports.filter((r) => r.underReview).length;
 
   return (
     <div className="space-y-4 min-w-0">
@@ -192,6 +196,11 @@ export default function StudentReportsView() {
             {
               label: "Locked",
               value: lockedCount,
+              color: "bg-amber-50 text-amber-700",
+            },
+            {
+              label: "Under Review",
+              value: underReviewCount,
               color: "bg-amber-50 text-amber-700",
             },
           ].map(({ label, value, color }) => (
@@ -233,7 +242,6 @@ export default function StudentReportsView() {
                 key={report._id}
                 className="p-3 sm:p-5 flex items-start sm:items-center gap-3 sm:gap-4 hover:bg-gray-50/50 transition-colors"
               >
-                {/* ── Text content only, no button here ── */}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 capitalize text-sm sm:text-base leading-snug">
                     {report.term?.name} Term
@@ -243,7 +251,15 @@ export default function StudentReportsView() {
                     </span>
                   </p>
 
-                  {!report.isLocked && report.percentage !== undefined && (
+                  {/* ── Under Review state ── */}
+                  {report.underReview ? (
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
+                        Result Under Review
+                      </span>
+                    </div>
+                  ) : !report.isLocked && report.percentage !== undefined ? (
                     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5">
                       <p className="text-xs sm:text-sm text-gray-500">
                         Score:{" "}
@@ -262,9 +278,7 @@ export default function StudentReportsView() {
                         </span>
                       )}
                     </div>
-                  )}
-
-                  {report.isLocked && (
+                  ) : report.isLocked ? (
                     <div className="mt-1 space-y-0.5">
                       {!report.schoolFeesPaid && (
                         <p className="text-xs text-amber-600">
@@ -274,7 +288,7 @@ export default function StudentReportsView() {
                       {report.schoolFeesPaid && !report.reportCardPaid && (
                         <p className="text-xs text-gray-400">
                           Pay ₦{REPORT_CARD_FEE.toLocaleString()} to unlock
-                          Report card
+                          report card
                         </p>
                       )}
                       {report.reportCardPaid && !report.schoolFeesPaid && (
@@ -284,12 +298,16 @@ export default function StudentReportsView() {
                         </p>
                       )}
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
-                {/* ── Single action button, right side only ── */}
+                {/* ── Action button ── */}
                 <div className="flex-shrink-0 mt-0.5 sm:mt-0">
-                  {!report.isLocked ? (
+                  {report.underReview ? (
+                    <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 text-xs font-medium">
+                      Under Review
+                    </span>
+                  ) : !report.isLocked ? (
                     <button
                       onClick={() => viewReport(report._id)}
                       disabled={loadingReport}
