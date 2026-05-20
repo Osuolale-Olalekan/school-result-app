@@ -110,6 +110,7 @@ export default function AdminReportsView() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState("");
   const [classesLoading, setClassesLoading] = useState(false);
+  const [revokeReason, setRevokeReason] = useState("");
 
   // Action modal
   const [actionModal, setActionModal] = useState<{
@@ -233,7 +234,7 @@ export default function AdminReportsView() {
           action: actionModal.type,
           ...(actionModal.type === "decline" && { declineReason }),
           ...(actionModal.type === "approve" && { principalComment }),
-          ...(actionModal.type === "revoke" && { revokeReason: declineReason }),
+          ...(actionModal.type === "revoke" && { revokeReason }),
         }),
       });
       const json = (await res.json()) as {
@@ -246,6 +247,7 @@ export default function AdminReportsView() {
         setActionModal(null);
         setDeclineReason("");
         setPrincipalComment("");
+        setRevokeReason("");
         fetchReports();
       } else {
         toast.error(json.error ?? "Failed to update report");
@@ -871,7 +873,9 @@ export default function AdminReportsView() {
               <h3 className="font-display text-lg font-bold text-gray-900 mb-1">
                 {actionModal.type === "approve"
                   ? "Approve Report Card"
-                  : "Decline Report Card"}
+                  : actionModal.type === "revoke"
+                    ? "Revoke Report Card"
+                    : "Decline Report Card"}
               </h3>
               <p className="text-sm text-gray-500 mb-4">
                 {actionModal.report.studentSnapshot.surname}{" "}
@@ -891,9 +895,10 @@ export default function AdminReportsView() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Reason for Revoking *
                   </label>
+
                   <textarea
-                    value={declineReason}
-                    onChange={(e) => setDeclineReason(e.target.value)}
+                    value={revokeReason}
+                    onChange={(e) => setRevokeReason(e.target.value)}
                     rows={3}
                     placeholder="e.g. Score entry error for Mathematics — please correct and re-submit"
                     className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-orange-400 resize-none"
@@ -934,7 +939,7 @@ export default function AdminReportsView() {
                     className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-emerald-400 resize-none"
                   />
                 </div>
-              ) : (
+              ) : actionModal.type === "decline" ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Reason for Declining *
@@ -947,7 +952,7 @@ export default function AdminReportsView() {
                     className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-red-400 resize-none"
                   />
                 </div>
-              )}
+              ) : null}
 
               <div className="flex gap-3 mt-5">
                 <button
@@ -955,6 +960,7 @@ export default function AdminReportsView() {
                     setActionModal(null);
                     setDeclineReason("");
                     setPrincipalComment("");
+                    setRevokeReason("");
                   }}
                   className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
                 >
@@ -964,7 +970,8 @@ export default function AdminReportsView() {
                   onClick={handleAction}
                   disabled={
                     actionLoading ||
-                    (actionModal.type === "decline" && !declineReason.trim())
+                    (actionModal.type === "decline" && !declineReason.trim()) ||
+                    (actionModal.type === "revoke" && !revokeReason.trim())
                   }
                   className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors disabled:opacity-50 ${
                     actionModal.type === "approve"

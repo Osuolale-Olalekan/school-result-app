@@ -181,41 +181,32 @@ export default function StudentReportsView() {
       </div>
 
       {!loading && reports.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className={`grid gap-2 sm:gap-3 ${underReviewCount > 0 ? "grid-cols-4" : "grid-cols-3"}`}>
           {[
-            {
-              label: "Total Reports",
-              value: reports.length,
-              color: "bg-blue-50 text-blue-700",
-            },
-            {
-              label: "Available",
-              value: unlockedCount,
-              color: "bg-emerald-50 text-emerald-700",
-            },
-            {
-              label: "Locked",
-              value: lockedCount,
-              color: "bg-amber-50 text-amber-700",
-            },
-            {
-              label: "Under Review",
-              value: underReviewCount,
-              color: "bg-amber-50 text-amber-700",
-            },
-          ].map(({ label, value, color }) => (
-            <div
-              key={label}
-              className={`rounded-xl sm:rounded-2xl p-2.5 sm:p-4 ${color}`}
-            >
-              <p className="text-xl sm:text-2xl font-bold leading-none">
-                {value}
-              </p>
-              <p className="text-[10px] sm:text-xs font-medium mt-1 leading-tight">
-                {label}
-              </p>
-            </div>
-          ))}
+  {
+    label: "Total Reports",
+    value: reports.length,
+    color: "bg-blue-50 text-blue-700",
+  },
+  {
+    label: "Available",
+    value: unlockedCount,
+    color: "bg-emerald-50 text-emerald-700",
+  },
+  {
+    label: "Locked",
+    value: lockedCount,
+    color: "bg-amber-50 text-amber-700",
+  },
+  ...(underReviewCount > 0
+    ? [{ label: "Under Review", value: underReviewCount, color: "bg-orange-50 text-orange-700" }]
+    : []),
+].map(({ label, value, color }) => (
+  <div key={label} className={`rounded-xl sm:rounded-2xl p-2.5 sm:p-4 ${color}`}>
+    <p className="text-xl sm:text-2xl font-bold leading-none">{value}</p>
+    <p className="text-[10px] sm:text-xs font-medium mt-1 leading-tight">{label}</p>
+  </div>
+))}
         </div>
       )}
 

@@ -28,12 +28,15 @@ export async function GET(
     const termId = searchParams.get("termId");
 
     const query: Record<string, unknown> = {
-      student: studentId,
-      $or: [
-        { status: ReportStatus.APPROVED },
-        { status: ReportStatus.DRAFT, approvedAt: { $exists: true } },
-      ],
-    };
+  student: studentId,
+  $or: [
+    { status: ReportStatus.APPROVED },
+    { 
+      status: ReportStatus.DRAFT, 
+      declineReason: { $regex: /^\[REVOKED BY ADMIN\]/ }
+    },
+  ],
+};
     if (sessionId) query.session = sessionId;
     if (termId) query.term = termId;
 

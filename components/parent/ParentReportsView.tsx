@@ -374,31 +374,35 @@ export default function ParentReportsView() {
         <div className="space-y-3">
           {filteredReports.map((report) => (
             <div
-              key={report._id}
-              className={`bg-white rounded-2xl shadow-sm border p-4 transition-colors ${
-                report.isLocked ? "border-gray-100" : "border-emerald-100"
-              }`}
-            >
+  key={report._id}
+  className={`bg-white rounded-2xl shadow-sm border p-4 transition-colors ${
+    report.underReview
+      ? "border-amber-100"
+      : report.isLocked
+        ? "border-gray-100"
+        : "border-emerald-100"
+  }`}
+>
               {/* On 320px: stack vertically. On larger: stay side by side */}
               <div className="flex flex-col min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`bg-white rounded-2xl shadow-sm border p-4 transition-colors ${
-                      report.underReview
-                        ? "border-amber-100"
-                        : report.isLocked
-                          ? "border-gray-100"
-                          : "border-emerald-100"
-                    }`}
-                  >
-                    {report.underReview ? (
-                      <FileText className="w-5 h-5 text-amber-500" />
-                    ) : report.isLocked ? (
-                      <Lock className="w-5 h-5 text-gray-400" />
-                    ) : (
-                      <FileText className="w-5 h-5 text-emerald-600" />
-                    )}
-                  </div>
+  className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+    report.underReview
+      ? "bg-amber-50"
+      : report.isLocked
+        ? "bg-gray-100"
+        : "bg-emerald-100"
+  }`}
+>
+  {report.underReview ? (
+    <FileText className="w-5 h-5 text-amber-500" />
+  ) : report.isLocked ? (
+    <Lock className="w-5 h-5 text-gray-400" />
+  ) : (
+    <FileText className="w-5 h-5 text-emerald-600" />
+  )}
+</div>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 capitalize">
                       {report.termName} Term Report
