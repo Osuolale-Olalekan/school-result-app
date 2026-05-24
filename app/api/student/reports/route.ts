@@ -28,18 +28,17 @@ export async function GET(
     const termId = searchParams.get("termId");
 
     const query: Record<string, unknown> = {
-  student: studentId,
-  $or: [
-    { status: ReportStatus.APPROVED },
-    { 
-      status: ReportStatus.DRAFT, 
-      declineReason: { $regex: /^\[REVOKED BY ADMIN\]/ }
-    },
-  ],
-};
+      student: studentId,
+      $or: [
+        { status: ReportStatus.APPROVED },
+        {
+          status: ReportStatus.DRAFT,
+          declineReason: { $regex: "^\\[REVOKED BY ADMIN\\]", $options: "i" },
+        },
+      ],
+    };
     if (sessionId) query.session = sessionId;
     if (termId) query.term = termId;
-
 
     const reports = await ReportCardModel.find(query)
       .populate("session", "name startYear endYear")
@@ -59,19 +58,35 @@ export async function GET(
         };
 
         if (report.status === ReportStatus.DRAFT) {
+          const declineReason = (
+            report as unknown as { declineReason?: string }
+          ).declineReason;
+          const isRevoked =
+            typeof declineReason === "string" &&
+            declineReason.startsWith("[REVOKED BY ADMIN]");
+
+          if (isRevoked) {
+            return {
+              _id: report._id,
+              student: report.student,
+              session: report.session,
+              term: report.term,
+              termName: (report.term as { name?: string })?.name,
+              sessionName: (report.session as { name?: string })?.name,
+              className: (report.class as { name?: string })?.name,
+              status: report.status,
+              isLocked: false,
+              underReview: true,
+              reportCardPaid: false,
+              schoolFeesPaid: false,
+            };
+          }
+
           return {
-            _id: report._id,
-            student: report.student,
-            session: report.session,
-            term: report.term,
-            termName: (report.term as { name?: string })?.name,
-            sessionName: (report.session as { name?: string })?.name,
-            className: (report.class as { name?: string })?.name,
-            status: report.status,
+            ...r,
             isLocked: false,
-            underReview: true,
-            reportCardPaid: false,
-            schoolFeesPaid: false,
+            reportCardPaid: true,
+            schoolFeesPaid: true,
           };
         }
 

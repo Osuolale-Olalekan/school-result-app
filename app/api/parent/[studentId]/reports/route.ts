@@ -55,19 +55,20 @@ export async function GET(
     //     { status: ReportStatus.DRAFT, approvedAt: { $exists: true } },
     //   ],
     // };
-    const query: Record<string, unknown> = {
+  const query: Record<string, unknown> = {
   student: studentId,
   $or: [
     { status: ReportStatus.APPROVED },
-    { 
-      status: ReportStatus.DRAFT, 
-      declineReason: { $regex: /^\[REVOKED BY ADMIN\]/ } // ← use this instead
+    {
+      status: ReportStatus.DRAFT,
+      declineReason: { $regex: "^\\[REVOKED BY ADMIN\\]", $options: "i" },
     },
   ],
 };
 
     if (sessionId) query.session = sessionId;
     if (termId) query.term = termId;
+
 
     const reports = await ReportCardModel.find(query)
       .populate("session", "name startYear endYear")
@@ -88,21 +89,42 @@ export async function GET(
         };
 
         if (report.status === ReportStatus.DRAFT) {
-                  return {
-                    _id: report._id,
-                    student: report.student,
-                    session: report.session,
-                    term: report.term,
-                    termName: (report.term as { name?: string })?.name,
-                    sessionName: (report.session as { name?: string })?.name,
-                    className: (report.class as { name?: string })?.name,
-                    status: report.status,
-                    isLocked: false,
-                    underReview: true,
-                    reportCardPaid: false,
-                    schoolFeesPaid: false,
-                  };
-                }
+          // Check if this approved report was revoked
+          const declineReason = (
+            report as unknown as { declineReason?: string }
+          ).declineReason;
+          const isRevoked =
+            typeof declineReason === "string" &&
+            declineReason.startsWith("[REVOKED BY ADMIN]");
+
+          if (isRevoked) {
+            return {
+              _id: report._id,
+              student: report.student,
+              session: report.session,
+              term: report.term,
+              termName: (report.term as { name?: string })?.name,
+              sessionName: (report.session as { name?: string })?.name,
+              className: (report.class as { name?: string })?.name,
+              status: report.status,
+              isLocked: false,
+              underReview: true,
+              reportCardPaid: false,
+              schoolFeesPaid: false,
+            };
+          }
+
+          // Fully unlocked — return everything
+          return {
+            ...r,
+            termName: (report.term as { name?: string })?.name,
+            sessionName: (report.session as { name?: string })?.name,
+            className: (report.class as { name?: string })?.name,
+            isLocked: false,
+            reportCardPaid: true,
+            schoolFeesPaid: true,
+          };
+        }
 
         const sessionObjId = (report.session as { _id: unknown })?._id;
         const termObjId = (report.term as { _id: unknown })?._id;
@@ -128,6 +150,7 @@ export async function GET(
         const reportCardPaid = !!reportCardPayment;
         const schoolFeesPaid = !!schoolFeesPayment;
         const isLocked = !reportCardPaid || !schoolFeesPaid; // both must be paid
+
 
         if (isLocked) {
           // Return limited data — don't expose scores/subjects

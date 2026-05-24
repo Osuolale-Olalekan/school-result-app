@@ -269,9 +269,9 @@ export default function StudentReportsView() {
                         </span>
                       )}
                     </div>
-                  ) : report.isLocked ? (
-                    <div className="mt-1 space-y-0.5">
-                      {!report.schoolFeesPaid && (
+                  ) : report.isLocked && !report.underReview ? (
+  <div className="mt-1 space-y-0.5">
+    {!report.schoolFeesPaid && (
                         <p className="text-xs text-amber-600">
                           ⚠ School fees not confirmed
                         </p>

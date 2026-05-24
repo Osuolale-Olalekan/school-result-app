@@ -455,6 +455,14 @@ await Promise.all(
       report.principalComment = undefined;
       report.isPromoted = undefined;
       report.promotedToClass = undefined;
+
+      // ADD THIS
+console.log("REVOKE SAVE:", {
+  id: report._id,
+  status: report.status,
+  declineReason: report.declineReason,
+  revokeReason,
+});
       await report.save();
 
       // Notify the teacher who submitted it
