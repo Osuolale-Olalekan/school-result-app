@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/db";
 import ClassModel from "@/models/Class";
+import ReportCardModel from "@/models/ReportCard";
+import "@/lib/registerModels";
 import { AuditAction, ClassLevel, Department, UserRole } from "@/types/enums";
 import { createAuditLog } from "@/lib/audit";
 import { CLASS_ORDER, CLASS_SECTION } from "@/lib/promotion";
@@ -16,6 +18,64 @@ async function requireAdmin() {
   const session = await getSession();
   if (!session?.user || session.user.activeRole !== UserRole.ADMIN) return null;
   return session;
+}
+
+export async function GET(
+  _request: NextRequest,
+  { params }: RouteParams
+): Promise<NextResponse<ApiResponse<object>>> {
+  const { id } = await params;
+  const session = await requireAdmin();
+  if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+
+  try {
+    await connectDB();
+
+    const cls = await ClassModel.findById(id)
+      .populate("subjects", "name code hasPractical")
+      .populate("classTeacher", "surname firstName otherName")
+      .lean();
+
+    if (!cls) return NextResponse.json({ success: false, error: "Class not found" }, { status: 404 });
+
+    // Get all active students in this class
+    const students = await StudentModel.find({ currentClass: id, studentStatus: "active" })
+      .select("surname firstName otherName admissionNumber gender department")
+      .sort({ surname: 1 })
+      .lean();
+
+    // Get latest report card status per student
+    const studentIds = students.map((s) => s._id);
+    const latestReports = await ReportCardModel.find({ student: { $in: studentIds } })
+      .sort({ createdAt: -1 })
+      .select("student status termName sessionName")
+      .lean();
+
+    // Map student id → latest report
+    const reportMap = new Map<string, { status: string; termName: string; sessionName: string }>();
+    for (const r of latestReports) {
+      const sid = r.student.toString();
+      if (!reportMap.has(sid)) {
+        reportMap.set(sid, {
+          status: r.status,
+          termName: (r as unknown as { termName: string }).termName,
+          sessionName: (r as unknown as { sessionName: string }).sessionName,
+        });
+      }
+    }
+
+    const studentsWithStatus = students.map((s) => ({
+      ...s,
+      latestReport: reportMap.get(s._id.toString()) ?? null,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: { ...cls, students: studentsWithStatus },
+    });
+  } catch {
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+  }
 }
 
 export async function PATCH(

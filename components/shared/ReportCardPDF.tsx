@@ -641,7 +641,7 @@ function PromotionBanner({ report }: { report: ReportCardPDFProps["report"] }) {
       bg: "#a7f3d0", border: "#6ee7b7",
       label: "GRADUATED", labelBg: "#059669",
       title: "CONGRATULATIONS — GRADUATED!",
-      subtitle: "Your child has successfully completed SSS 2. Well done!",
+      subtitle: "Your child has successfully completed SSS 3. Well done!",
       tc: "#065f46", sc: "#065f46",
     },
     "Performance Under Review": {

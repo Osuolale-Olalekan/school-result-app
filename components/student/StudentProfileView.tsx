@@ -123,7 +123,7 @@ export default function StudentProfileView() {
                 icon: BookOpen,
                 label: "Class",
                 value: isGraduated
-                  ? `${profile.currentClass?.name ?? "SSS 2"} (Graduated)`
+                  ? `${profile.currentClass?.name ?? "SSS 3"} (Graduated)`
                   : (profile.currentClass?.name ?? "Not assigned"),
               },
               {

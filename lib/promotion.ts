@@ -11,9 +11,9 @@ export const CLASS_PROGRESSION: Record<string, string | null> = {
   [ClassLevel.JSS_2]: ClassLevel.JSS_3,
   [ClassLevel.JSS_3]: "SSS_1_DEPT_REQUIRED", // Requires department assignment
   [ClassLevel.SSS_1]: ClassLevel.SSS_2,
-  [ClassLevel.SSS_2]: null, // Graduates
-  // [ClassLevel.SSS_2]: ClassLevel.SSS_3,  // ← change from null to SSS_3
-  // [ClassLevel.SSS_3]: null,              // ← add — graduates here
+  [ClassLevel.SSS_2]: ClassLevel.SSS_3,  // ← change from null to SSS_3
+  [ClassLevel.SSS_3]: null,              // ← add — graduates here
+  // [ClassLevel.SSS_2]: null, // Graduates
 };
 
 export const CLASS_SECTION: Record<string, "primary" | "jss" | "sss"> = {
@@ -27,7 +27,7 @@ export const CLASS_SECTION: Record<string, "primary" | "jss" | "sss"> = {
   [ClassLevel.JSS_3]: "jss",
   [ClassLevel.SSS_1]: "sss",
   [ClassLevel.SSS_2]: "sss",
-  // [ClassLevel.SSS_3]: "sss",  // ← add
+  [ClassLevel.SSS_3]: "sss",  // ← add
 };
 
 export const CLASS_ORDER: Record<string, number> = {
@@ -41,7 +41,7 @@ export const CLASS_ORDER: Record<string, number> = {
   [ClassLevel.JSS_3]: 7,
   [ClassLevel.SSS_1]: 8,
   [ClassLevel.SSS_2]: 9,
-  // [ClassLevel.SSS_3]: 10,  // ← add
+  [ClassLevel.SSS_3]: 10,  // ← add
 };
 
 export interface TermScore {
@@ -126,7 +126,7 @@ export function checkPromotionEligibility(
   if (nextClass === null) {
     return {
       eligible: true,
-      reason: "Student has completed SSS 2 and will graduate.",
+      reason: "Student has completed SSS 3 and will graduate.",
       requiresDepartment: false,
       willGraduate: true,
       nextClass: null,

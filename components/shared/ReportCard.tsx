@@ -598,7 +598,7 @@ export default function ReportCardComponent({
       "Graduated": {
         bg: "linear-gradient(135deg, #d1fae5, #a7f3d0)", border: "#6ee7b7", icon: "🎓",
         title: "CONGRATULATIONS — GRADUATED!",
-        subtitle: "Your child has successfully completed SSS 2. Well done!",
+        subtitle: "Your child has successfully completed SSS 3. Well done!",
         titleColor: "#065f46", subColor: "#065f46",
       },
       "Performance Under Review": {

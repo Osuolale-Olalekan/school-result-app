@@ -375,7 +375,7 @@ export default function PromotionManagement() {
                         {c.department !== Department.NONE ? ` (${c.department})` : ""}
                       </option>
                     ))}
-                  <option value="graduate">🎓 Graduate Student (SSS 2 completion)</option>
+                  <option value="graduate">🎓 Graduate Student (SSS 3 completion)</option>
                 </select>
               </div>
 

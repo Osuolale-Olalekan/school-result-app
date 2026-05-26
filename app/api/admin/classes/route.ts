@@ -81,6 +81,7 @@ import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/db";
 import ClassModel from "@/models/Class";
 import ReportCardModel from "@/models/ReportCard";
+import "@/lib/registerModels"
 import { AuditAction, ClassLevel, Department, UserRole } from "@/types/enums";
 import { createAuditLog } from "@/lib/audit";
 import SubjectModel from "@/models/Subject";
@@ -173,7 +174,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     });
 
     return NextResponse.json({ success: true, data: newClass, message: "Class created" }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+} catch (error) {
+  console.error("Create class error:", JSON.stringify(error, null, 2));
+  const err = error as { code?: number; keyValue?: object };
+  if (err.code === 11000) {
+    return NextResponse.json(
+      { success: false, error: `Class already exists: ${JSON.stringify(err.keyValue)}` },
+      { status: 409 }
+    );
   }
+  return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+}
 }

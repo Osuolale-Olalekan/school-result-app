@@ -50,6 +50,7 @@ export enum ClassLevel {
   JSS_3 = "JSS 3",
   SSS_1 = "SSS 1",
   SSS_2 = "SSS 2",
+  SSS_3 = "SSS 3",
 }
 
 export enum Department {

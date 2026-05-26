@@ -116,7 +116,7 @@ const PROGRAMS = [
   },
   {
     level: "Senior Secondary",
-    classes: ["SSS 1", "SSS 2"],
+    classes: ["SSS 1", "SSS 2", "SSS 3"],
     description:
       "Specialized departments: Science, Arts & Commercial — tailored for university success.",
     icon: "🎓",
@@ -147,7 +147,7 @@ const TESTIMONIALS = [
   },
   {
     name: "Solomon",
-    role: "SSS 2 Graduate, 2023",
+    role: "SSS 3 Graduate, 2023",
     initials: "OS",
     color: "#7dd3fc",
     stars: 5,

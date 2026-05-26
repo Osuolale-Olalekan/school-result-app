@@ -89,12 +89,18 @@ export async function GET(
 
     const total = await UserModel.countDocuments(query);
     const users = await UserModel.find(query)
-      .select("-password")
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate("currentClass", "name section")
-      .lean();
+  .select("-password")
+  .sort({ createdAt: -1 })
+  .skip((page - 1) * limit)
+  .limit(limit)
+  .populate("currentClass", "name section")
+  .populate("parents", "surname firstName otherName")
+  .populate({
+    path: "children",
+    select: "surname firstName otherName admissionNumber studentStatus currentClass",
+    populate: { path: "currentClass", select: "name" },
+  })
+  .lean();
 
     return NextResponse.json({
       success: true,
