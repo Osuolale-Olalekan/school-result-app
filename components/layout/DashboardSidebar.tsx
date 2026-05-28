@@ -30,6 +30,7 @@ import {
   CalendarDays,
   Banknote,
   AlertCircle,
+  MessageCircle,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { UserRole } from "@/types/enums";
@@ -52,7 +53,11 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Classes", href: "/admin/classes", icon: BookOpen },
   { label: "Attendance", href: "/admin/attendance", icon: CalendarDays },
   { label: "Subjects", href: "/admin/subjects", icon: BookMarked },
-  { label: "Subject Schedules", href: "/admin/subject-schedule", icon: FileText },
+  {
+    label: "Subject Schedules",
+    href: "/admin/subject-schedule",
+    icon: FileText,
+  },
   {
     label: "Class Assignments",
     href: "/admin/class-assignments",
@@ -65,13 +70,26 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Audit Logs", href: "/admin/audit-logs", icon: ClipboardList },
   { label: "Settings", href: "/admin/settings", icon: Settings },
   { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
-   { label: "School Calendar", href: "/admin/school-calendar", icon: CalendarDays },
+  {
+    label: "School Calendar",
+    href: "/admin/school-calendar",
+    icon: CalendarDays,
+  },
   { label: "Behaviour", href: "/admin/behaviour", icon: ShieldAlert },
-  { label: "Assignments", href: "/admin/assignments",   icon: BookOpen },
+  { label: "Assignments", href: "/admin/assignments", icon: BookOpen },
   { label: "Notifications", href: "/notifications", icon: Bell },
-  { label: "Fee Structure",       href: "/admin/fee-structure",        icon: Banknote    },
-     { label: "Outstanding Balances", href: "/admin/outstanding-balances", icon: AlertCircle },
-  { label: "Timetable", href: "/admin/timetable",   icon: CalendarDays },
+  {
+    label: "WhatsApp",
+    href: "/admin/whatsapp",
+    icon: MessageCircle,
+  },
+  { label: "Fee Structure", href: "/admin/fee-structure", icon: Banknote },
+  {
+    label: "Outstanding Balances",
+    href: "/admin/outstanding-balances",
+    icon: AlertCircle,
+  },
+  { label: "Timetable", href: "/admin/timetable", icon: CalendarDays },
   { label: "My Profile", href: "/admin/profile", icon: User },
 ];
 
@@ -83,7 +101,7 @@ const TEACHER_NAV: NavItem[] = [
   { label: "Behaviour", href: "/teacher/behaviour", icon: ShieldAlert },
   { label: "Assignments", href: "/teacher/assignments", icon: BookOpen },
   { label: "Notifications", href: "/notifications", icon: Bell },
-  { label: "Timetable", href: "/teacher/timetable",   icon: CalendarDays },
+  { label: "Timetable", href: "/teacher/timetable", icon: CalendarDays },
   { label: "My Profile", href: "/teacher/profile", icon: User }, // ← add
 ];
 
@@ -92,10 +110,10 @@ const PARENT_NAV: NavItem[] = [
   { label: "My Children", href: "/parent/children", icon: GraduationCap },
   { label: "Report Cards", href: "/parent/reports", icon: FileText },
   { label: "Announcements", href: "/announcements", icon: Megaphone },
-  { label: "Behaviour", href: "/parent/behaviour",  icon: ShieldAlert },
+  { label: "Behaviour", href: "/parent/behaviour", icon: ShieldAlert },
   // { label: "Assignments", href: "/parent/assignments",  icon: BookOpen },
   // { label: "Timetable", href: "/parent/timetable",   icon: CalendarDays },
-   { label: "Payments",            href: "/parent/payments",             icon: CreditCard  },
+  { label: "Payments", href: "/parent/payments", icon: CreditCard },
   { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "My Profile", href: "/parent/profile", icon: User }, // ← add
 ];
@@ -106,7 +124,7 @@ const STUDENT_NAV: NavItem[] = [
   { label: "Announcements", href: "/announcements", icon: Megaphone },
   { label: "Behaviour", href: "/student/behaviour", icon: ShieldAlert },
   { label: "Assignments", href: "/student/assignments", icon: BookOpen },
-  { label: "Timetable", href: "/student/timetable",   icon: CalendarDays },
+  { label: "Timetable", href: "/student/timetable", icon: CalendarDays },
   { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "My Profile", href: "/student/profile", icon: User }, // ← add
 ];

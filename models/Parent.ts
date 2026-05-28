@@ -20,13 +20,6 @@ const ParentSchema = new Schema<IParentDocument>(
 
 ParentSchema.index({ children: 1 });
 
-// const ParentModel: Model<IParentDocument> =
-//   mongoose.models.Parent ??
-//   UserModel.discriminator<IParentDocument>("parent", ParentSchema);
-
-// export default ParentModel;
-
-
 let ParentModel: Model<IParentDocument>;
 
 try {

@@ -22,6 +22,7 @@ import { sendReportDeclinedEmail, sendReportAvailableEmail } from "@/lib/email";
 import { CLASS_PROGRESSION } from "@/lib/promotion";
 import { generateAIPrincipalComment } from "@/lib/aicomment";
 import type { ApiResponse } from "@/types";
+import { sendToAllPhones } from "@/lib/whatsapp";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -38,13 +39,13 @@ async function handlePromotion(
   nextClassName: string | null;
   performanceUnderReview: boolean;
 }> {
-  const sessionReports = await ReportCardModel.find({
+  const sessionReports = (await ReportCardModel.find({
     student: studentId,
     session: sessionId,
     status: ReportStatus.APPROVED,
   })
     .select("percentage termName")
-    .lean() as Array<{ percentage: number; termName: string }>;
+    .lean()) as Array<{ percentage: number; termName: string }>;
 
   if (sessionReports.length === 0) {
     return {
@@ -131,9 +132,9 @@ async function resolveDeptCount(
     studentStatus: StudentStatus.ACTIVE,
   });
 
-  const meaningfulDepts = (distinctDepts as (string | null | undefined)[]).filter(
-    (d) => d && d !== "none",
-  );
+  const meaningfulDepts = (
+    distinctDepts as (string | null | undefined)[]
+  ).filter((d) => d && d !== "none");
 
   const shouldSplitByDept =
     meaningfulDepts.length >= 1 &&
@@ -144,9 +145,7 @@ async function resolveDeptCount(
   }
 
   const deptQuery =
-    department === "none"
-      ? { $in: [null, "none", undefined] }
-      : department;
+    department === "none" ? { $in: [null, "none", undefined] } : department;
 
   const count = await UserModel.countDocuments({
     $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
@@ -213,7 +212,8 @@ export async function PATCH(
       }
 
       report.status = ReportStatus.APPROVED;
-      report.approvedBy = session.user.id as unknown as typeof report.approvedBy;
+      report.approvedBy = session.user
+        .id as unknown as typeof report.approvedBy;
       report.approvedAt = new Date();
 
       // ── Resolve dept count ──────────────────────────────────────────────
@@ -230,7 +230,7 @@ export async function PATCH(
 
       const totalInDept = classId
         ? await resolveDeptCount(classId, department, totalInClass)
-        : report.totalStudentsInDept ?? report.totalStudentsInClass;
+        : (report.totalStudentsInDept ?? report.totalStudentsInClass);
       // ───────────────────────────────────────────────────────────────────
 
       // ── AI Comment ─────────────────────────────────────────────────────
@@ -307,111 +307,144 @@ export async function PATCH(
       });
 
       // Notify parents + student
-const studentWithParents = await UserModel.findById(report.student).populate(
-  "parents",
-  "surname firstName otherName email",
-);
+      const studentWithParents = await UserModel.findById(
+        report.student,
+      ).populate("parents", "surname firstName otherName email phone");
 
-if (studentWithParents) {
-  const parents = (
-    studentWithParents as {
-      parents?: Array<{
-        _id: { toString(): string };
-        surname: string;
-        firstName: string;
-        otherName: string;
-        email: string;
-      }>;
-    }
-  ).parents ?? [];
+      if (studentWithParents) {
+        const parents =
+          (
+            studentWithParents as {
+              parents?: Array<{
+                _id: { toString(): string };
+                surname: string;
+                firstName: string;
+                otherName: string;
+                email: string;
+                phone: string;
+              }>;
+            }
+          ).parents ?? [];
 
-  const studentUser = studentWithParents as unknown as {
-    _id: { toString(): string };
-    surname: string;
-    firstName: string;
-    otherName: string;
-    email: string;
-  };
+        const studentUser = studentWithParents as unknown as {
+          _id: { toString(): string };
+          surname: string;
+          firstName: string;
+          otherName: string;
+          email: string;
+          phone: string;
+        };
 
-  // Build a shared promotion suffix for messages
-  let promotionSuffix = "";
-  if (isThirdTerm && report.promotedToClass) {
-    if (report.promotedToClass === "Performance Under Review") {
-      promotionSuffix = " Performance is under review.";
-    } else if (report.promotedToClass === "Graduated") {
-      promotionSuffix = " 🎓 Your child has graduated!";
-    } else if (report.promotedToClass === "Pending Department Assignment") {
-      promotionSuffix = " Department assignment pending before promotion.";
-    } else if (report.isPromoted) {
-      promotionSuffix = ` Promoted to ${report.promotedToClass}.`;
-    }
-  }
+        // Build a shared promotion suffix for messages
+        let promotionSuffix = "";
+        if (isThirdTerm && report.promotedToClass) {
+          if (report.promotedToClass === "Performance Under Review") {
+            promotionSuffix = " Performance is under review.";
+          } else if (report.promotedToClass === "Graduated") {
+            promotionSuffix = " 🎓 Your child has graduated!";
+          } else if (
+            report.promotedToClass === "Pending Department Assignment"
+          ) {
+            promotionSuffix =
+              " Department assignment pending before promotion.";
+          } else if (report.isPromoted) {
+            promotionSuffix = ` Promoted to ${report.promotedToClass}.`;
+          }
+        }
 
-  const studentFullName = `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName}`;
-  const reportUrl = `${process.env.NEXT_PUBLIC_APP_URL}/parent/reports`;
-  const studentReportUrl = `${process.env.NEXT_PUBLIC_APP_URL}/student/reports`;
+        const studentFullName = `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName}`;
+        const reportUrl = `${process.env.NEXT_PUBLIC_APP_URL}/parent/reports`;
+        const studentReportUrl = `${process.env.NEXT_PUBLIC_APP_URL}/student/reports`;
 
-  // ── Notify each parent (parallel) ──────────────────────────────────
-const notifMessage = `${studentFullName}'s ${report.termName} term report is available.${promotionSuffix}`;
+        // ── Notify each parent (parallel) ──────────────────────────────────
+        const notifMessage = `${studentFullName}'s ${report.termName} term report is available.${promotionSuffix}`;
 
-await Promise.all(
-  parents.map((parent) =>
-    Promise.all([
-      createNotification({
-        recipientId: parent._id.toString(),
-        recipientRole: UserRole.PARENT,
-        type: NotificationType.REPORT_AVAILABLE,
-        title: "Report Card Available",
-        message: notifMessage,
-        link: reportUrl,
-      }),
-      sendReportAvailableEmail(
-        parent.email,
-        `${parent.surname} ${parent.firstName} ${parent.otherName}`,
-        studentFullName,
-        report.sessionName,
-        report.termName,
-        reportUrl,
-      ),
-    ]),
-  ),
-);
+        await Promise.all(
+          parents.map((parent) =>
+            Promise.all([
+              createNotification({
+                recipientId: parent._id.toString(),
+                recipientRole: UserRole.PARENT,
+                type: NotificationType.REPORT_AVAILABLE,
+                title: "Report Card Available",
+                message: notifMessage,
+                link: reportUrl,
+              }),
+              sendReportAvailableEmail(
+                parent.email,
+                `${parent.surname} ${parent.firstName} ${parent.otherName}`,
+                studentFullName,
+                report.sessionName,
+                report.termName,
+                reportUrl,
+              ),
+            ]),
+          ),
+        );
 
-  // ── Notify the student ──────────────────────────────────────────────
-  if (studentUser.email) {
-    const studentNotifMessage = `Your ${report.termName} term report card for ${report.sessionName} is now available.${
-      isThirdTerm && report.promotedToClass
-        ? report.promotedToClass === "Graduated"
-          ? " 🎓 Congratulations, you have graduated!"
-          : report.promotedToClass === "Performance Under Review"
-          ? " Your performance is under review."
-          : report.promotedToClass === "Pending Department Assignment"
-          ? " Your department assignment is pending before promotion."
-          : report.isPromoted
-          ? ` You have been promoted to ${report.promotedToClass}.`
-          : ""
-        : ""
-    }`;
+        // ── Auto WhatsApp to parents
+        const approvalMessage = `Your child ${studentFullName}'s ${report.termName} term report card for ${report.sessionName} session is now available. Please log in to godswayschool.com to view it. ${promotionSuffix}`;
 
-    await createNotification({
-      recipientId: studentUser._id.toString(),
-      recipientRole: UserRole.STUDENT,
-      type: NotificationType.REPORT_AVAILABLE,
-      title: "Your Report Card is Ready",
-      message: studentNotifMessage,
-      link: studentReportUrl,
-    });
+        await Promise.all(
+          parents.map(async (parent) => {
+            if (!parent.phone) return;
+            await sendToAllPhones(
+              parent.phone,
+              `${parent.surname} ${parent.firstName}`,
+              approvalMessage,
+            );
+          }),
+        );
 
-    await sendReportAvailableEmail(
-      studentUser.email,
-      `${studentUser.surname} ${studentUser.firstName} ${studentUser.otherName}`,
-      studentFullName,
-      report.sessionName,
-      report.termName,
-      studentReportUrl,
-    );
-  }
-}
+        // ── Auto WhatsApp to student ────────────────────────────────────────────────
+        if (studentUser.phone) {
+          const studentMessage = `Your ${report.termName} term report card for ${report.sessionName} is now available. Please log in to godswayschool.com to view it.${
+            isThirdTerm && report.promotedToClass && report.isPromoted
+              ? ` You have been promoted to ${report.promotedToClass}.`
+              : ""
+          }`;
+          await sendToAllPhones(
+            studentUser.phone,
+            `${studentUser.surname} ${studentUser.firstName}`,
+            studentMessage,
+          );
+        }
+
+        // ── Notify the student ──────────────────────────────────────────────
+        if (studentUser.email) {
+          const studentNotifMessage = `Your ${report.termName} term report card for ${report.sessionName} is now available.${
+            isThirdTerm && report.promotedToClass
+              ? report.promotedToClass === "Graduated"
+                ? " 🎓 Congratulations, you have graduated!"
+                : report.promotedToClass === "Performance Under Review"
+                  ? " Your performance is under review."
+                  : report.promotedToClass === "Pending Department Assignment"
+                    ? " Your department assignment is pending before promotion."
+                    : report.isPromoted
+                      ? ` You have been promoted to ${report.promotedToClass}.`
+                      : ""
+              : ""
+          }`;
+
+          await createNotification({
+            recipientId: studentUser._id.toString(),
+            recipientRole: UserRole.STUDENT,
+            type: NotificationType.REPORT_AVAILABLE,
+            title: "Your Report Card is Ready",
+            message: studentNotifMessage,
+            link: studentReportUrl,
+          });
+
+          await sendReportAvailableEmail(
+            studentUser.email,
+            `${studentUser.surname} ${studentUser.firstName} ${studentUser.otherName}`,
+            studentFullName,
+            report.sessionName,
+            report.termName,
+            studentReportUrl,
+          );
+        }
+      }
 
       await createAuditLog({
         actorId: session.user.id,
@@ -429,14 +462,17 @@ await Promise.all(
         message: "Report approved",
       });
 
-    // ── REVOKE ────────────────────────────────────────────────────────────────
+      // ── REVOKE ────────────────────────────────────────────────────────────────
     } else if (action === "revoke") {
       if (
         report.status !== ReportStatus.APPROVED &&
         report.status !== ReportStatus.DECLINED
       ) {
         return NextResponse.json(
-          { success: false, error: "Only approved or declined reports can be revoked" },
+          {
+            success: false,
+            error: "Only approved or declined reports can be revoked",
+          },
           { status: 400 },
         );
       }
@@ -457,12 +493,12 @@ await Promise.all(
       report.promotedToClass = undefined;
 
       // ADD THIS
-console.log("REVOKE SAVE:", {
-  id: report._id,
-  status: report.status,
-  declineReason: report.declineReason,
-  revokeReason,
-});
+      console.log("REVOKE SAVE:", {
+        id: report._id,
+        status: report.status,
+        declineReason: report.declineReason,
+        revokeReason,
+      });
       await report.save();
 
       // Notify the teacher who submitted it
@@ -487,10 +523,11 @@ console.log("REVOKE SAVE:", {
 
       return NextResponse.json({
         success: true,
-        message: "Report revoked to draft. Teacher can now correct and re-submit.",
+        message:
+          "Report revoked to draft. Teacher can now correct and re-submit.",
       });
 
-    // ── DECLINE ───────────────────────────────────────────────────────────────
+      // ── DECLINE ───────────────────────────────────────────────────────────────
     } else if (action === "decline") {
       if (report.status !== ReportStatus.SUBMITTED) {
         return NextResponse.json(
@@ -591,7 +628,9 @@ export async function GET(
     const department = snap?.department ?? "none";
 
     let totalStudentsInClass = report.totalStudentsInClass;
-    let totalStudentsInDept = (report as unknown as { totalStudentsInDept?: number }).totalStudentsInDept ?? 0;
+    let totalStudentsInDept =
+      (report as unknown as { totalStudentsInDept?: number })
+        .totalStudentsInDept ?? 0;
 
     if (cId) {
       totalStudentsInClass = await UserModel.countDocuments({
@@ -617,7 +656,8 @@ export async function GET(
 
     const typedReport = report as Record<string, unknown>;
     const snapshot = typedReport.studentSnapshot as Record<string, unknown>;
-    const freshPhoto = (freshStudent as unknown as { profilePhoto?: string })?.profilePhoto;
+    const freshPhoto = (freshStudent as unknown as { profilePhoto?: string })
+      ?.profilePhoto;
 
     if (freshPhoto) {
       typedReport.studentSnapshot = {
@@ -634,7 +674,9 @@ export async function GET(
         studentSnapshot: typedReport.studentSnapshot,
         totalStudentsInClass,
         totalStudentsInDept,
-        overallPosition: (report as unknown as { overallPosition?: number }).overallPosition ?? report.position,
+        overallPosition:
+          (report as unknown as { overallPosition?: number }).overallPosition ??
+          report.position,
       },
     });
   } catch (error) {
