@@ -1,6 +1,6 @@
 const WHATSAPP_API_URL = `https://graph.facebook.com/v25.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
-const TEMPLATE_NAME = "school_notification";
+const TEMPLATE_NAME = "school_notification_utility";
 
 // ── Normalize a Nigerian phone number to international format ────────────────
 export function normalizePhone(raw: string): string {
@@ -53,11 +53,12 @@ export async function sendWhatsAppMessage(
       }),
     });
 
-    const json = (await res.json()) as { error?: { message: string } };
-    if (!res.ok) {
-      return { success: false, error: json.error?.message ?? "Unknown error" };
-    }
-    return { success: true };
+    const json = (await res.json()) as { error?: { message: string }; messages?: unknown; contacts?: unknown };
+
+if (!res.ok) {
+  return { success: false, error: json.error?.message ?? "Unknown error" };
+}
+return { success: true };
   } catch (err) {
     return {
       success: false,

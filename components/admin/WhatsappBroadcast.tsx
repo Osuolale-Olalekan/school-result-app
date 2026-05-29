@@ -13,6 +13,7 @@ import {
   X,
   ChevronDown,
   BookOpen,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -34,17 +35,63 @@ interface BroadcastResult {
   }>;
 }
 
+type RecipientType =
+  | "all_parents"
+  | "class"
+  | "class_students"
+  | "teachers"
+  | "custom";
+
+const recipientOptions: {
+  value: RecipientType;
+  label: string;
+  icon: React.ElementType;
+  description: string;
+}[] = [
+  {
+    value: "all_parents",
+    label: "All Parents",
+    icon: Users,
+    description: "Every parent in the school",
+  },
+  {
+    value: "teachers",
+    label: "Teachers",
+    icon: BookOpen,
+    description: "All active teachers",
+  },
+  {
+    value: "class",
+    label: "Class Parents",
+    icon: GraduationCap,
+    description: "Parents of a specific class",
+  },
+  {
+    value: "class_students",
+    label: "Class Students",
+    icon: UserCheck,
+    description: "Students in a specific class",
+  },
+  {
+    value: "custom",
+    label: "Custom",
+    icon: Phone,
+    description: "Enter numbers manually",
+  },
+];
+
 export default function WhatsAppBroadcast() {
   const [message, setMessage] = useState("");
-  const [recipients, setRecipients] = useState<
-    "all_parents" | "class" | "teachers" | "custom"
-  >("all_parents");
+  const [recipients, setRecipients] = useState<RecipientType>("all_parents");
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState("");
   const [customNumbers, setCustomNumbers] = useState("");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<BroadcastResult | null>(null);
   const [showResults, setShowResults] = useState(false);
+
+  const needsClassSelect =
+    recipients === "class" || recipients === "class_students";
 
   useEffect(() => {
     fetch("/api/admin/classes")
@@ -54,12 +101,16 @@ export default function WhatsAppBroadcast() {
       });
   }, []);
 
+  useEffect(() => {
+    setSelectedClass("");
+  }, [recipients]);
+
   async function handleSend() {
     if (!message.trim()) {
       toast.error("Please enter a message");
       return;
     }
-    if (recipients === "class" && !selectedClass) {
+    if (needsClassSelect && !selectedClass) {
       toast.error("Please select a class");
       return;
     }
@@ -86,7 +137,7 @@ export default function WhatsAppBroadcast() {
         body: JSON.stringify({
           message,
           recipients,
-          classId: recipients === "class" ? selectedClass : undefined,
+          classId: needsClassSelect ? selectedClass : undefined,
           phoneNumbers,
         }),
       });
@@ -127,7 +178,7 @@ export default function WhatsAppBroadcast() {
           WhatsApp Broadcast
         </h1>
         <p className="text-gray-500 text-sm mt-0.5">
-          Send WhatsApp messages to parents
+          Send WhatsApp messages to parents, teachers, or students
         </p>
       </div>
 
@@ -137,30 +188,36 @@ export default function WhatsAppBroadcast() {
           {/* Recipients */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
             <p className="text-sm font-semibold text-gray-700 mb-3">Send To</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-              {[
-                { value: "all_parents", label: "All Parents", icon: Users },
-                { value: "teachers", label: "Teachers", icon: BookOpen },
-                { value: "class", label: "By Class", icon: GraduationCap },
-                { value: "custom", label: "Custom", icon: Phone },
-              ].map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  onClick={() => setRecipients(value as typeof recipients)}
-                  className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-medium ${
-                    recipients === value
-                      ? "border-[#1e3a5f] bg-[#1e3a5f]/5 text-[#1e3a5f]"
-                      : "border-gray-100 text-gray-500 hover:border-gray-200"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {label}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+              {recipientOptions.map(
+                ({ value, label, icon: Icon, description }) => (
+                  <button
+                    key={value}
+                    onClick={() => setRecipients(value)}
+                    className={`flex flex-col items-start gap-1.5 p-3 rounded-xl border-2 transition-all text-left ${
+                      recipients === value
+                        ? "border-[#1e3a5f] bg-[#1e3a5f]/5 text-[#1e3a5f]"
+                        : "border-gray-100 text-gray-500 hover:border-gray-200"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="text-sm font-medium">{label}</span>
+                    <span className="text-[11px] leading-tight opacity-70">
+                      {description}
+                    </span>
+                  </button>
+                ),
+              )}
             </div>
 
-            {recipients === "class" && (
+            {/* Class selector */}
+            {needsClassSelect && (
               <div className="relative">
+                <label className="block text-xs text-gray-500 mb-1.5">
+                  {recipients === "class"
+                    ? "Select class — parents of students in this class will be messaged"
+                    : "Select class — students in this class with a phone number will be messaged"}
+                </label>
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
@@ -173,21 +230,28 @@ export default function WhatsAppBroadcast() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-2.5 top-[2.15rem] w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
             )}
 
+            {/* Custom numbers */}
             {recipients === "custom" && (
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Enter phone numbers (one per line, international format e.g.
-                  2348012345678)
+                <label className="block text-xs text-gray-500 mb-1.5">
+                  One entry per line —{" "}
+                  <span className="font-mono font-semibold text-gray-700">
+                    Name::2348012345678
+                  </span>{" "}
+                  for a named recipient, or just a phone number (shown as
+                  &quot;Valued Contact&quot;)
                 </label>
                 <textarea
                   value={customNumbers}
                   onChange={(e) => setCustomNumbers(e.target.value)}
-                  rows={4}
-                  placeholder="2348012345678&#10;2347098765432&#10;2349012345678"
+                  rows={5}
+                  placeholder={
+                    "Mrs Fatima Bello::2348012345678\nMr Chukwu Okafor::2347098765432\n2349012345678"
+                  }
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:border-amber-400 resize-none font-mono"
                 />
               </div>
@@ -211,7 +275,7 @@ export default function WhatsAppBroadcast() {
             />
             <div className="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-3">
               <p className="text-xs text-amber-700">
-                <span className="font-semibold">Preview:</span> Hello [Parent
+                <span className="font-semibold">Preview:</span> Hello [Recipient
                 Name], this is a message from God&apos;s Way Model Groups of
                 Schools. {message || "[your message]"}. Thank you.
               </p>
@@ -226,13 +290,11 @@ export default function WhatsAppBroadcast() {
           >
             {sending ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Sending messages...
+                <Loader2 className="w-4 h-4 animate-spin" /> Sending messages...
               </>
             ) : (
               <>
-                <Send className="w-4 h-4" />
-                Send WhatsApp Message
+                <Send className="w-4 h-4" /> Send WhatsApp Message
               </>
             )}
           </button>
@@ -244,30 +306,31 @@ export default function WhatsAppBroadcast() {
             <div className="flex items-center gap-2 mb-3">
               <MessageCircle className="w-5 h-5 text-[#25D366]" />
               <p className="font-semibold text-gray-700 text-sm">
-                How it works
+                Recipient Guide
               </p>
             </div>
-            <div className="space-y-2.5 text-xs text-gray-500">
-              <p>1. Select who to send to</p>
-              <p>2. Type your message</p>
-              <p>3. Click Send — parents receive it on WhatsApp instantly</p>
+            <div className="space-y-3 text-xs text-gray-500">
+              {recipientOptions.map(
+                ({ value, label, icon: Icon, description }) => (
+                  <div key={value} className="flex items-start gap-2">
+                    <Icon className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-400" />
+                    <div>
+                      <p className="font-semibold text-gray-600">{label}</p>
+                      <p>{description}</p>
+                    </div>
+                  </div>
+                ),
+              )}
             </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <p className="font-semibold text-gray-700 text-sm mb-3">
-              Important Notes
-            </p>
+            <p className="font-semibold text-gray-700 text-sm mb-3">Notes</p>
             <div className="space-y-2 text-xs text-gray-500">
-              <p>
-                ⚠️ Only parents with a phone number on file will receive
-                messages
-              </p>
-              <p>⚠️ Phone numbers must be in international format (234...)</p>
+              <p>⚠️ Numbers must be in international format (234...)</p>
+              <p>⚠️ Recipients without a phone number on file are skipped</p>
+              <p>✅ Each person gets their own personalised greeting</p>
               <p>✅ 1,000 free conversations per month</p>
-              <p>
-                ✅ Multiple messages to same parent in 24hrs = 1 conversation
-              </p>
             </div>
           </div>
 
