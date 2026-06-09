@@ -443,209 +443,214 @@ export default function AttendanceTab({
   }
 
   // ── Register view ─────────────────────────────────────────────────────────
-  if (viewMode === "register") {
-    return (
-      <div className="space-y-3 w-full min-w-0">
-        {TermSelector}
+  // ── Register view ─────────────────────────────────────────────────────────
+if (viewMode === "register") {
+  return (
+    // Fix 1: removed min-w-0
+    <div className="space-y-3 w-full">
+      {TermSelector}
 
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h2 className="font-bold text-base text-gray-900 leading-tight">
-              Register — {className}
-            </h2>
-            <p className="text-[11px] text-gray-500 capitalize mt-0.5">
-              {selectedTerm.name} Term
-            </p>
-          </div>
-          <button
-            onClick={() => setViewMode("mark")}
-            className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-[#1e3a5f] text-white text-xs font-semibold hover:bg-[#152847] transition-colors"
-          >
-            Mark Today
-          </button>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="font-bold text-base text-gray-900 leading-tight">
+            Register — {className}
+          </h2>
+          <p className="text-[11px] text-gray-500 capitalize mt-0.5">
+            {selectedTerm.name} Term
+          </p>
         </div>
+        <button
+          onClick={() => setViewMode("mark")}
+          className="flex-shrink-0 px-3 py-1.5 rounded-xl bg-[#1e3a5f] text-white text-xs font-semibold hover:bg-[#152847] transition-colors"
+        >
+          Mark Today
+        </button>
+      </div>
 
-        {calendarEvents.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
-              Term Calendar
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {calendarEvents.map((event) => {
-                const cfg = CALENDAR_TYPE_CONFIG[event.type];
+      {calendarEvents.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+            Term Calendar
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {calendarEvents.map((event) => {
+              const cfg = CALENDAR_TYPE_CONFIG[event.type];
+              return (
+                <span
+                  key={event._id}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-medium ${cfg.bg} ${cfg.border} ${cfg.color}`}
+                >
+                  {cfg.icon}
+                  <span className="truncate max-w-[120px]">{event.title}</span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {recordDates.length === 0 ? (
+        <div className="text-center py-10 text-gray-400">
+          <CalendarDays className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          <p className="text-sm">
+            No attendance marked yet for {selectedTerm.name} term.
+          </p>
+        </div>
+      ) : (
+        // Fix 2: proper scroll wrapper with iOS momentum scrolling
+        // Fix 3: removed the inner min-w-[320px] div
+        <div
+          className="overflow-x-auto w-full rounded-xl border border-gray-100 shadow-sm"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          <table
+            className="text-xs border-collapse"
+            // Fix 5: table grows to content width, enabling actual scroll
+            style={{ minWidth: "max-content" }}
+          >
+            <thead>
+              <tr className="bg-[#1e3a5f] text-white">
+                <th className="text-left px-3 py-2.5 font-semibold sticky left-0 bg-[#1e3a5f] z-10 min-w-[110px]">
+                  Student
+                </th>
+                {recordDates.map((d) => {
+                  const evt = getBlockingEvent(d, calendarEvents);
+                  return (
+                    <th
+                      key={d}
+                      className="px-1.5 py-2.5 font-medium text-center min-w-[38px]"
+                    >
+                      <div className="text-[10px] opacity-80">
+                        {new Date(d + "T00:00:00").toLocaleDateString("en-NG", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </div>
+                      <div className="text-[9px] opacity-60">
+                        {evt
+                          ? "🏖"
+                          : new Date(d + "T00:00:00").toLocaleDateString(
+                              "en-NG",
+                              { weekday: "short" }
+                            )}
+                      </div>
+                    </th>
+                  );
+                })}
+                <th className="px-2 py-2.5 font-semibold text-center min-w-[52px] sticky right-0 bg-[#1e3a5f]">
+                  Days
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((student, idx) => {
+                let daysPresent = 0;
+                // Fix 4: explicit bg colors instead of bg-inherit (iOS Safari sticky fix)
+                const rowBg = idx % 2 === 0 ? "bg-white" : "bg-gray-50";
+                const stickyBg = idx % 2 === 0 ? "bg-white" : "bg-gray-50";
+
                 return (
-                  <span
-                    key={event._id}
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-medium ${cfg.bg} ${cfg.border} ${cfg.color}`}
-                  >
-                    {cfg.icon}
-                    <span className="truncate max-w-[120px]">
-                      {event.title}
-                    </span>
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {recordDates.length === 0 ? (
-          <div className="text-center py-10 text-gray-400">
-            <CalendarDays className="w-8 h-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">
-              No attendance marked yet for {selectedTerm.name} term.
-            </p>
-          </div>
-        ) : (
-          /* Scrollable register table */
-          <div className="overflow-x-auto -mx-3 px-3">
-            <div className="min-w-[320px]">
-              <div className="rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-[#1e3a5f] text-white">
-                      {/* Sticky student column */}
-                      <th className="text-left px-3 py-2.5 font-semibold sticky left-0 bg-[#1e3a5f] z-10 min-w-[110px] max-w-[130px]">
-                        Student
-                      </th>
-                      {recordDates.map((d) => {
-                        const evt = getBlockingEvent(d, calendarEvents);
-                        return (
-                          <th
-                            key={d}
-                            className="px-1.5 py-2.5 font-medium text-center min-w-[38px]"
-                          >
-                            <div className="text-[10px] opacity-80">
-                              {new Date(d + "T00:00:00").toLocaleDateString(
-                                "en-NG",
-                                { day: "numeric", month: "short" }
-                              )}
-                            </div>
-                            <div className="text-[9px] opacity-60">
-                              {evt
-                                ? "🏖"
-                                : new Date(
-                                    d + "T00:00:00"
-                                  ).toLocaleDateString("en-NG", {
-                                    weekday: "short",
-                                  })}
-                            </div>
-                          </th>
-                        );
-                      })}
-                      <th className="px-2 py-2.5 font-semibold text-center min-w-[52px] sticky right-0 bg-[#1e3a5f]">
-                        Days
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map((student, idx) => {
-                      let daysPresent = 0;
+                  <tr key={student._id} className={rowBg}>
+                    {/* Fix 4 applied: stickyBg instead of bg-inherit */}
+                    <td
+                      className={`px-3 py-2 sticky left-0 z-10 min-w-[110px] ${stickyBg}`}
+                    >
+                      <p className="font-semibold text-gray-800 truncate text-[11px] leading-tight">
+                        {student.surname} {student.firstName.charAt(0)}.
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-mono leading-tight">
+                        {student.admissionNumber}
+                      </p>
+                    </td>
+                    {recordDates.map((d) => {
+                      const rec = records.get(d);
+                      const entry = rec?.students.find(
+                        (s) => s.student === student._id
+                      );
+                      const morning = entry?.morning ?? "—";
+                      const afternoon = entry?.afternoon ?? "—";
+                      if (morning === "present") daysPresent += 0.5;
+                      if (afternoon === "present") daysPresent += 0.5;
+                      const statusColor = (s: string) =>
+                        s === "present"
+                          ? "text-emerald-600"
+                          : s === "absent"
+                          ? "text-red-500"
+                          : s === "late"
+                          ? "text-amber-500"
+                          : s === "excused"
+                          ? "text-blue-500"
+                          : "text-gray-300";
+                      const statusLetter = (s: string) =>
+                        s === "present"
+                          ? "P"
+                          : s === "absent"
+                          ? "A"
+                          : s === "late"
+                          ? "L"
+                          : s === "excused"
+                          ? "E"
+                          : "·";
                       return (
-                        <tr
-                          key={student._id}
-                          className={
-                            idx % 2 === 0 ? "bg-white" : "bg-gray-50/60"
-                          }
-                        >
-                          <td className="px-3 py-2 sticky left-0 z-10 bg-inherit min-w-[110px] max-w-[130px]">
-                            <p className="font-semibold text-gray-800 truncate text-[11px] leading-tight">
-                              {student.surname}{" "}
-                              {student.firstName.charAt(0)}.
-                            </p>
-                            <p className="text-[10px] text-gray-400 font-mono leading-tight">
-                              {student.admissionNumber}
-                            </p>
-                          </td>
-                          {recordDates.map((d) => {
-                            const rec = records.get(d);
-                            const entry = rec?.students.find(
-                              (s) => s.student === student._id
-                            );
-                            const morning = entry?.morning ?? "—";
-                            const afternoon = entry?.afternoon ?? "—";
-                            if (morning === "present") daysPresent += 0.5;
-                            if (afternoon === "present") daysPresent += 0.5;
-                            const statusColor = (s: string) =>
-                              s === "present"
-                                ? "text-emerald-600"
-                                : s === "absent"
-                                ? "text-red-500"
-                                : s === "late"
-                                ? "text-amber-500"
-                                : s === "excused"
-                                ? "text-blue-500"
-                                : "text-gray-300";
-                            const statusLetter = (s: string) =>
-                              s === "present"
-                                ? "P"
-                                : s === "absent"
-                                ? "A"
-                                : s === "late"
-                                ? "L"
-                                : s === "excused"
-                                ? "E"
-                                : "·";
-                            return (
-                              <td key={d} className="px-1.5 py-2 text-center">
-                                <div className="flex flex-col items-center gap-px">
-                                  <span
-                                    className={`text-[10px] font-bold leading-none ${statusColor(morning)}`}
-                                  >
-                                    {statusLetter(morning)}
-                                  </span>
-                                  <span
-                                    className={`text-[10px] font-bold leading-none ${statusColor(afternoon)}`}
-                                  >
-                                    {statusLetter(afternoon)}
-                                  </span>
-                                </div>
-                              </td>
-                            );
-                          })}
-                          <td className="px-2 py-2 text-center sticky right-0 bg-inherit">
-                            <span className="text-[11px] font-bold text-[#1e3a5f]">
-                              {daysPresent}
+                        <td key={d} className="px-1.5 py-2 text-center">
+                          <div className="flex flex-col items-center gap-px">
+                            <span
+                              className={`text-[10px] font-bold leading-none ${statusColor(morning)}`}
+                            >
+                              {statusLetter(morning)}
                             </span>
-                            <span className="text-[9px] text-gray-400">
-                              /{recordDates.length}
+                            <span
+                              className={`text-[10px] font-bold leading-none ${statusColor(afternoon)}`}
+                            >
+                              {statusLetter(afternoon)}
                             </span>
-                          </td>
-                        </tr>
+                          </div>
+                        </td>
                       );
                     })}
-                  </tbody>
-                </table>
-
-                {/* Legend */}
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-t border-gray-100 flex-wrap">
-                  {(
-                    [
-                      ["P", "Present", "text-emerald-600"],
-                      ["A", "Absent", "text-red-500"],
-                      ["L", "Late", "text-amber-500"],
-                      ["E", "Excused", "text-blue-500"],
-                    ] as const
-                  ).map(([code, label, color]) => (
-                    <span
-                      key={code}
-                      className="flex items-center gap-0.5 text-[10px] text-gray-500"
+                    {/* Fix 4 applied: stickyBg on the Days cell too */}
+                    <td
+                      className={`px-2 py-2 text-center sticky right-0 ${stickyBg}`}
                     >
-                      <span className={`font-bold ${color}`}>{code}</span>={" "}
-                      {label}
-                    </span>
-                  ))}
-                  <span className="text-[10px] text-gray-400 ml-auto">
-                    Top=AM · Bot=PM
-                  </span>
-                </div>
-              </div>
-            </div>
+                      <span className="text-[11px] font-bold text-[#1e3a5f]">
+                        {daysPresent}
+                      </span>
+                      <span className="text-[9px] text-gray-400">
+                        /{recordDates.length}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          {/* Legend */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-t border-gray-100 flex-wrap">
+            {(
+              [
+                ["P", "Present", "text-emerald-600"],
+                ["A", "Absent", "text-red-500"],
+                ["L", "Late", "text-amber-500"],
+                ["E", "Excused", "text-blue-500"],
+              ] as const
+            ).map(([code, label, color]) => (
+              <span
+                key={code}
+                className="flex items-center gap-0.5 text-[10px] text-gray-500"
+              >
+                <span className={`font-bold ${color}`}>{code}</span>= {label}
+              </span>
+            ))}
+            <span className="text-[10px] text-gray-400 ml-auto">
+              Top=AM · Bot=PM
+            </span>
           </div>
-        )}
-      </div>
-    );
-  }
+        </div>
+      )}
+    </div>
+  );
+}
 
   // ── Mark attendance view ───────────────────────────────────────────────────
   return (

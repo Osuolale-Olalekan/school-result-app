@@ -7,6 +7,7 @@ import ClassModel from "@/models/Class";
 import UserModel from "@/models/User";
 import { SessionModel } from "@/models/Session";
 import "@/lib/registerModels";
+import mongoose from "mongoose";
 
 // ─── Shared term detector (same logic as teacher/parent side) ─────────────────
 
@@ -83,8 +84,11 @@ export async function GET(request: NextRequest): Promise<Response> {
     // ════════════════════════════════════════════════════════════════════════
     if (classIdParam) {
       // Fetch all students in this class
+        const classObjId = new mongoose.Types.ObjectId(classIdParam);  // ← ADD THIS
+
       const students = await UserModel.find({
-        currentClass: classIdParam,
+        // currentClass: classIdParam,
+        currentClass: classObjId,
         studentStatus: StudentStatus.ACTIVE,
       })
         .select("surname firstName otherName admissionNumber gender")
@@ -97,7 +101,8 @@ export async function GET(request: NextRequest): Promise<Response> {
 
       // Fetch all attendance records for this class/session/term
       const records = await AttendanceRecordModel.find({
-        class: classIdParam,
+        // class: classIdParam,
+        class: classObjId, 
         session: typedSession._id,
         term: term.name,
       }).lean();
