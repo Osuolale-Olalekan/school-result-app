@@ -40,7 +40,7 @@ const TH_BG     = "#f0f4f8";
 const MUTED     = "#6b7280";
 const RED       = "#dc2626";
 
-const TWO_PAGE_THRESHOLD = 19;
+const TWO_PAGE_THRESHOLD = 25;
 
 // ─── helpers ─────────────────────────────────────────────────────
 function gradeBg(g: string) {
@@ -652,7 +652,10 @@ function GradeScale() {
 }
 
 // ─── AttendanceAndComments ────────────────────────────────────────
-function AttendanceAndComments({ report }: { report: ReportCardPDFProps["report"] }) {
+function AttendanceAndComments({ report, stampBase64 }: {
+  report: ReportCardPDFProps["report"];
+  stampBase64: string;
+}) {
   return (
     <View style={S.attCommRow}>
       <View style={S.attBox}>
@@ -680,10 +683,24 @@ function AttendanceAndComments({ report }: { report: ReportCardPDFProps["report"
           <Text style={S.commentTitle}>Class Teacher&apos;s Comment</Text>
           <Text style={S.commentText}>{report.teacherComment ?? "No comment provided."}</Text>
         </View>
-        <View style={S.commentBox}>
-          <Text style={S.commentTitle}>Proprietress&apos;s Comment</Text>
-          <Text style={S.commentText}>{report.principalComment ?? "Keep up the good work!"}</Text>
-        </View>
+        <View style={[S.commentBox, { position: "relative", overflow: "hidden" }]}>
+  {stampBase64 ? (
+    <Image
+      src={stampBase64}
+      style={{
+        position: "absolute",
+        width: 90,
+        height: 55,
+        bottom: 0,
+        right: 4,
+        opacity: 0.75,
+        transform: "rotate(-12deg)",
+      }}
+    />
+  ) : null}
+  <Text style={S.commentTitle}>Proprietress&apos;s Comment</Text>
+  <Text style={S.commentText}>{report.principalComment ?? "Keep up the good work!"}</Text>
+</View>
       </View>
     </View>
   );
@@ -759,10 +776,10 @@ function ResumptionDate({ report }: { report: ReportCardPDFProps["report"] }) {
 }
 
 // ─── PageFooter ───────────────────────────────────────────────────
-function PageFooter({ report, signatureBase64, stampBase64 }: {
+function PageFooter({ report, signatureBase64 }: {
   report: ReportCardPDFProps["report"];
   signatureBase64: string;
-  stampBase64: string;
+  // stampBase64: string;
 }) {
   const today = new Date().toLocaleDateString("en-NG", {
     day: "2-digit", month: "long", year: "numeric",
@@ -783,16 +800,7 @@ function PageFooter({ report, signatureBase64, stampBase64 }: {
         </View> */}
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 1, alignItems: "center" }}>
   {signatureBase64 ? <Image src={signatureBase64} style={S.footerSigImg} /> : null}
-  {stampBase64 ? (
-    <Image
-      src={stampBase64}
-      style={[
-        S.footerStampImg,
-        { transform: "rotate(-12deg)" },
-      ]}
-    />
-  ) : null}
-  {!signatureBase64 && !stampBase64 && <View style={S.footerSigLine} />}
+  {!signatureBase64 && <View style={S.footerSigLine} />}
 </View>
       </View>
     </View>
@@ -829,7 +837,8 @@ function ReportCardDocument({ report, assets }: {
         {!isTwoPage && (
           <>
             <GradeScale />
-            <AttendanceAndComments report={report} />
+            {/* <AttendanceAndComments report={report} /> */}
+            <AttendanceAndComments report={report} stampBase64={assets.stampBase64} />
             <PromotionBanner report={report} />
             <ResumptionDate report={report} />
           </>
@@ -843,7 +852,7 @@ function ReportCardDocument({ report, assets }: {
           </View>
         )}
 
-        <PageFooter report={report} signatureBase64={assets.signatureBase64} stampBase64={assets.stampBase64} />
+        <PageFooter report={report} signatureBase64={assets.signatureBase64} />
       </Page>
 
       {/* ══ PAGE 2 ══ */}
@@ -869,10 +878,11 @@ function ReportCardDocument({ report, assets }: {
           </View>
 
           <GradeScale />
-          <AttendanceAndComments report={report} />
+          {/* <AttendanceAndComments report={report} /> */}
+          <AttendanceAndComments report={report} stampBase64={assets.stampBase64} />
           <PromotionBanner report={report} />
           <ResumptionDate report={report} />
-          <PageFooter report={report} signatureBase64={assets.signatureBase64} stampBase64={assets.stampBase64} />
+          <PageFooter report={report} signatureBase64={assets.signatureBase64}  />
         </Page>
       )}
     </Document>
