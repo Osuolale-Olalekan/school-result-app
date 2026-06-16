@@ -32,13 +32,17 @@ export async function POST(
       );
     }
 
-    const { studentId, sessionId, termId, type = "report_card" } =
-      paystackResult.metadata as {
-        studentId: string;
-        sessionId: string;
-        termId: string;
-        type?: "report_card" | "school_fees";
-      };
+    const {
+      studentId,
+      sessionId,
+      termId,
+      type = "report_card",
+    } = paystackResult.metadata as {
+      studentId: string;
+      sessionId: string;
+      termId: string;
+      type?: "report_card" | "school_fees";
+    };
 
     // Security: ensure the payment belongs to the logged-in student
     if (studentId !== session.user.id) {
@@ -51,10 +55,12 @@ export async function POST(
     await PaymentRecordModel.findOneAndUpdate(
       { paystackReference: reference },
       {
-        status: PaymentStatus.PAID,
-        amount: paystackResult.amount / 100,
-        paidAt: new Date(),
-        paymentMethod: "paystack",
+        $set: {
+          status: PaymentStatus.PAID,
+          amount: paystackResult.amount / 100,
+          paidAt: new Date(),
+          paymentMethod: "paystack",
+        },
       },
     );
 
@@ -62,8 +68,7 @@ export async function POST(
       await ReportCardModel.findOneAndUpdate(
         { student: studentId, session: sessionId, term: termId },
         {
-          paymentStatus: PaymentStatus.PAID,
-          paidAt: new Date(),
+          $set: { paymentStatus: PaymentStatus.PAID, paidAt: new Date() },
         },
       );
     }

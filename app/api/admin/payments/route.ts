@@ -69,7 +69,12 @@ export async function GET(
       // for (const report of approvedReports) {
       //   const r = report as { student: unknown; session: unknown; term: unknown };
       await PaymentRecordModel.findOneAndUpdate(
-        { student: r.student, session: r.session, term: r.term, type: "report_card" },
+        {
+          student: r.student,
+          session: r.session,
+          term: r.term,
+          type: "report_card",
+        },
         {
           $setOnInsert: {
             student: r.student,
@@ -155,11 +160,13 @@ export async function POST(
         type: body.type,
       },
       {
-        status: body.status,
-        amount: body.amount,
-        note: body.note,
-        markedBy: session.user.id,
-        markedAt: new Date(),
+        $set: {
+          status: body.status,
+          amount: body.amount,
+          note: body.note,
+          markedBy: session.user.id,
+          markedAt: new Date(),
+        },
       },
       { upsert: true, new: true },
     );
@@ -179,11 +186,12 @@ export async function POST(
       await ReportCardModel.findOneAndUpdate(
         { student: body.studentId, session: body.sessionId, term: body.termId },
         {
-          paymentStatus: body.status,
+          $set: {paymentStatus: body.status,
           ...(body.status === PaymentStatus.PAID
             ? { paidAt: new Date(), markedPaidBy: session.user.id }
             : {}),
         },
+      },
       );
     }
 
@@ -197,24 +205,28 @@ export async function POST(
     //   description: `Marked payment as ${body.status} for student ${body.studentId}`,
     // });
     // ── Fetch student name for audit log ─────────────────────────────
-const student = await UserModel.findById(body.studentId)
-  .select("surname firstName otherName")
-  .lean() as { surname: string; firstName: string; otherName: string } | null;
+    const student = (await UserModel.findById(body.studentId)
+      .select("surname firstName otherName")
+      .lean()) as {
+      surname: string;
+      firstName: string;
+      otherName: string;
+    } | null;
 
-const studentName = student
-  ? `${student.surname} ${student.firstName} ${student.otherName}`
-  : body.studentId;
-// ─────────────────────────────────────────────────────────────────
+    const studentName = student
+      ? `${student.surname} ${student.firstName} ${student.otherName}`
+      : body.studentId;
+    // ─────────────────────────────────────────────────────────────────
 
-await createAuditLog({
-  actorId: session.user.id,
-  actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
-  actorRole: UserRole.ADMIN,
-  action: AuditAction.PAYMENT_UPDATE,
-  entity: "Payment",
-  entityId: body.studentId,
-  description: `Marked ${body.type === "report_card" ? "report card" : "school fees"} payment as ${body.status} for ${studentName}`,
-});
+    await createAuditLog({
+      actorId: session.user.id,
+      actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
+      actorRole: UserRole.ADMIN,
+      action: AuditAction.PAYMENT_UPDATE,
+      entity: "Payment",
+      entityId: body.studentId,
+      description: `Marked ${body.type === "report_card" ? "report card" : "school fees"} payment as ${body.status} for ${studentName}`,
+    });
 
     return NextResponse.json({
       success: true,

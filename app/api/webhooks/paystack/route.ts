@@ -27,7 +27,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       reference: string;
       status: string;
       amount: number;
-      metadata: { studentId: string; sessionId: string; termId: string; type: string };
+      metadata: {
+        studentId: string;
+        sessionId: string;
+        termId: string;
+        type: string;
+      };
     };
   };
 
@@ -43,20 +48,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         await PaymentRecordModel.findOneAndUpdate(
           { paystackReference: reference },
           {
-            status: PaymentStatus.PAID,
-            amount: amount / 100,
-            paidAt: new Date(),
-            paymentMethod: "paystack",
-          }
+            $set: {
+              status: PaymentStatus.PAID,
+              amount: amount / 100,
+              paidAt: new Date(),
+              paymentMethod: "paystack",
+            },
+          },
         );
 
         // Unlock report card
         await ReportCardModel.findOneAndUpdate(
           { student: studentId, session: sessionId, term: termId },
           {
-            paymentStatus: PaymentStatus.PAID,
-            paidAt: new Date(),
-          }
+            $set: { paymentStatus: PaymentStatus.PAID, paidAt: new Date() },
+          },
         );
       }
     } catch (error) {

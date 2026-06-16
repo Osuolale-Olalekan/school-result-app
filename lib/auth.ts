@@ -31,56 +31,121 @@ export const authConfig: NextAuthOptions = {
         // ─────────────────────────────────────────────────────────────
         // 1. PARENT LOGIN — via child's admission number + own password
         // ─────────────────────────────────────────────────────────────
-        if (loginType === "parent") {
-          const admissionNumber = credentials.admissionNumber as string;
-          const password = credentials.password as string;
+        // if (loginType === "parent") {
+        //   const admissionNumber = credentials.admissionNumber as string;
+        //   const password = credentials.password as string;
 
-          if (!admissionNumber || !password) return null;
+        //   if (!admissionNumber || !password) return null;
 
-          const StudentModel = (await import("@/models/Student")).default;
-          const ParentModel = (await import("@/models/Parent")).default;
+        //   const StudentModel = (await import("@/models/Student")).default;
+        //   const ParentModel = (await import("@/models/Parent")).default;
 
-          // Find the student by admission number
-          const student = await StudentModel.findOne({
-            admissionNumber: admissionNumber.toUpperCase(),
-          }).lean();
+        //   // Find the student by admission number
+        //   const student = await StudentModel.findOne({
+        //     admissionNumber: admissionNumber.toUpperCase(),
+        //   }).lean();
 
-          if (!student) return null;
+        //   if (!student) return null;
 
-          // Find the parent linked to this student
-          const parent = await ParentModel.findOne({
-            children: student._id,
-            status: UserStatus.ACTIVE,
-          })
-            .select("+password")
-            .lean();
+        //   // Find the parent linked to this student
+        //   const parent = await ParentModel.findOne({
+        //     children: student._id,
+        //     status: UserStatus.ACTIVE,
+        //   })
+        //     .select("+password")
+        //     .lean();
 
-          if (!parent) return null;
+        //   if (!parent) return null;
 
-          const passwordMatch = await bcrypt.compare(
-            password,
-            (parent as unknown as { password: string }).password
-          );
-          if (!passwordMatch) return null;
+        //   const passwordMatch = await bcrypt.compare(
+        //     password,
+        //     (parent as unknown as { password: string }).password
+        //   );
+        //   if (!passwordMatch) return null;
 
-          const parentTyped = parent as unknown as IUser;
+        //   const parentTyped = parent as unknown as IUser;
 
-          // Update last login
-          await UserModel.findByIdAndUpdate(parent._id, {
-            lastLogin: new Date(),
-          });
+        //   // Update last login
+        //   await UserModel.findByIdAndUpdate(parent._id, {
+        //     lastLogin: new Date(),
+        //   });
 
-          return {
-            id: parent._id.toString(),
-            email: parentTyped.email,
-            surname: parentTyped.surname,
-            firstName: parentTyped.firstName,
-            otherName: parentTyped.otherName,
-            roles: parentTyped.roles,
-            activeRole: UserRole.PARENT,
-            status: parentTyped.status,
-          };
-        }
+        //   return {
+        //     id: parent._id.toString(),
+        //     email: parentTyped.email,
+        //     surname: parentTyped.surname,
+        //     firstName: parentTyped.firstName,
+        //     otherName: parentTyped.otherName,
+        //     roles: parentTyped.roles,
+        //     activeRole: UserRole.PARENT,
+        //     status: parentTyped.status,
+        //   };
+        // }
+        // ─────────────────────────────────────────────────────────────
+// 1. PARENT LOGIN — via child's admission number OR own email + password
+// ─────────────────────────────────────────────────────────────
+if (loginType === "parent") {
+  const admissionNumber = credentials.admissionNumber as string;
+  const email = credentials.email as string;
+  const password = credentials.password as string;
+
+  if (!password) return null;
+
+  const ParentModel = (await import("@/models/Parent")).default;
+
+  let parent;
+
+  if (admissionNumber) {
+    // Lookup via child's admission number
+    const StudentModel = (await import("@/models/Student")).default;
+
+    const student = await StudentModel.findOne({
+      admissionNumber: admissionNumber.toUpperCase(),
+    }).lean();
+
+    if (!student) return null;
+
+    parent = await ParentModel.findOne({
+      children: student._id,
+      status: UserStatus.ACTIVE,
+    })
+      .select("+password")
+      .lean();
+  } else if (email) {
+    // Lookup via parent's own email
+    parent = await ParentModel.findOne({
+      email: email.toLowerCase(),
+      status: UserStatus.ACTIVE,
+    })
+      .select("+password")
+      .lean();
+  } else {
+    return null;
+  }
+
+  if (!parent) return null;
+
+  const passwordMatch = await bcrypt.compare(
+    password,
+    (parent as unknown as { password: string }).password
+  );
+  if (!passwordMatch) return null;
+
+  const parentTyped = parent as unknown as IUser;
+
+  await UserModel.findByIdAndUpdate(parent._id, { lastLogin: new Date() });
+
+  return {
+    id: parent._id.toString(),
+    email: parentTyped.email,
+    surname: parentTyped.surname,
+    firstName: parentTyped.firstName,
+    otherName: parentTyped.otherName,
+    roles: parentTyped.roles,
+    activeRole: UserRole.PARENT,
+    status: parentTyped.status,
+  };
+}
 
         // ─────────────────────────────────────────────────────────────
         // 2. STUDENT LOGIN — via admission number + own password
@@ -151,6 +216,11 @@ export const authConfig: NextAuthOptions = {
         if (!user) return null;
 
         const typedUser = user as unknown as IUser & { password: string };
+
+        // ✅ Add this — block parents and students from staff login
+        const allowedStaffRoles = [UserRole.ADMIN, UserRole.TEACHER];
+        const hasStaffRole = typedUser.roles.some((r) => allowedStaffRoles.includes(r));
+        if (!hasStaffRole) return null;
 
         const passwordMatch = await bcrypt.compare(password, typedUser.password);
         if (!passwordMatch) return null;

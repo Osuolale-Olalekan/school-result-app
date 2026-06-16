@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
       .lean();
 
     // Only return paid records in history
-    const paid = payments.filter((p) => p.status === "paid" || p.amount);
+    // const paid = payments.filter((p) => p.status === "paid" || p.amount);
+    const paid = payments.filter((p) => p.status === "paid");
 
     return NextResponse.json({ success: true, data: paid });
   } catch {

@@ -204,6 +204,16 @@ export default function ParentPaymentHistory() {
     (f) => String(f.child._id) === activeChild,
   );
 
+  const filteredHistory = activeChild
+  ? history.filter((p) => {
+      const studentId =
+        typeof p.student === "object"
+          ? String((p.student as { _id?: string; firstName?: string })._id ?? "")
+          : String(p.student);
+      return studentId === activeChild;
+    })
+  : history;
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
@@ -395,72 +405,82 @@ export default function ParentPaymentHistory() {
           </h2>
         </div>
 
-        {history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 rounded-2xl border border-dashed border-gray-200 bg-gray-50">
-            <CreditCard className="w-7 h-7 mb-2 text-gray-300" />
-            <p className="text-xs text-gray-400">No payment history yet</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {history.map((p, i) => {
-              const st = statusStyle(p.status);
-              const sessionName =
-                typeof p.session === "object" ? p.session.name : "—";
-              const termName = typeof p.term === "object" ? p.term.name : "—";
-              const date = p.paidAt ?? p.markedAt;
+        {filteredHistory.length === 0 ? (
+  <div className="flex flex-col items-center justify-center py-10 rounded-2xl border border-dashed border-gray-200 bg-gray-50">
+    <CreditCard className="w-7 h-7 mb-2 text-gray-300" />
+    <p className="text-xs text-gray-400">No payment history yet</p>
+  </div>
+) : (
+  <div className="space-y-2">
+    {filteredHistory.map((p, i) => {
+      const st = statusStyle(p.status);
+      const sessionName =
+        typeof p.session === "object" ? p.session.name : "—";
+      const termName = typeof p.term === "object" ? p.term.name : "—";
+      const studentName =
+        typeof p.student === "object" && p.student.firstName
+          ? `${p.student.firstName} ${p.student.surname ?? ""}`.trim()
+          : null;
+      const date = p.paidAt ?? p.markedAt;
 
-              return (
-                <motion.div
-                  key={p._id}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100"
-                >
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 border ${st.bg} ${st.border}`}
-                  >
-                    {p.type === "report_card" ? (
-                      <FileText className={`w-3.5 h-3.5 ${st.text}`} />
-                    ) : (
-                      <Banknote className={`w-3.5 h-3.5 ${st.text}`} />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-900">
-                      {p.type === "report_card" ? "Report Card" : "School Fees"}
-                    </p>
-                    <p className="text-[10px] text-gray-400">
-                      {sessionName} · {termName} Term
-                      {date &&
-                        ` · ${new Date(date).toLocaleDateString("en-NG")}`}
-                    </p>
-                    {p.paymentMethod && (
-                      <p className="text-[10px] text-gray-400">
-                        via{" "}
-                        {p.paymentMethod === "paystack"
-                          ? "Paystack (online)"
-                          : "Manual"}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    {p.amount && (
-                      <p className="text-xs font-bold text-gray-900 mb-0.5">
-                        ₦{p.amount.toLocaleString()}
-                      </p>
-                    )}
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize border ${st.bg} ${st.text} ${st.border}`}
-                    >
-                      {p.status}
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            })}
+      return (
+        <motion.div
+          key={p._id}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.03 }}
+          className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100"
+        >
+          <div
+            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 border ${st.bg} ${st.border}`}
+          >
+            {p.type === "report_card" ? (
+              <FileText className={`w-3.5 h-3.5 ${st.text}`} />
+            ) : (
+              <Banknote className={`w-3.5 h-3.5 ${st.text}`} />
+            )}
           </div>
-        )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-semibold text-gray-900">
+                {p.type === "report_card" ? "Report Card" : "School Fees"}
+              </p>
+              {studentName && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-500 font-medium">
+                  {studentName}
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-gray-400">
+              {sessionName} · {termName} Term
+              {date && ` · ${new Date(date).toLocaleDateString("en-NG")}`}
+            </p>
+            {p.paymentMethod && (
+              <p className="text-[10px] text-gray-400">
+                via{" "}
+                {p.paymentMethod === "paystack"
+                  ? "Paystack (online)"
+                  : "Manual / Cash"}
+              </p>
+            )}
+          </div>
+          <div className="text-right flex-shrink-0">
+            {p.amount && (
+              <p className="text-xs font-bold text-gray-900 mb-0.5">
+                ₦{p.amount.toLocaleString()}
+              </p>
+            )}
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize border ${st.bg} ${st.text} ${st.border}`}
+            >
+              {p.status}
+            </span>
+          </div>
+        </motion.div>
+      );
+    })}
+  </div>
+)}
       </div>
     </div>
   );

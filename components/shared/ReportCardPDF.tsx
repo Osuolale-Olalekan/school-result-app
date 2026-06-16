@@ -40,7 +40,7 @@ const TH_BG     = "#f0f4f8";
 const MUTED     = "#6b7280";
 const RED       = "#dc2626";
 
-const TWO_PAGE_THRESHOLD = 24;
+const TWO_PAGE_THRESHOLD = 19;
 
 // ─── helpers ─────────────────────────────────────────────────────
 function gradeBg(g: string) {
@@ -82,17 +82,66 @@ function gradeColor(g: string) {
 //   return "students";
 // }
 
+// async function toBase64(url: string): Promise<string> {
+//   try {
+//     const res  = await fetch(url);
+//     const blob = await res.blob();
+//     return new Promise((resolve, reject) => {
+//       const r = new FileReader();
+//       r.onloadend = () => resolve(r.result as string);
+//       r.onerror   = reject;
+//       r.readAsDataURL(blob);
+//     });
+//   } catch {
+//     return "";
+//   }
+// }
+// async function toBase64(url: string): Promise<string> {
+//   try {
+//     const res = await fetch(url);
+//     if (!res.ok) return url; // ← fall back to URL if fetch fails
+//     const blob = await res.blob();
+//     return new Promise((resolve, reject) => {
+//       const r = new FileReader();
+//       r.onloadend = () => resolve(r.result as string);
+//       r.onerror   = () => resolve(url); // ← fall back to URL on read error
+//       r.readAsDataURL(blob);
+//     });
+//   } catch {
+//     return url; // ← fall back to URL on network error
+//   }
+// }
 async function toBase64(url: string): Promise<string> {
   try {
-    const res  = await fetch(url);
+    const proxied = url.startsWith("http")
+      ? `/api/image-proxy?url=${encodeURIComponent(url)}`
+      : url;
+
+    const res = await fetch(proxied, { cache: "no-store" });
+    if (!res.ok) {
+      console.error(`[toBase64] proxy fetch failed: ${res.status} for ${url}`);
+      return ""; // ← return empty string, NOT the raw URL
+    }
     const blob = await res.blob();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const r = new FileReader();
-      r.onloadend = () => resolve(r.result as string);
-      r.onerror   = reject;
+      r.onloadend = () => {
+        const result = r.result as string;
+        if (!result.startsWith("data:")) {
+          console.error(`[toBase64] FileReader result is not base64 for ${url}`);
+          resolve("");
+          return;
+        }
+        resolve(result);
+      };
+      r.onerror = () => {
+        console.error(`[toBase64] FileReader error for ${url}`);
+        resolve("");
+      };
       r.readAsDataURL(blob);
     });
-  } catch {
+  } catch (e) {
+    console.error(`[toBase64] exception for ${url}:`, e);
     return "";
   }
 }
@@ -242,7 +291,7 @@ const S = StyleSheet.create({
   attFooterValue: { fontSize: 10, fontFamily: "Helvetica-Bold", color: GOLD },
   commentsCol:   { flex: 1, flexDirection: "column", gap: 6 },
   commentBox: {
-    flex: 1, backgroundColor: LIGHT_BG, borderRadius: 7,
+    backgroundColor: LIGHT_BG, borderRadius: 7,
     border: `1 solid ${BORDER}`, padding: "7 11",
   },
   commentTitle: {
@@ -279,11 +328,14 @@ const S = StyleSheet.create({
   footer: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
     backgroundColor: DARK_NAVY, padding: "7 20",
+    marginTop: "auto",
   },
   footerDate:     { fontSize: 7.5, color: "rgba(255,255,255,0.4)", lineHeight: 1.4 },
   footerID:       { fontSize: 7.5, color: "rgba(255,255,255,0.3)", marginTop: 1, lineHeight: 1.4 },
   footerRight:    { alignItems: "flex-end" },
-  footerSigImg:   { height: 40, objectFit: "contain", marginBottom: 2 },
+  // footerSigImg:   { height: 40, objectFit: "contain", marginBottom: 2 },
+  footerSigImg: { height: 28, objectFit: "contain", marginBottom: -2 },
+footerStampImg: { height: 58, objectFit: "contain", marginBottom: -2 },
   footerSigLine:  { width: 80, height: 1, backgroundColor: "rgba(255,255,255,0.2)", marginBottom: 3 },
   footerSigLabel: { fontSize: 7.5, color: "rgba(255,255,255,0.4)" },
 });
@@ -298,12 +350,15 @@ function PageHeader({ showQR, qrDataUrl, logoBase64, report }: {
   return (
     <View style={S.header}>
       <View style={S.headerTop}>
-        {logoBase64
+        {/* {logoBase64
           ? <Image src={logoBase64} style={S.headerLogo} />
-          : <View style={S.headerLogoPlaceholder} />}
+          : <View style={S.headerLogoPlaceholder} />} */}
+          {logoBase64
+  ? <Image src={logoBase64} style={S.headerLogo} />
+  : <View style={S.headerLogoPlaceholder} />}
 
         <View style={S.headerCenter}>
-          <Text style={S.headerSchoolName}>God's Way Model Groups of Schools</Text>
+          <Text style={S.headerSchoolName}>God&apos;s Way Model Groups of Schools</Text>
           <Text style={S.headerMotto}>SOWING THE SEED OF MERIT AND EXCELLENCE</Text>
           <Text style={S.headerContact}>
             No 12 Siyanbola Street, Osogbo, Osun State{"\n"}
@@ -440,9 +495,18 @@ const deptLabel = report.studentSnapshot.department !== "none"
 }
 
 // ─── SubjectsTable ────────────────────────────────────────────────
-function SubjectsTable({ report }: { report: ReportCardPDFProps["report"] }) {
+// function SubjectsTable({ report }: { report: ReportCardPDFProps["report"] }) {
+function SubjectsTable({ report, logoBase64 }: { report: ReportCardPDFProps["report"]; logoBase64: string }) {
+
   return (
-    <View style={S.tableSection}>
+    // <View style={S.tableSection}>
+     <View style={[S.tableSection, { position: "relative" }]}>
+      {/* Watermark */}
+     {(logoBase64 || SCHOOL_LOGO_URL) ? (
+  <View style={{ position: "absolute", top: "30%", left: "25%", width: 220, height: 220, opacity: 0.07 }}>
+    <Image src={logoBase64} style={{ width: 220, height: 220 }} />
+  </View>
+) : null}
       <Text style={S.tableTitle}>ACADEMIC PERFORMANCE</Text>
 
       {/* Header row */}
@@ -613,11 +677,11 @@ function AttendanceAndComments({ report }: { report: ReportCardPDFProps["report"
 
       <View style={S.commentsCol}>
         <View style={S.commentBox}>
-          <Text style={S.commentTitle}>Class Teacher's Comment</Text>
+          <Text style={S.commentTitle}>Class Teacher&apos;s Comment</Text>
           <Text style={S.commentText}>{report.teacherComment ?? "No comment provided."}</Text>
         </View>
         <View style={S.commentBox}>
-          <Text style={S.commentTitle}>Proprietress's Comment</Text>
+          <Text style={S.commentTitle}>Proprietress&apos;s Comment</Text>
           <Text style={S.commentText}>{report.principalComment ?? "Keep up the good work!"}</Text>
         </View>
       </View>
@@ -707,16 +771,29 @@ function PageFooter({ report, signatureBase64, stampBase64 }: {
     <View style={S.footer}>
       <View>
         <Text style={S.footerDate}>Report generated on {today}</Text>
-        <Text style={S.footerID}>
+        {/* <Text style={S.footerID}>
           Report ID: {String(report._id)} · Scan QR code to verify authenticity
-        </Text>
+        </Text> */}
       </View>
       <View style={S.footerRight}>
-        <View style={{ flexDirection: "row", gap: 8, marginBottom: 3, alignItems: "center" }}>
+        {/* <View style={{ flexDirection: "row", gap: 8, marginBottom: 3, alignItems: "center" }}>
           {signatureBase64 ? <Image src={signatureBase64} style={S.footerSigImg} /> : null}
           {stampBase64     ? <Image src={stampBase64}     style={S.footerSigImg} /> : null}
           {!signatureBase64 && !stampBase64 && <View style={S.footerSigLine} />}
-        </View>
+        </View> */}
+        <View style={{ flexDirection: "row", gap: 8, marginBottom: 1, alignItems: "center" }}>
+  {signatureBase64 ? <Image src={signatureBase64} style={S.footerSigImg} /> : null}
+  {stampBase64 ? (
+    <Image
+      src={stampBase64}
+      style={[
+        S.footerStampImg,
+        { transform: "rotate(-12deg)" },
+      ]}
+    />
+  ) : null}
+  {!signatureBase64 && !stampBase64 && <View style={S.footerSigLine} />}
+</View>
       </View>
     </View>
   );
@@ -745,7 +822,9 @@ function ReportCardDocument({ report, assets }: {
       <Page size="A4" style={S.page}>
         <PageHeader showQR qrDataUrl={assets.qrDataUrl} logoBase64={assets.logoBase64} report={report} />
         <StudentInfoStrip report={report} profilePhotoBase64={assets.profilePhotoBase64} avgScore={avgScore} />
-        <SubjectsTable report={report} />
+        {/* <SubjectsTable report={report} /> */}
+        <SubjectsTable report={report} logoBase64={assets.logoBase64} />
+
 
         {!isTwoPage && (
           <>
@@ -804,10 +883,14 @@ function ReportCardDocument({ report, assets }: {
 export async function downloadReportCardPDF(
   report: ReportCardPDFProps["report"],
 ): Promise<void> {
+  console.log("[PDF] Starting download...");
+
   const qrDataUrl = await QRCode.toDataURL(
     `${window.location.origin}/verify-report/${report._id}`,
     { width: 100, margin: 1 },
   ).catch(() => null);
+
+  console.log("[PDF] QR generated:", !!qrDataUrl);
 
   const [logoBase64, profilePhotoBase64, signatureBase64, stampBase64] =
     await Promise.all([
@@ -816,6 +899,13 @@ export async function downloadReportCardPDF(
       report.principalSignature           ? toBase64(report.principalSignature)           : Promise.resolve(""),
       report.schoolStamp                  ? toBase64(report.schoolStamp)                  : Promise.resolve(""),
     ]);
+
+  console.log("[PDF] Assets:", {
+    logoBase64: logoBase64.slice(0, 40),       // shows "data:image/png;base64,..." or ""
+    profilePhotoBase64: profilePhotoBase64.slice(0, 40),
+    signatureBase64: signatureBase64.slice(0, 40),
+    stampBase64: stampBase64.slice(0, 40),
+  });
 
   const blob = await pdf(
     <ReportCardDocument

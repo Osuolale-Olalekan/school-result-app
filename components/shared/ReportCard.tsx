@@ -35,15 +35,18 @@ const GRADE_SCALE_H = 38;
 const ATTENDANCE_COMMENTS_H = 136;
 const FOOTER_H = 48;
 
+// const FIXED_TOTAL =
+//   HEADER_H +
+//   STUDENT_STRIP_H +
+//   TABLE_TITLE_H +
+//   TABLE_HEADER_H +
+//   TABLE_FOOTER_H +
+//   GRADE_SCALE_H +
+//   ATTENDANCE_COMMENTS_H +
+//   FOOTER_H;
 const FIXED_TOTAL =
-  HEADER_H +
-  STUDENT_STRIP_H +
-  TABLE_TITLE_H +
-  TABLE_HEADER_H +
-  TABLE_FOOTER_H +
-  GRADE_SCALE_H +
-  ATTENDANCE_COMMENTS_H +
-  FOOTER_H;
+  HEADER_H + STUDENT_STRIP_H + TABLE_TITLE_H + TABLE_HEADER_H +
+  TABLE_FOOTER_H + GRADE_SCALE_H + FOOTER_H;
 
 function fixFlexAlignment(el: HTMLElement) {
   const style = el.style;
@@ -425,7 +428,25 @@ export default function ReportCardComponent({
 
   function SubjectsTable() {
     return (
-      <div style={{ padding: "0 24px", flexShrink: 0 }}>
+      // <div style={{ padding: "0 24px", flexShrink: 0 }}>
+      <div style={{ padding: "0 24px", flexShrink: 0, position: "relative" }}>
+      {/* Watermark */}
+      {(logoBase64 || SCHOOL_LOGO_URL) && (
+        <div style={{
+          position: "absolute",
+          top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 280, height: 280,
+          backgroundImage: `url(${logoBase64 || SCHOOL_LOGO_URL})`,
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          opacity: 0.08,
+          pointerEvents: "none",
+          zIndex: 0,
+        }} />
+      )}
+      <div style={{ position: "relative", zIndex: 1 }}></div>
         <h3 style={{ fontSize: 11, fontWeight: "bold", color: "#1e3a5f", padding: "7px 0 5px", borderBottom: "2px solid #1e3a5f", margin: 0, letterSpacing: "0.5px" }}>
           ACADEMIC PERFORMANCE
         </h3>
@@ -528,14 +549,21 @@ export default function ReportCardComponent({
 
   function AttendanceAndComments() {
     return (
+      // <div style={{
+      //   padding: "0 24px 8px",
+      //   display: "grid",
+      //   gridTemplateColumns: "1fr 1fr",
+      //   gap: 10,
+      //   flexShrink: 0,
+      //   height: ATTENDANCE_COMMENTS_H,
+      // }}>
       <div style={{
-        padding: "0 24px 8px",
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 10,
-        flexShrink: 0,
-        height: ATTENDANCE_COMMENTS_H,
-      }}>
+  padding: "0 24px 8px",
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 10,
+  flexShrink: 0,
+}}>
         <div style={{ background: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0", overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "7px 12px", flex: 1, overflow: "hidden" }}>
             <h4 style={{ fontSize: 10, fontWeight: "bold", color: "#1e3a5f", margin: "0 0 5px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.2 }}>
@@ -564,7 +592,9 @@ export default function ReportCardComponent({
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6, overflow: "hidden" }}>
-          <div style={{ background: "#f8fafc", borderRadius: 8, padding: "7px 11px", border: "1px solid #e2e8f0", flex: 1, overflow: "hidden" }}>
+          {/* <div style={{ background: "#f8fafc", borderRadius: 8, padding: "7px 11px", border: "1px solid #e2e8f0", flex: 1, overflow: "hidden" }}> */}
+          <div style={{ background: "#f8fafc", borderRadius: 8, padding: "7px 11px",
+  border: "1px solid #e2e8f0" }}>
             <h4 style={{ fontSize: 9.5, fontWeight: "bold", color: "#1e3a5f", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.2 }}>
               Class Teacher&apos;s Comment
             </h4>
@@ -572,7 +602,9 @@ export default function ReportCardComponent({
               {report.teacherComment ?? "No comment provided."}
             </p>
           </div>
-          <div style={{ background: "#f8fafc", borderRadius: 8, padding: "7px 11px", border: "1px solid #e2e8f0", flex: 1, overflow: "hidden" }}>
+          {/* <div style={{ background: "#f8fafc", borderRadius: 8, padding: "7px 11px", border: "1px solid #e2e8f0", flex: 1, overflow: "hidden" }}> */}
+          <div style={{ background: "#f8fafc", borderRadius: 8, padding: "7px 11px",
+  border: "1px solid #e2e8f0" }}>
             <h4 style={{ fontSize: 9.5, fontWeight: "bold", color: "#1e3a5f", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.2 }}>
               Proprietress&apos;s Comment
             </h4>
@@ -663,10 +695,22 @@ export default function ReportCardComponent({
               <img src={signatureBase64 || report.principalSignature} alt="Principal Signature"
                 style={{ height: 36, objectFit: "contain", display: "block", filter: "brightness(0) invert(1)" }} />
             )}
-            {report.schoolStamp && (
+            {/* {report.schoolStamp && (
               <img src={stampBase64 || report.schoolStamp} alt="School Stamp"
                 style={{ height: 50, objectFit: "contain", display: "block", filter: "brightness(0) invert(1)" }} />
-            )}
+            )} */}
+            {report.schoolStamp && (
+  <img src={stampBase64 || report.schoolStamp} alt="School Stamp"
+    style={{
+      height: 72,
+      objectFit: "contain",
+      display: "block",
+      filter: "brightness(0) invert(1)",
+      transform: "rotate(-12deg)",
+      transformOrigin: "center center",
+      marginBottom: 4,
+    }} />
+)}
             {!report.principalSignature && !report.schoolStamp && (
               <div style={{ width: 100, height: 1, background: "rgba(255,255,255,0.2)" }} />
             )}
@@ -732,25 +776,15 @@ export default function ReportCardComponent({
             <SubjectsTable />
 
             {!isTwoPage && (
-              <>
-                <GradeScale />
-                <AttendanceAndComments />
-                <PromotionBanner />
-                <ResumptionDate />
-              </>
-            )}
-
-            {isTwoPage && (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                <div style={{ margin: "0 24px 10px", padding: "8px 14px", background: "#f0f4f8", borderRadius: 7, border: "1px dashed #cbd5e1", display: "flex", alignItems: "center", gap: 7 }}>
-                  <span style={{ fontSize: 13, lineHeight: 1 }}>📋</span>
-                  <span style={{ fontSize: 9.5, color: "#475569", fontStyle: "italic" }}>
-                    Attendance record, teacher comments, and other details are continued on Page 2.
-                  </span>
-                </div>
-                <PageFooter />
-              </div>
-            )}
+  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+    <GradeScale />
+    <AttendanceAndComments />
+    <PromotionBanner />
+    <ResumptionDate />
+    <div style={{ flex: 1 }} /> {/* pushes footer to bottom */}
+    {/* <PageFooter /> */}
+  </div>
+)}
 
             {!isTwoPage && <PageFooter />}
           </A4Page>
