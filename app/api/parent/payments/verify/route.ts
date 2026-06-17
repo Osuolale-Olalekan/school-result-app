@@ -47,18 +47,18 @@ export async function POST(
     };
 
     // In parent-payments-verify-route.ts, replace the PaymentRecord update with:
-    const existingPayment = await PaymentRecordModel.findOne({
-      paystackReference: reference,
-    });
-    const previousAmount = existingPayment?.amount ?? 0;
-    const newTotal = previousAmount + paystackResult.amount / 100;
+    // const existingPayment = await PaymentRecordModel.findOne({
+    //   paystackReference: reference,
+    // });
+    // const previousAmount = existingPayment?.amount ?? 0;
+    // const newTotal = previousAmount + paystackResult.amount / 100;
 
     await PaymentRecordModel.findOneAndUpdate(
       { paystackReference: reference },
       {
         $set: {
           status: PaymentStatus.PAID, // full payment via Paystack always completes it
-          amount: newTotal, // adds to any previous cash amount
+          amount: paystackResult.amount/100, // adds to any previous cash amount
           paidAt: new Date(),
           paymentMethod: "paystack",
         },
