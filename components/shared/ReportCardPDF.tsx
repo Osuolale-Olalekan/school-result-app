@@ -30,15 +30,15 @@ export interface ReportCardPDFProps {
 const SCHOOL_LOGO_URL =
   "https://res.cloudinary.com/disxrmlco/image/upload/v1771881211/android-chrome-512x512_mc7kty.png";
 
-const NAVY      = "#1e3a5f";
+const NAVY = "#1e3a5f";
 const DARK_NAVY = "#0a1628";
-const GOLD      = "#f59e0b";
-const LIGHT_BG  = "#f8fafc";
-const BORDER    = "#e2e8f0";
-const STRIPE    = "#fafbfc";
-const TH_BG     = "#f0f4f8";
-const MUTED     = "#6b7280";
-const RED       = "#dc2626";
+const GOLD = "#f59e0b";
+const LIGHT_BG = "#f8fafc";
+const BORDER = "#e2e8f0";
+const STRIPE = "#fafbfc";
+const TH_BG = "#f0f4f8";
+const MUTED = "#6b7280";
+const RED = "#dc2626";
 
 const TWO_PAGE_THRESHOLD = 25;
 
@@ -73,7 +73,9 @@ async function toBase64(url: string): Promise<string> {
       r.onloadend = () => {
         const result = r.result as string;
         if (!result.startsWith("data:")) {
-          console.error(`[toBase64] FileReader result is not base64 for ${url}`);
+          console.error(
+            `[toBase64] FileReader result is not base64 for ${url}`,
+          );
           resolve("");
           return;
         }
@@ -115,178 +117,396 @@ const S = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  headerLogo:            { width: 60, height: 60, borderRadius: 6 },
-  headerLogoPlaceholder: { width: 60, height: 60, borderRadius: 6, backgroundColor: "rgba(255,255,255,0.1)" },
-  headerCenter:          { flex: 1, alignItems: "center", paddingHorizontal: 12 },
+  headerLogo: { width: 60, height: 60, borderRadius: 6 },
+  headerLogoPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 6,
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  headerCenter: { flex: 1, alignItems: "center", paddingHorizontal: 12 },
   headerSchoolName: {
-    fontSize: 13, fontFamily: "Helvetica-Bold", color: "#ffffff",
-    textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2, textAlign: "center",
+    fontSize: 13,
+    fontFamily: "Helvetica-Bold",
+    color: "#ffffff",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+    textAlign: "center",
   },
   headerMotto: {
-    fontSize: 7, color: "rgba(255,255,255,0.55)", letterSpacing: 1.5, marginBottom: 3, textAlign: "center",
+    fontSize: 7,
+    color: "rgba(255,255,255,0.55)",
+    letterSpacing: 1.5,
+    marginBottom: 3,
+    textAlign: "center",
   },
-  headerContact: { fontSize: 7.5, color: "rgba(255,255,255,0.6)", textAlign: "center", lineHeight: 1.6 },
-  headerQrBox:   { backgroundColor: "#ffffff", padding: 4, borderRadius: 5, alignItems: "center" },
-  headerQrImg:   { width: 56, height: 56 },
-  headerQrLabel: { fontSize: 6, color: "#555555", marginTop: 2, textAlign: "center" },
+  headerContact: {
+    fontSize: 7.5,
+    color: "rgba(255,255,255,0.6)",
+    textAlign: "center",
+    lineHeight: 1.6,
+  },
+  headerQrBox: {
+    backgroundColor: "#ffffff",
+    padding: 4,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  headerQrImg: { width: 56, height: 56 },
+  headerQrLabel: {
+    fontSize: 6,
+    color: "#555555",
+    marginTop: 2,
+    textAlign: "center",
+  },
   headerQrPlaceholder: {
-    width: 64, height: 64, borderRadius: 5,
-    backgroundColor: "rgba(255,255,255,0.05)", justifyContent: "center", alignItems: "center",
+    width: 64,
+    height: 64,
+    borderRadius: 5,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerContinueBadge: {
-    width: 64, height: 64, borderRadius: 5,
-    backgroundColor: "rgba(245,158,11,0.12)", border: "1 solid rgba(245,158,11,0.3)",
-    justifyContent: "center", alignItems: "center",
+    width: 64,
+    height: 64,
+    borderRadius: 5,
+    backgroundColor: "rgba(245,158,11,0.12)",
+    border: "1 solid rgba(245,158,11,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   titleBar: {
-    flexDirection: "row", justifyContent: "center", alignItems: "center",
-    marginTop: 7, marginBottom: 6, paddingVertical: 4, paddingHorizontal: 14,
-    backgroundColor: "rgba(245,158,11,0.15)", borderRadius: 5,
-    border: "1 solid rgba(245,158,11,0.3)", alignSelf: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 7,
+    marginBottom: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    backgroundColor: "rgba(245,158,11,0.15)",
+    borderRadius: 5,
+    border: "1 solid rgba(245,158,11,0.3)",
+    alignSelf: "center",
   },
-  titleBarText: { fontSize: 9, fontFamily: "Helvetica-Bold", color: GOLD, letterSpacing: 0.4 },
-  titleBarSep:  { fontSize: 8, color: "rgba(255,255,255,0.4)", marginHorizontal: 6 },
-  titleBarSub:  { fontSize: 8, color: "rgba(255,255,255,0.65)" },
+  titleBarText: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: GOLD,
+    letterSpacing: 0.4,
+  },
+  titleBarSep: {
+    fontSize: 8,
+    color: "rgba(255,255,255,0.4)",
+    marginHorizontal: 6,
+  },
+  titleBarSub: { fontSize: 8, color: "rgba(255,255,255,0.65)" },
 
   // ── student strip
   studentStrip: {
-    flexDirection: "row", padding: "8 20",
-    borderBottom: `2 solid ${BORDER}`, alignItems: "stretch", gap: 10,
+    flexDirection: "row",
+    padding: "8 20",
+    borderBottom: `2 solid ${BORDER}`,
+    alignItems: "stretch",
+    gap: 10,
   },
-  studentPhoto: { width: 62, height: 62, borderRadius: 7, border: `2 solid ${NAVY}`, objectFit: "cover" },
+  studentPhoto: {
+    width: 62,
+    height: 62,
+    borderRadius: 7,
+    border: `2 solid ${NAVY}`,
+    objectFit: "cover",
+  },
   studentAvatar: {
-    width: 62, height: 62, borderRadius: 7, border: `2 solid ${NAVY}`,
-    backgroundColor: "#e8eff7", justifyContent: "center", alignItems: "center",
+    width: 62,
+    height: 62,
+    borderRadius: 7,
+    border: `2 solid ${NAVY}`,
+    backgroundColor: "#e8eff7",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  studentAvatarText: { fontSize: 18, fontFamily: "Helvetica-Bold", color: NAVY },
-  studentInfoGrid:   { flex: 1, flexDirection: "row", flexWrap: "wrap" },
-  studentInfoCell:   { width: "50%", paddingVertical: 1, paddingRight: 8 },
-  studentInfoLabel:  { fontSize: 7, color: MUTED, textTransform: "uppercase", letterSpacing: 0.4, lineHeight: 1.3 },
-  studentInfoValue:  { fontSize: 10, fontFamily: "Helvetica-Bold", color: "#111111", lineHeight: 1.3 },
+  studentAvatarText: {
+    fontSize: 18,
+    fontFamily: "Helvetica-Bold",
+    color: NAVY,
+  },
+  studentInfoGrid: { flex: 1, flexDirection: "row", flexWrap: "wrap" },
+  studentInfoCell: { width: "50%", paddingVertical: 1, paddingRight: 8 },
+  studentInfoLabel: {
+    fontSize: 7,
+    color: MUTED,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    lineHeight: 1.3,
+  },
+  studentInfoValue: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    color: "#111111",
+    lineHeight: 1.3,
+  },
   perfBox: {
-    backgroundColor: NAVY, borderRadius: 7, padding: "8 12",
-    alignItems: "center", justifyContent: "center", minWidth: 88,
+    backgroundColor: NAVY,
+    borderRadius: 7,
+    padding: "8 12",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 88,
   },
-  perfScore:   { fontSize: 24, fontFamily: "Helvetica-Bold", color: GOLD, lineHeight: 1, marginBottom: 1 },
-  perfLabel:   { fontSize: 7, color: "rgba(255,255,255,0.5)", lineHeight: 1.3 },
-  perfGrade:   { fontSize: 16, fontFamily: "Helvetica-Bold", color: "#ffffff", lineHeight: 1.2, marginBottom: 1 },
-  perfDivider: { width: "100%", height: 1, backgroundColor: "rgba(255,255,255,0.15)", marginVertical: 4 },
+  perfScore: {
+    fontSize: 24,
+    fontFamily: "Helvetica-Bold",
+    color: GOLD,
+    lineHeight: 1,
+    marginBottom: 1,
+  },
+  perfLabel: { fontSize: 7, color: "rgba(255,255,255,0.5)", lineHeight: 1.3 },
+  perfGrade: {
+    fontSize: 16,
+    fontFamily: "Helvetica-Bold",
+    color: "#ffffff",
+    lineHeight: 1.2,
+    marginBottom: 1,
+  },
+  perfDivider: {
+    width: "100%",
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    marginVertical: 4,
+  },
   perfPosition: { fontSize: 9, color: GOLD, fontFamily: "Helvetica-Bold" },
-  perfPosSub:   { fontSize: 7, color: "rgba(255,255,255,0.5)" },
+  perfPosSub: { fontSize: 7, color: "rgba(255,255,255,0.5)" },
 
   // ── table — column widths must sum to 100%
-  tableSection:   { paddingHorizontal: 20 },
+  tableSection: { paddingHorizontal: 20 },
   tableTitle: {
-    fontSize: 9, fontFamily: "Helvetica-Bold", color: NAVY,
-    paddingTop: 6, paddingBottom: 4, borderBottom: `2 solid ${NAVY}`, letterSpacing: 0.4,
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: NAVY,
+    paddingTop: 6,
+    paddingBottom: 4,
+    borderBottom: `2 solid ${NAVY}`,
+    letterSpacing: 0.4,
   },
   tableHeaderRow: { flexDirection: "row", backgroundColor: TH_BG },
-  tableRow:       { flexDirection: "row" },
+  tableRow: { flexDirection: "row" },
   tableFooterRow: { flexDirection: "row", backgroundColor: NAVY },
 
   colSubject: { width: "30%" },
-  colTest:    { width: "10%" },
-  colExam:    { width: "10%" },
-  colPrac:    { width: "10%" },
-  colTotal:   { width: "14%" },
-  colGrade:   { width: "10%" },
-  colRemark:  { width: "16%" },
+  colTest: { width: "10%" },
+  colExam: { width: "10%" },
+  colPrac: { width: "10%" },
+  colTotal: { width: "14%" },
+  colGrade: { width: "10%" },
+  colRemark: { width: "16%" },
 
   // base styles — alignment set per-cell via inline overrides
   thCell: {
-    fontSize: 7.5, fontFamily: "Helvetica-Bold", color: "#374151",
-    paddingVertical: 4, paddingHorizontal: 3, borderBottom: `1 solid ${BORDER}`,
+    fontSize: 7.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#374151",
+    paddingVertical: 4,
+    paddingHorizontal: 3,
+    borderBottom: `1 solid ${BORDER}`,
   },
-  thSub:  { fontSize: 6.5, color: MUTED, fontFamily: "Helvetica" },
+  thSub: { fontSize: 6.5, color: MUTED, fontFamily: "Helvetica" },
   tdCell: {
-    fontSize: 9, color: "#111111",
-    paddingVertical: 3, paddingHorizontal: 3, borderBottom: `1 solid #f0f4f8`,
+    fontSize: 9,
+    color: "#111111",
+    paddingVertical: 3,
+    paddingHorizontal: 3,
+    borderBottom: `1 solid #f0f4f8`,
   },
   gradeBadge: { borderRadius: 3, paddingVertical: 1, paddingHorizontal: 4 },
   tfCell: {
-    fontSize: 9, fontFamily: "Helvetica-Bold",
-    color: "#ffffff", paddingVertical: 5, paddingHorizontal: 3,
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: "#ffffff",
+    paddingVertical: 5,
+    paddingHorizontal: 3,
   },
 
   // ── grade scale
   gradeScaleRow: {
-    flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 3,
-    padding: "4 8", backgroundColor: LIGHT_BG, borderRadius: 5,
-    border: `1 solid ${BORDER}`, marginHorizontal: 20, marginVertical: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 3,
+    padding: "4 8",
+    backgroundColor: LIGHT_BG,
+    borderRadius: 5,
+    border: `1 solid ${BORDER}`,
+    marginHorizontal: 20,
+    marginVertical: 4,
   },
-  gradeScaleLabel: { fontSize: 7.5, fontFamily: "Helvetica-Bold", color: MUTED, marginRight: 3 },
-  gradeScaleBadge: { borderRadius: 3, paddingVertical: 1, paddingHorizontal: 5 },
+  gradeScaleLabel: {
+    fontSize: 7.5,
+    fontFamily: "Helvetica-Bold",
+    color: MUTED,
+    marginRight: 3,
+  },
+  gradeScaleBadge: {
+    borderRadius: 3,
+    paddingVertical: 1,
+    paddingHorizontal: 5,
+  },
 
   // ── attendance + comments
-  attCommRow: { flexDirection: "row", paddingHorizontal: 20, paddingBottom: 8, gap: 10 },
+  attCommRow: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+    gap: 10,
+  },
   attBox: {
-    flex: 1, backgroundColor: LIGHT_BG, borderRadius: 7,
-    border: `1 solid ${BORDER}`, overflow: "hidden",
+    flex: 1,
+    backgroundColor: LIGHT_BG,
+    borderRadius: 7,
+    border: `1 solid ${BORDER}`,
+    overflow: "hidden",
   },
-  attInner:      { padding: "7 11" },
+  attInner: { padding: "7 11" },
   attTitle: {
-    fontSize: 8.5, fontFamily: "Helvetica-Bold", color: NAVY,
-    textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4,
+    fontSize: 8.5,
+    fontFamily: "Helvetica-Bold",
+    color: NAVY,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 4,
   },
-  attRow:        { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2, borderBottom: `1 solid #e8edf2` },
-  attRowLabel:   { fontSize: 8.5, color: MUTED },
-  attRowValue:   { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#111" },
-  attFooter:     { flexDirection: "row", justifyContent: "space-between", backgroundColor: NAVY, padding: "4 11" },
+  attRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 2,
+    borderBottom: `1 solid #e8edf2`,
+  },
+  attRowLabel: { fontSize: 8.5, color: MUTED },
+  attRowValue: { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#111" },
+  attFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: NAVY,
+    padding: "4 11",
+  },
   attFooterLabel: { fontSize: 8.5, color: "rgba(255,255,255,0.75)" },
   attFooterValue: { fontSize: 10, fontFamily: "Helvetica-Bold", color: GOLD },
-  commentsCol:   { flex: 1, flexDirection: "column", gap: 6 },
+  commentsCol: { flex: 1, flexDirection: "column", gap: 6 },
   commentBox: {
-    backgroundColor: LIGHT_BG, borderRadius: 7,
-    border: `1 solid ${BORDER}`, padding: "7 11",
+    backgroundColor: LIGHT_BG,
+    borderRadius: 7,
+    border: `1 solid ${BORDER}`,
+    padding: "7 11",
   },
   commentTitle: {
-    fontSize: 8.5, fontFamily: "Helvetica-Bold", color: NAVY,
-    textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 3,
+    fontSize: 8.5,
+    fontFamily: "Helvetica-Bold",
+    color: NAVY,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 3,
   },
-  commentText: { fontSize: 9, color: "#374151", fontStyle: "italic", lineHeight: 1.5 },
+  commentText: {
+    fontSize: 9,
+    color: "#374151",
+    fontStyle: "italic",
+    lineHeight: 1.5,
+  },
 
   // ── promotion banner
   promotionWrap: { paddingHorizontal: 20, paddingBottom: 7 },
-  promotionBox:  { flexDirection: "row", alignItems: "center", borderRadius: 7, padding: "7 12", gap: 7 },
-  promotionTitle: { fontSize: 10, fontFamily: "Helvetica-Bold", lineHeight: 1.3 },
-  promotionSub:   { fontSize: 8.5, lineHeight: 1.3, marginTop: 1 },
+  promotionBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 7,
+    padding: "7 12",
+    gap: 7,
+  },
+  promotionTitle: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    lineHeight: 1.3,
+  },
+  promotionSub: { fontSize: 8.5, lineHeight: 1.3, marginTop: 1 },
 
   // ── resumption date
   resumptionWrap: { paddingHorizontal: 20, paddingBottom: 7 },
   resumptionBox: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: "#fffbeb", border: `1 solid #fde68a`, borderRadius: 5, padding: "5 11", gap: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fffbeb",
+    border: `1 solid #fde68a`,
+    borderRadius: 5,
+    padding: "5 11",
+    gap: 6,
   },
-  resumptionLabel: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: "#78350f", textTransform: "uppercase" },
-  resumptionValue: { fontSize: 10, fontFamily: "Helvetica-Bold", color: "#92400e", marginLeft: 6 },
+  resumptionLabel: {
+    fontSize: 8.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#78350f",
+    textTransform: "uppercase",
+  },
+  resumptionValue: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    color: "#92400e",
+    marginLeft: 6,
+  },
 
   // ── page 2 banner
   page2Banner: {
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    backgroundColor: TH_BG, borderBottom: `1 solid ${BORDER}`, padding: "5 20",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: TH_BG,
+    borderBottom: `1 solid ${BORDER}`,
+    padding: "5 20",
   },
-  page2BannerName:  { fontSize: 10, fontFamily: "Helvetica-Bold", color: NAVY },
+  page2BannerName: { fontSize: 10, fontFamily: "Helvetica-Bold", color: NAVY },
   page2BannerMuted: { fontSize: 8.5, color: MUTED },
   page2BannerRight: { fontSize: 8.5, color: MUTED, fontStyle: "italic" },
 
   // ── footer
   footer: {
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    backgroundColor: DARK_NAVY, padding: "7 20",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: DARK_NAVY,
+    padding: "7 20",
     marginTop: "auto",
   },
-  footerDate:     { fontSize: 7.5, color: "rgba(255,255,255,0.4)", lineHeight: 1.4 },
-  footerID:       { fontSize: 7.5, color: "rgba(255,255,255,0.3)", marginTop: 1, lineHeight: 1.4 },
-  footerRight:    { alignItems: "flex-end" },
+  footerDate: {
+    fontSize: 7.5,
+    color: "rgba(255,255,255,0.4)",
+    lineHeight: 1.4,
+  },
+  footerID: {
+    fontSize: 7.5,
+    color: "rgba(255,255,255,0.3)",
+    marginTop: 1,
+    lineHeight: 1.4,
+  },
+  footerRight: { alignItems: "flex-end" },
   // footerSigImg:   { height: 40, objectFit: "contain", marginBottom: 2 },
   footerSigImg: { height: 28, objectFit: "contain", marginBottom: -2 },
-footerStampImg: { height: 58, objectFit: "contain", marginBottom: -2 },
-  footerSigLine:  { width: 80, height: 1, backgroundColor: "rgba(255,255,255,0.2)", marginBottom: 3 },
+  footerStampImg: { height: 58, objectFit: "contain", marginBottom: -2 },
+  footerSigLine: {
+    width: 80,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    marginBottom: 3,
+  },
   footerSigLabel: { fontSize: 7.5, color: "rgba(255,255,255,0.4)" },
 });
 
 // ─── PageHeader ───────────────────────────────────────────────────
-function PageHeader({ showQR, qrDataUrl, logoBase64, report }: {
+function PageHeader({
+  showQR,
+  qrDataUrl,
+  logoBase64,
+  report,
+}: {
   showQR: boolean;
   qrDataUrl: string | null;
   logoBase64: string;
@@ -298,16 +518,22 @@ function PageHeader({ showQR, qrDataUrl, logoBase64, report }: {
         {/* {logoBase64
           ? <Image src={logoBase64} style={S.headerLogo} />
           : <View style={S.headerLogoPlaceholder} />} */}
-          {logoBase64
-  ? <Image src={logoBase64} style={S.headerLogo} />
-  : <View style={S.headerLogoPlaceholder} />}
+        {logoBase64 ? (
+          <Image src={logoBase64} style={S.headerLogo} />
+        ) : (
+          <View style={S.headerLogoPlaceholder} />
+        )}
 
         <View style={S.headerCenter}>
-          <Text style={S.headerSchoolName}>God&apos;s Way Model Groups of Schools</Text>
-          <Text style={S.headerMotto}>SOWING THE SEED OF MERIT AND EXCELLENCE</Text>
+          <Text style={S.headerSchoolName}>
+            God&apos;s Way Model Groups of Schools
+          </Text>
+          <Text style={S.headerMotto}>
+            SOWING THE SEED OF MERIT AND EXCELLENCE
+          </Text>
           <Text style={S.headerContact}>
             No 12 Siyanbola Street, Osogbo, Osun State{"\n"}
-            08069825847, 08067110930  |  godswaygroupofschools@gmail.com
+            08069825847, 08067110930 | godswaygroupofschools@gmail.com
           </Text>
         </View>
 
@@ -319,12 +545,27 @@ function PageHeader({ showQR, qrDataUrl, logoBase64, report }: {
             </View>
           ) : (
             <View style={S.headerQrPlaceholder}>
-              <Text style={{ fontSize: 7, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>QR Code</Text>
+              <Text
+                style={{
+                  fontSize: 7,
+                  color: "rgba(255,255,255,0.3)",
+                  textAlign: "center",
+                }}
+              >
+                QR Code
+              </Text>
             </View>
           )
         ) : (
           <View style={S.headerContinueBadge}>
-            <Text style={{ fontSize: 8, color: GOLD, fontFamily: "Helvetica-Bold", textAlign: "center" }}>
+            <Text
+              style={{
+                fontSize: 8,
+                color: GOLD,
+                fontFamily: "Helvetica-Bold",
+                textAlign: "center",
+              }}
+            >
               PAGE 2{"\n"}CONT.
             </Text>
           </View>
@@ -343,20 +584,41 @@ function PageHeader({ showQR, qrDataUrl, logoBase64, report }: {
 }
 
 // ─── StudentInfoStrip ─────────────────────────────────────────────
-function StudentInfoStrip({ report, profilePhotoBase64, avgScore }: {
+function StudentInfoStrip({
+  report,
+  profilePhotoBase64,
+  avgScore,
+}: {
   report: ReportCardPDFProps["report"];
   profilePhotoBase64: string;
   avgScore: string;
 }) {
   const fields = [
-    { label: "Student Name",     value: `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName}` },
-    { label: "Admission No.",    value: report.studentSnapshot.admissionNumber },
-    { label: "Class",            value: report.className },
+    {
+      label: "Student Name",
+      value: `${report.studentSnapshot.surname} ${report.studentSnapshot.firstName} ${report.studentSnapshot.otherName}`,
+    },
+    { label: "Admission No.", value: report.studentSnapshot.admissionNumber },
+    { label: "Class", value: report.className },
     { label: "Academic Session", value: report.sessionName },
-    { label: "Term",             value: `${report.termName.toUpperCase()} TERM` },
-    { label: "Date of Birth",    value: formatDate(report.studentSnapshot.dateOfBirth) },
-    { label: "Gender",           value: report.studentSnapshot.gender.charAt(0).toUpperCase() + report.studentSnapshot.gender.slice(1) },
-    { label: "Department",       value: report.studentSnapshot.department !== "none" ? report.studentSnapshot.department.toUpperCase() : "N/A" },
+    { label: "Term", value: `${report.termName.toUpperCase()} TERM` },
+    {
+      label: "Date of Birth",
+      value: formatDate(report.studentSnapshot.dateOfBirth),
+    },
+    {
+      label: "Gender",
+      value:
+        report.studentSnapshot.gender.charAt(0).toUpperCase() +
+        report.studentSnapshot.gender.slice(1),
+    },
+    {
+      label: "Department",
+      value:
+        report.studentSnapshot.department !== "none"
+          ? report.studentSnapshot.department.toUpperCase()
+          : "N/A",
+    },
   ];
 
   const initials =
@@ -365,19 +627,24 @@ function StudentInfoStrip({ report, profilePhotoBase64, avgScore }: {
     report.studentSnapshot.otherName.charAt(0);
 
   const hasDeptRanking =
-  (report.totalStudentsInDept ?? 0) > 0 &&
-  report.totalStudentsInDept !== report.totalStudentsInClass;
+    (report.totalStudentsInDept ?? 0) > 0 &&
+    report.totalStudentsInDept !== report.totalStudentsInClass;
 
-const deptLabel = report.studentSnapshot.department !== "none"
-  ? report.studentSnapshot.department.toUpperCase()
-  : "DEPT";
+  const deptLabel =
+    report.studentSnapshot.department !== "none"
+      ? report.studentSnapshot.department.toUpperCase()
+      : "DEPT";
   // ────────────────────────────────────────────────────────────────
 
   return (
     <View style={S.studentStrip}>
-      {profilePhotoBase64
-        ? <Image src={profilePhotoBase64} style={S.studentPhoto} />
-        : <View style={S.studentAvatar}><Text style={S.studentAvatarText}>{initials}</Text></View>}
+      {profilePhotoBase64 ? (
+        <Image src={profilePhotoBase64} style={S.studentPhoto} />
+      ) : (
+        <View style={S.studentAvatar}>
+          <Text style={S.studentAvatarText}>{initials}</Text>
+        </View>
+      )}
 
       <View style={S.studentInfoGrid}>
         {fields.map(({ label, value }) => (
@@ -389,70 +656,136 @@ const deptLabel = report.studentSnapshot.department !== "none"
       </View>
 
       <View style={S.perfBox}>
-  <Text style={S.perfScore}>{avgScore}%</Text>
-  <Text style={S.perfLabel}>Overall Score</Text>
-  <Text style={S.perfGrade}>{report.grade}</Text>
-  <Text style={S.perfLabel}>Grade</Text>
-  <View style={S.perfDivider} />
+        <Text style={S.perfScore}>{avgScore}%</Text>
+        <Text style={S.perfLabel}>Overall Score</Text>
+        <Text style={S.perfGrade}>{report.grade}</Text>
+        <Text style={S.perfLabel}>Grade</Text>
+        <View style={S.perfDivider} />
 
-  {hasDeptRanking ? (
-    // ── Two rows: dept position + overall position ──────────────
-    <>
-      {/* Dept position */}
-      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center" }}>
-        <Text style={S.perfPosition}>{getOrdinal(report.position)}</Text>
-        <Text style={S.perfPosSub}> / {report.totalStudentsInDept}</Text>
-      </View>
-      <Text style={[S.perfPosSub, { marginTop: 1 }]}>{deptLabel} DEPT.</Text>
+        {hasDeptRanking ? (
+          // ── Two rows: dept position + overall position ──────────────
+          <>
+            {/* Dept position */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "baseline",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={S.perfPosition}>{getOrdinal(report.position)}</Text>
+              <Text style={S.perfPosSub}> / {report.totalStudentsInDept}</Text>
+            </View>
+            <Text style={[S.perfPosSub, { marginTop: 1 }]}>
+              {deptLabel} DEPT.
+            </Text>
 
-      {/* Thin separator */}
-      <View style={{ width: "100%", height: 1, backgroundColor: "rgba(255,255,255,0.08)", marginVertical: 3 }} />
+            {/* Thin separator */}
+            <View
+              style={{
+                width: "100%",
+                height: 1,
+                backgroundColor: "rgba(255,255,255,0.08)",
+                marginVertical: 3,
+              }}
+            />
 
-      {/* Overall position */}
-      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center" }}>
-        <Text style={[S.perfPosition, { fontSize: 8, color: "rgba(255,255,255,0.75)" }]}>
-          {getOrdinal((report as unknown as { overallPosition?: number }).overallPosition ?? report.position)}
-        </Text>
-        <Text style={[S.perfPosSub, { color: "rgba(255,255,255,0.4)" }]}>
-          {" "}/ {report.totalStudentsInClass}
-        </Text>
+            {/* Overall position */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "baseline",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={[
+                  S.perfPosition,
+                  { fontSize: 8, color: "rgba(255,255,255,0.75)" },
+                ]}
+              >
+                {getOrdinal(
+                  (report as unknown as { overallPosition?: number })
+                    .overallPosition ?? report.position,
+                )}
+              </Text>
+              <Text style={[S.perfPosSub, { color: "rgba(255,255,255,0.4)" }]}>
+                {" "}
+                / {report.totalStudentsInClass}
+              </Text>
+            </View>
+            <Text
+              style={[
+                S.perfPosSub,
+                { marginTop: 1, color: "rgba(255,255,255,0.3)" },
+              ]}
+            >
+              OVERALL STUDENTS
+            </Text>
+          </>
+        ) : (
+          // ── Single row: overall only (Primary / JSS) ───────────────
+          <>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "baseline",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={S.perfPosition}>{getOrdinal(report.position)}</Text>
+              <Text style={S.perfPosSub}> / {report.totalStudentsInClass}</Text>
+            </View>
+            <Text style={[S.perfPosSub, { marginTop: 1 }]}>students</Text>
+          </>
+        )}
       </View>
-      <Text style={[S.perfPosSub, { marginTop: 1, color: "rgba(255,255,255,0.3)" }]}>OVERALL STUDENTS</Text>
-    </>
-  ) : (
-    // ── Single row: overall only (Primary / JSS) ───────────────
-    <>
-      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center" }}>
-        <Text style={S.perfPosition}>{getOrdinal(report.position)}</Text>
-        <Text style={S.perfPosSub}> / {report.totalStudentsInClass}</Text>
-      </View>
-      <Text style={[S.perfPosSub, { marginTop: 1 }]}>students</Text>
-    </>
-  )}
-</View>
     </View>
   );
 }
 
 // ─── SubjectsTable ────────────────────────────────────────────────
 // function SubjectsTable({ report }: { report: ReportCardPDFProps["report"] }) {
-function SubjectsTable({ report, logoBase64 }: { report: ReportCardPDFProps["report"]; logoBase64: string }) {
-
+function SubjectsTable({
+  report,
+  logoBase64,
+}: {
+  report: ReportCardPDFProps["report"];
+  logoBase64: string;
+}) {
   return (
     // <View style={S.tableSection}>
-     <View style={[S.tableSection, { position: "relative" }]}>
+    <View style={[S.tableSection, { position: "relative" }]}>
       {/* Watermark */}
-     {(logoBase64 || SCHOOL_LOGO_URL) ? (
-  <View style={{ position: "absolute", top: "30%", left: "25%", width: 220, height: 220, opacity: 0.07 }}>
-    <Image src={logoBase64} style={{ width: 220, height: 220 }} />
-  </View>
-) : null}
+      {logoBase64 || SCHOOL_LOGO_URL ? (
+        <View
+          style={{
+            position: "absolute",
+            top: "30%",
+            left: "25%",
+            width: 220,
+            height: 220,
+            opacity: 0.07,
+          }}
+        >
+          <Image
+            src={logoBase64 || SCHOOL_LOGO_URL}
+            style={{ width: 220, height: 220 }}
+          />
+        </View>
+      ) : null}
       <Text style={S.tableTitle}>ACADEMIC PERFORMANCE</Text>
 
       {/* Header row */}
       <View style={S.tableHeaderRow}>
         {/* SUBJECT — left aligned */}
-        <View style={[S.colSubject, S.thCell, { alignItems: "flex-start", paddingLeft: 6 }]}>
+        <View
+          style={[
+            S.colSubject,
+            S.thCell,
+            { alignItems: "flex-start", paddingLeft: 6 },
+          ]}
+        >
           <Text style={{ textAlign: "left" }}>SUBJECT</Text>
         </View>
         {/* TEST */}
@@ -488,10 +821,19 @@ function SubjectsTable({ report, logoBase64 }: { report: ReportCardPDFProps["rep
       {report.subjects.map((subject: ISubjectScore, i: number) => (
         <View
           key={subject.subject}
-          style={[S.tableRow, { backgroundColor: i % 2 === 0 ? "#ffffff" : STRIPE }]}
+          style={[
+            S.tableRow,
+            { backgroundColor: i % 2 === 0 ? "#ffffff" : STRIPE },
+          ]}
         >
           {/* Subject — left */}
-          <View style={[S.colSubject, S.tdCell, { alignItems: "flex-start", paddingLeft: 6 }]}>
+          <View
+            style={[
+              S.colSubject,
+              S.tdCell,
+              { alignItems: "flex-start", paddingLeft: 6 },
+            ]}
+          >
             <Text>{subject.subjectName}</Text>
           </View>
           {/* Test — center */}
@@ -504,30 +846,52 @@ function SubjectsTable({ report, logoBase64 }: { report: ReportCardPDFProps["rep
           </View>
           {/* Practical — center */}
           <View style={[S.colPrac, S.tdCell, { alignItems: "center" }]}>
-            <Text style={{ textAlign: "center", color: subject.hasPractical ? "#111" : "#cccccc" }}>
+            <Text
+              style={{
+                textAlign: "center",
+                color: subject.hasPractical ? "#111" : "#cccccc",
+              }}
+            >
               {subject.hasPractical ? subject.practicalScore : "—"}
             </Text>
           </View>
           {/* Total — center, bold */}
           <View style={[S.colTotal, S.tdCell, { alignItems: "center" }]}>
-            <Text style={{
-              textAlign: "center", fontFamily: "Helvetica-Bold",
-              color: subject.totalScore < subject.maxTotalScore * 0.5 ? RED : NAVY,
-            }}>
+            <Text
+              style={{
+                textAlign: "center",
+                fontFamily: "Helvetica-Bold",
+                color:
+                  subject.totalScore < subject.maxTotalScore * 0.5 ? RED : NAVY,
+              }}
+            >
               {subject.totalScore}/{subject.maxTotalScore}
             </Text>
           </View>
           {/* Grade badge — center */}
           <View style={[S.colGrade, S.tdCell, { alignItems: "center" }]}>
-            <View style={[S.gradeBadge, { backgroundColor: gradeBg(subject.grade) }]}>
-              <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: gradeColor(subject.grade) }}>
+            <View
+              style={[
+                S.gradeBadge,
+                { backgroundColor: gradeBg(subject.grade) },
+              ]}
+            >
+              <Text
+                style={{
+                  fontSize: 8,
+                  fontFamily: "Helvetica-Bold",
+                  color: gradeColor(subject.grade),
+                }}
+              >
                 {subject.grade}
               </Text>
             </View>
           </View>
           {/* Remark — center */}
           <View style={[S.colRemark, S.tdCell, { alignItems: "center" }]}>
-            <Text style={{ textAlign: "center", color: MUTED, fontSize: 8.5 }}>{subject.remark}</Text>
+            <Text style={{ textAlign: "center", color: MUTED, fontSize: 8.5 }}>
+              {subject.remark}
+            </Text>
           </View>
         </View>
       ))}
@@ -535,7 +899,13 @@ function SubjectsTable({ report, logoBase64 }: { report: ReportCardPDFProps["rep
       {/* Footer row — one cell per column (no colSpan in react-pdf) */}
       <View style={S.tableFooterRow}>
         {/* col: SUBJECT — "TOTAL" label */}
-        <View style={[S.colSubject, S.tfCell, { alignItems: "flex-start", paddingLeft: 6 }]}>
+        <View
+          style={[
+            S.colSubject,
+            S.tfCell,
+            { alignItems: "flex-start", paddingLeft: 6 },
+          ]}
+        >
           <Text>TOTAL</Text>
         </View>
         {/* col: TEST — empty */}
@@ -546,19 +916,39 @@ function SubjectsTable({ report, logoBase64 }: { report: ReportCardPDFProps["rep
         <View style={[S.colPrac, S.tfCell]} />
         {/* col: TOTAL — score */}
         <View style={[S.colTotal, S.tfCell, { alignItems: "center" }]}>
-          <Text style={{ textAlign: "center", color: GOLD, fontSize: 10, fontFamily: "Helvetica-Bold" }}>
+          <Text
+            style={{
+              textAlign: "center",
+              color: GOLD,
+              fontSize: 10,
+              fontFamily: "Helvetica-Bold",
+            }}
+          >
             {report.totalObtained}/{report.totalObtainable}
           </Text>
         </View>
         {/* col: GRADE — grade letter */}
         <View style={[S.colGrade, S.tfCell, { alignItems: "center" }]}>
-          <Text style={{ textAlign: "center", color: GOLD, fontSize: 10, fontFamily: "Helvetica-Bold" }}>
+          <Text
+            style={{
+              textAlign: "center",
+              color: GOLD,
+              fontSize: 10,
+              fontFamily: "Helvetica-Bold",
+            }}
+          >
             {report.grade}
           </Text>
         </View>
         {/* col: REMARK — percentage */}
         <View style={[S.colRemark, S.tfCell, { alignItems: "center" }]}>
-          <Text style={{ textAlign: "center", color: "rgba(255,255,255,0.85)", fontSize: 9 }}>
+          <Text
+            style={{
+              textAlign: "center",
+              color: "rgba(255,255,255,0.85)",
+              fontSize: 9,
+            }}
+          >
             {report.percentage.toFixed(1)}%
           </Text>
         </View>
@@ -571,18 +961,27 @@ function SubjectsTable({ report, logoBase64 }: { report: ReportCardPDFProps["rep
 function GradeScale() {
   const grades = [
     { grade: "A", range: "70–100%", bg: "#d1fae5", text: "#065f46" },
-    { grade: "B", range: "60–69%",  bg: "#dbeafe", text: "#1e40af" },
-    { grade: "C", range: "50–59%",  bg: "#fef3c7", text: "#92400e" },
-    { grade: "D", range: "49–45%",  bg: "#f3f4f6", text: "#374151" },
-    { grade: "E", range: "44–40%",  bg: "#fde68a", text: "#78350f" },
-    { grade: "F", range: "0–39%",   bg: "#fee2e2", text: "#991b1b" },
+    { grade: "B", range: "60–69%", bg: "#dbeafe", text: "#1e40af" },
+    { grade: "C", range: "50–59%", bg: "#fef3c7", text: "#92400e" },
+    { grade: "D", range: "49–45%", bg: "#f3f4f6", text: "#374151" },
+    { grade: "E", range: "44–40%", bg: "#fde68a", text: "#78350f" },
+    { grade: "F", range: "0–39%", bg: "#fee2e2", text: "#991b1b" },
   ];
   return (
     <View style={S.gradeScaleRow}>
       <Text style={S.gradeScaleLabel}>Grade Scale:</Text>
       {grades.map((g) => (
-        <View key={g.grade} style={[S.gradeScaleBadge, { backgroundColor: g.bg }]}>
-          <Text style={{ color: g.text, fontSize: 7.5, fontFamily: "Helvetica-Bold" }}>
+        <View
+          key={g.grade}
+          style={[S.gradeScaleBadge, { backgroundColor: g.bg }]}
+        >
+          <Text
+            style={{
+              color: g.text,
+              fontSize: 7.5,
+              fontFamily: "Helvetica-Bold",
+            }}
+          >
             {g.grade}: {g.range}
           </Text>
         </View>
@@ -592,7 +991,10 @@ function GradeScale() {
 }
 
 // ─── AttendanceAndComments ────────────────────────────────────────
-function AttendanceAndComments({ report, stampBase64 }: {
+function AttendanceAndComments({
+  report,
+  stampBase64,
+}: {
   report: ReportCardPDFProps["report"];
   stampBase64: string;
 }) {
@@ -602,9 +1004,12 @@ function AttendanceAndComments({ report, stampBase64 }: {
         <View style={S.attInner}>
           <Text style={S.attTitle}>Attendance Record</Text>
           {[
-            { label: "School Days Open", value: report.attendance.schoolDaysOpen },
-            { label: "Days Present",     value: report.attendance.daysPresent },
-            { label: "Days Absent",      value: report.attendance.daysAbsent },
+            {
+              label: "School Days Open",
+              value: report.attendance.schoolDaysOpen,
+            },
+            { label: "Days Present", value: report.attendance.daysPresent },
+            { label: "Days Absent", value: report.attendance.daysAbsent },
           ].map(({ label, value }) => (
             <View key={label} style={S.attRow}>
               <Text style={S.attRowLabel}>{label}:</Text>
@@ -614,33 +1019,41 @@ function AttendanceAndComments({ report, stampBase64 }: {
         </View>
         <View style={S.attFooter}>
           <Text style={S.attFooterLabel}>Attendance Rate:</Text>
-          <Text style={S.attFooterValue}>{report.attendance.attendancePercentage.toFixed(0)}%</Text>
+          <Text style={S.attFooterValue}>
+            {report.attendance.attendancePercentage.toFixed(0)}%
+          </Text>
         </View>
       </View>
 
       <View style={S.commentsCol}>
         <View style={S.commentBox}>
           <Text style={S.commentTitle}>Class Teacher&apos;s Comment</Text>
-          <Text style={S.commentText}>{report.teacherComment ?? "No comment provided."}</Text>
+          <Text style={S.commentText}>
+            {report.teacherComment ?? "No comment provided."}
+          </Text>
         </View>
-        <View style={[S.commentBox, { position: "relative", overflow: "hidden" }]}>
-  {stampBase64 ? (
-    <Image
-      src={stampBase64}
-      style={{
-        position: "absolute",
-        width: 90,
-        height: 55,
-        bottom: 0,
-        right: 4,
-        opacity: 0.75,
-        transform: "rotate(-12deg)",
-      }}
-    />
-  ) : null}
-  <Text style={S.commentTitle}>Proprietress&apos;s Comment</Text>
-  <Text style={S.commentText}>{report.principalComment ?? "Keep up the good work!"}</Text>
-</View>
+        <View
+          style={[S.commentBox, { position: "relative", overflow: "hidden" }]}
+        >
+          {stampBase64 ? (
+            <Image
+              src={stampBase64}
+              style={{
+                position: "absolute",
+                width: 90,
+                height: 55,
+                bottom: 0,
+                right: 4,
+                opacity: 0.75,
+                transform: "rotate(-12deg)",
+              }}
+            />
+          ) : null}
+          <Text style={S.commentTitle}>Proprietress&apos;s Comment</Text>
+          <Text style={S.commentText}>
+            {report.principalComment ?? "Keep up the good work!"}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -648,53 +1061,104 @@ function AttendanceAndComments({ report, stampBase64 }: {
 
 // ─── PromotionBanner ──────────────────────────────────────────────
 function PromotionBanner({ report }: { report: ReportCardPDFProps["report"] }) {
-  if (report.termName !== TermName.THIRD || !report.promotedToClass) return null;
+  if (report.termName !== TermName.THIRD || !report.promotedToClass)
+    return null;
 
-  const map: Record<string, { bg: string; border: string; label: string; title: string; subtitle: string; tc: string; sc: string; labelBg: string }> = {
+  const map: Record<
+    string,
+    {
+      bg: string;
+      border: string;
+      label: string;
+      title: string;
+      subtitle: string;
+      tc: string;
+      sc: string;
+      labelBg: string;
+    }
+  > = {
     "Pending Department Assignment": {
-      bg: "#fef3c7", border: "#fde68a",
-      label: "PENDING", labelBg: "#f59e0b",
+      bg: "#fef3c7",
+      border: "#fde68a",
+      label: "PENDING",
+      labelBg: "#f59e0b",
       title: "DEPARTMENT ASSIGNMENT PENDING",
-      subtitle: "Your child has passed! Admin will assign your SSS 1 class and department shortly.",
-      tc: "#92400e", sc: "#78350f",
+      subtitle:
+        "Your child has passed! Admin will assign your SSS 1 class and department shortly.",
+      tc: "#92400e",
+      sc: "#78350f",
     },
-    "Graduated": {
-      bg: "#a7f3d0", border: "#6ee7b7",
-      label: "GRADUATED", labelBg: "#059669",
+    Graduated: {
+      bg: "#a7f3d0",
+      border: "#6ee7b7",
+      label: "GRADUATED",
+      labelBg: "#059669",
       title: "CONGRATULATIONS — GRADUATED!",
       subtitle: "Your child has successfully completed SSS 3. Well done!",
-      tc: "#065f46", sc: "#065f46",
+      tc: "#065f46",
+      sc: "#065f46",
     },
     "Performance Under Review": {
-      bg: "#fecaca", border: "#fca5a5",
-      label: "REVIEW", labelBg: "#dc2626",
+      bg: "#fecaca",
+      border: "#fca5a5",
+      label: "REVIEW",
+      labelBg: "#dc2626",
       title: "PERFORMANCE UNDER REVIEW",
       subtitle: "Please contact the school for further information.",
-      tc: "#991b1b", sc: "#7f1d1d",
+      tc: "#991b1b",
+      sc: "#7f1d1d",
     },
   };
 
-  const cfg = map[report.promotedToClass] ?? (report.isPromoted ? {
-    bg: "#a7f3d0", border: "#6ee7b7",
-    label: "PROMOTED", labelBg: "#059669",
-    title: `PROMOTED TO: ${report.promotedToClass}`,
-    subtitle: "Congratulations! Continue to excel in the next academic year.",
-    tc: "#065f46", sc: "#065f46",
-  } : null);
+  const cfg =
+    map[report.promotedToClass] ??
+    (report.isPromoted
+      ? {
+          bg: "#a7f3d0",
+          border: "#6ee7b7",
+          label: "PROMOTED",
+          labelBg: "#059669",
+          title: `PROMOTED TO: ${report.promotedToClass}`,
+          subtitle:
+            "Congratulations! Continue to excel in the next academic year.",
+          tc: "#065f46",
+          sc: "#065f46",
+        }
+      : null);
 
   if (!cfg) return null;
 
   return (
     <View style={S.promotionWrap}>
-      <View style={[S.promotionBox, { backgroundColor: cfg.bg, border: `1 solid ${cfg.border}` }]}>
-        <View style={{ backgroundColor: cfg.labelBg, borderRadius: 4, paddingVertical: 3, paddingHorizontal: 6 }}>
-          <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: "#ffffff" }}>
+      <View
+        style={[
+          S.promotionBox,
+          { backgroundColor: cfg.bg, border: `1 solid ${cfg.border}` },
+        ]}
+      >
+        <View
+          style={{
+            backgroundColor: cfg.labelBg,
+            borderRadius: 4,
+            paddingVertical: 3,
+            paddingHorizontal: 6,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 7,
+              fontFamily: "Helvetica-Bold",
+              color: "#ffffff",
+            }}
+          >
             {cfg.label}
           </Text>
         </View>
         <View>
           <Text style={[S.promotionTitle, { color: cfg.tc }]}>{cfg.title}</Text>
-          <Text style={[S.promotionSub, { color: cfg.sc }]}>{cfg.subtitle}</Text>
+          <Text style={[S.promotionSub, { color: cfg.sc }]}>
+            {cfg.subtitle}
+          </Text>
         </View>
       </View>
     </View>
@@ -707,22 +1171,36 @@ function ResumptionDate({ report }: { report: ReportCardPDFProps["report"] }) {
   return (
     <View style={S.resumptionWrap}>
       <View style={S.resumptionBox}>
-        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#f59e0b" }} />
+        <View
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: "#f59e0b",
+          }}
+        />
         <Text style={S.resumptionLabel}>Next Term Resumption:</Text>
-        <Text style={S.resumptionValue}>{formatDate(report.nextTermResumptionDate)}</Text>
+        <Text style={S.resumptionValue}>
+          {formatDate(report.nextTermResumptionDate)}
+        </Text>
       </View>
     </View>
   );
 }
 
 // ─── PageFooter ───────────────────────────────────────────────────
-function PageFooter({ report, signatureBase64 }: {
+function PageFooter({
+  report,
+  signatureBase64,
+}: {
   report: ReportCardPDFProps["report"];
   signatureBase64: string;
   // stampBase64: string;
 }) {
   const today = new Date().toLocaleDateString("en-NG", {
-    day: "2-digit", month: "long", year: "numeric",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
   });
   return (
     <View style={S.footer}>
@@ -733,18 +1211,29 @@ function PageFooter({ report, signatureBase64 }: {
         </Text> */}
       </View>
       <View style={S.footerRight}>
-        
-        <View style={{ flexDirection: "row", gap: 8, marginBottom: 1, alignItems: "center" }}>
-  {signatureBase64 ? <Image src={signatureBase64} style={S.footerSigImg} /> : null}
-  {!signatureBase64 && <View style={S.footerSigLine} />}
-</View>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 8,
+            marginBottom: 1,
+            alignItems: "center",
+          }}
+        >
+          {signatureBase64 ? (
+            <Image src={signatureBase64} style={S.footerSigImg} />
+          ) : null}
+          {!signatureBase64 && <View style={S.footerSigLine} />}
+        </View>
       </View>
     </View>
   );
 }
 
 // ─── ReportCardDocument ───────────────────────────────────────────
-function ReportCardDocument({ report, assets }: {
+function ReportCardDocument({
+  report,
+  assets,
+}: {
   report: ReportCardPDFProps["report"];
   assets: {
     qrDataUrl: string | null;
@@ -755,7 +1244,7 @@ function ReportCardDocument({ report, assets }: {
   };
 }) {
   const isTwoPage = report.subjects.length > TWO_PAGE_THRESHOLD;
-  const avgScore  = report.percentage.toFixed(1);
+  const avgScore = report.percentage.toFixed(1);
 
   return (
     <Document
@@ -764,26 +1253,48 @@ function ReportCardDocument({ report, assets }: {
     >
       {/* ══ PAGE 1 ══ */}
       <Page size="A4" style={S.page}>
-        <PageHeader showQR qrDataUrl={assets.qrDataUrl} logoBase64={assets.logoBase64} report={report} />
-        <StudentInfoStrip report={report} profilePhotoBase64={assets.profilePhotoBase64} avgScore={avgScore} />
+        <PageHeader
+          showQR
+          qrDataUrl={assets.qrDataUrl}
+          logoBase64={assets.logoBase64}
+          report={report}
+        />
+        <StudentInfoStrip
+          report={report}
+          profilePhotoBase64={assets.profilePhotoBase64}
+          avgScore={avgScore}
+        />
         {/* <SubjectsTable report={report} /> */}
         <SubjectsTable report={report} logoBase64={assets.logoBase64} />
-
 
         {!isTwoPage && (
           <>
             <GradeScale />
             {/* <AttendanceAndComments report={report} /> */}
-            <AttendanceAndComments report={report} stampBase64={assets.stampBase64} />
+            <AttendanceAndComments
+              report={report}
+              stampBase64={assets.stampBase64}
+            />
             <PromotionBanner report={report} />
             <ResumptionDate report={report} />
           </>
         )}
 
         {isTwoPage && (
-          <View style={{ padding: "8 20", backgroundColor: "#f0f4f8", margin: "8 20", borderRadius: 6, border: "1 dashed #cbd5e1" }}>
-            <Text style={{ fontSize: 8.5, color: "#475569", fontStyle: "italic" }}>
-              Attendance record, teacher comments, and other details are continued on Page 2.
+          <View
+            style={{
+              padding: "8 20",
+              backgroundColor: "#f0f4f8",
+              margin: "8 20",
+              borderRadius: 6,
+              border: "1 dashed #cbd5e1",
+            }}
+          >
+            <Text
+              style={{ fontSize: 8.5, color: "#475569", fontStyle: "italic" }}
+            >
+              Attendance record, teacher comments, and other details are
+              continued on Page 2.
             </Text>
           </View>
         )}
@@ -794,15 +1305,31 @@ function ReportCardDocument({ report, assets }: {
       {/* ══ PAGE 2 ══ */}
       {isTwoPage && (
         <Page size="A4" style={S.page}>
-          <PageHeader showQR={false} qrDataUrl={null} logoBase64={assets.logoBase64} report={report} />
+          <PageHeader
+            showQR={false}
+            qrDataUrl={null}
+            logoBase64={assets.logoBase64}
+            report={report}
+          />
 
           <View style={S.page2Banner}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Text style={[S.page2BannerMuted, { textTransform: "uppercase", letterSpacing: 0.4, marginRight: 4 }]}>
+              <Text
+                style={[
+                  S.page2BannerMuted,
+                  {
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                    marginRight: 4,
+                  },
+                ]}
+              >
                 Student:
               </Text>
               <Text style={S.page2BannerName}>
-                {report.studentSnapshot.surname} {report.studentSnapshot.firstName} {report.studentSnapshot.otherName}
+                {report.studentSnapshot.surname}{" "}
+                {report.studentSnapshot.firstName}{" "}
+                {report.studentSnapshot.otherName}
               </Text>
               <Text style={[S.page2BannerMuted, { marginLeft: 8 }]}>
                 · {report.studentSnapshot.admissionNumber}
@@ -815,10 +1342,16 @@ function ReportCardDocument({ report, assets }: {
 
           <GradeScale />
           {/* <AttendanceAndComments report={report} /> */}
-          <AttendanceAndComments report={report} stampBase64={assets.stampBase64} />
+          <AttendanceAndComments
+            report={report}
+            stampBase64={assets.stampBase64}
+          />
           <PromotionBanner report={report} />
           <ResumptionDate report={report} />
-          <PageFooter report={report} signatureBase64={assets.signatureBase64}  />
+          <PageFooter
+            report={report}
+            signatureBase64={assets.signatureBase64}
+          />
         </Page>
       )}
     </Document>
@@ -831,25 +1364,30 @@ export async function downloadReportCardPDF(
 ): Promise<void> {
   console.log("[PDF] Starting download...");
 
- 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-const qrDataUrl = await QRCode.toDataURL(
-  `${baseUrl}/verify-report/${report._id}`,
-  { width: 100, margin: 1 },
-).catch(() => null);
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+  const qrDataUrl = await QRCode.toDataURL(
+    `${baseUrl}/verify-report/${report._id}`,
+    { width: 100, margin: 1 },
+  ).catch(() => null);
 
   console.log("[PDF] QR generated:", !!qrDataUrl);
 
-  const [logoBase64, profilePhotoBase64, signatureBase64, stampBase64] =
+  const [logoBase64Raw, profilePhotoBase64, signatureBase64, stampBase64] =
     await Promise.all([
       toBase64(SCHOOL_LOGO_URL),
-      report.studentSnapshot.profilePhoto ? toBase64(report.studentSnapshot.profilePhoto) : Promise.resolve(""),
-      report.principalSignature           ? toBase64(report.principalSignature)           : Promise.resolve(""),
-      report.schoolStamp                  ? toBase64(report.schoolStamp)                  : Promise.resolve(""),
+      report.studentSnapshot.profilePhoto
+        ? toBase64(report.studentSnapshot.profilePhoto)
+        : Promise.resolve(""),
+      report.principalSignature
+        ? toBase64(report.principalSignature)
+        : Promise.resolve(""),
+      report.schoolStamp ? toBase64(report.schoolStamp) : Promise.resolve(""),
     ]);
 
+  const logoBase64 = logoBase64Raw || SCHOOL_LOGO_URL;
+
   console.log("[PDF] Assets:", {
-    logoBase64: logoBase64.slice(0, 40),       // shows "data:image/png;base64,..." or ""
+    logoBase64: logoBase64.slice(0, 40), // shows "data:image/png;base64,..." or ""
     profilePhotoBase64: profilePhotoBase64.slice(0, 40),
     signatureBase64: signatureBase64.slice(0, 40),
     stampBase64: stampBase64.slice(0, 40),
@@ -858,13 +1396,19 @@ const qrDataUrl = await QRCode.toDataURL(
   const blob = await pdf(
     <ReportCardDocument
       report={report}
-      assets={{ qrDataUrl, logoBase64, profilePhotoBase64, signatureBase64, stampBase64 }}
+      assets={{
+        qrDataUrl,
+        logoBase64,
+        profilePhotoBase64,
+        signatureBase64,
+        stampBase64,
+      }}
     />,
   ).toBlob();
 
   const url = URL.createObjectURL(blob);
-  const a   = document.createElement("a");
-  a.href     = url;
+  const a = document.createElement("a");
+  a.href = url;
   a.download = `ReportCard_${report.studentSnapshot.admissionNumber}_${report.termName}_${report.sessionName}.pdf`;
   document.body.appendChild(a);
   a.click();
@@ -878,8 +1422,11 @@ export function ReportCardPDFDownloadButton({ report }: ReportCardPDFProps) {
 
   async function handleClick() {
     setLoading(true);
-    try { await downloadReportCardPDF(report); }
-    finally { setLoading(false); }
+    try {
+      await downloadReportCardPDF(report);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -888,7 +1435,16 @@ export function ReportCardPDFDownloadButton({ report }: ReportCardPDFProps) {
       disabled={loading}
       className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1e3a5f] text-white text-sm font-medium hover:bg-[#152847] transition-colors disabled:opacity-50"
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
         <polyline points="7 10 12 15 17 10" />
         <line x1="12" y1="15" x2="12" y2="3" />

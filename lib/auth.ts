@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/db";
 import UserModel from "@/models/User";
 import { UserRole, UserStatus } from "@/types/enums";
 import type { IUser } from "@/types";
+import StudentModel from "@/models/Student";
 
 export const authConfig: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -99,26 +100,31 @@ if (loginType === "parent") {
         // 2. STUDENT LOGIN — via admission number + own password
         // ─────────────────────────────────────────────────────────────
         if (loginType === "student") {
-          const admissionNumber = credentials.admissionNumber as string;
-          const password = credentials.password as string;
+  const admissionNumber = credentials.admissionNumber as string;
+  const email = credentials.email as string;
+  const password = credentials.password as string;
 
-          if (!admissionNumber || !password) return null;
+  if (!password) return null;
 
-          const StudentModel = (await import("@/models/Student")).default;
+  let student;
 
-          // Find student by admission number
-          const student = await StudentModel.findOne({
-            admissionNumber: admissionNumber.toUpperCase(),
-            studentStatus: "active",
-          }).lean();
+  if (admissionNumber) {
+    student = await StudentModel.findOne({
+      admissionNumber: admissionNumber.toUpperCase(),
+      studentStatus: "active",
+    }).lean();
+  } else if (email) {
+    student = await StudentModel.findOne({
+      email: email.toLowerCase(),
+      studentStatus: "active",
+    }).lean();
+  } else {
+    return null;
+  }
 
-          if (!student) return null;
+  if (!student) return null;
 
-          // The student's password lives on the base User document (same _id,
-          // discriminator pattern), so we fetch it from UserModel directly.
-          const user = await UserModel.findById(student._id)
-            .select("+password")
-            .lean();
+  const user = await UserModel.findById(student._id).select("+password").lean();
 
           if (!user) return null;
 
