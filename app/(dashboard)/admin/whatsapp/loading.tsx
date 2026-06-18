@@ -1,5 +1,3 @@
-// import PageLoader from "@/components/PageLoader"
-// export default PageLoader
 
 export default function Loading() {
   return (

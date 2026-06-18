@@ -157,13 +157,7 @@ export default function SignInForm() {
     try {
       const isAdmission = data.loginMethod === "admissionNumber";
 
-      // const result = await signIn("credentials", {
-      //   ...(isAdmission
-      //     ? { admissionNumber: data.admissionNumber, loginType: "student" }
-      //     : { email: data.email, loginType: "staff" }),
-      //   password: data.password,
-      //   redirect: false,
-      // });
+      
       // ✅ After — always send loginType: "student"
       const result = await signIn("credentials", {
         ...(isAdmission

@@ -56,61 +56,6 @@ function gradeColor(g: string) {
   return "#92400e";
 }
 
-// Returns the correct denominator for position display.
-// For SS students with a department, uses totalStudentsInDept.
-// For Primary/JSS (department === "none" or missing), falls back to totalStudentsInClass.
-// function resolvePositionDenominator(report: ReportCardPDFProps["report"]): number {
-//   const dept = report.studentSnapshot?.department;
-//   const hasDept = dept && dept !== "none";
-//   const deptCount = report.totalStudentsInDept;
-
-//   if (hasDept && deptCount && deptCount > 0 && deptCount !== report.totalStudentsInClass) {
-//     return deptCount;
-//   }
-//   return report.totalStudentsInClass;
-// }
-
-// Returns the label shown below the position (e.g. "in dept" vs "in class")
-// function resolvePositionLabel(report: ReportCardPDFProps["report"]): string {
-//   const dept = report.studentSnapshot?.department;
-//   const hasDept = dept && dept !== "none";
-//   const deptCount = report.totalStudentsInDept;
-
-//   if (hasDept && deptCount && deptCount > 0 && deptCount !== report.totalStudentsInClass) {
-//     return "in dept";
-//   }
-//   return "students";
-// }
-
-// async function toBase64(url: string): Promise<string> {
-//   try {
-//     const res  = await fetch(url);
-//     const blob = await res.blob();
-//     return new Promise((resolve, reject) => {
-//       const r = new FileReader();
-//       r.onloadend = () => resolve(r.result as string);
-//       r.onerror   = reject;
-//       r.readAsDataURL(blob);
-//     });
-//   } catch {
-//     return "";
-//   }
-// }
-// async function toBase64(url: string): Promise<string> {
-//   try {
-//     const res = await fetch(url);
-//     if (!res.ok) return url; // ← fall back to URL if fetch fails
-//     const blob = await res.blob();
-//     return new Promise((resolve, reject) => {
-//       const r = new FileReader();
-//       r.onloadend = () => resolve(r.result as string);
-//       r.onerror   = () => resolve(url); // ← fall back to URL on read error
-//       r.readAsDataURL(blob);
-//     });
-//   } catch {
-//     return url; // ← fall back to URL on network error
-//   }
-// }
 async function toBase64(url: string): Promise<string> {
   try {
     const proxied = url.startsWith("http")
@@ -419,11 +364,6 @@ function StudentInfoStrip({ report, profilePhotoBase64, avgScore }: {
     report.studentSnapshot.firstName.charAt(0) +
     report.studentSnapshot.otherName.charAt(0);
 
-  // ── Resolve position denominator and label ──────────────────────
-  // SS students: show position out of department count (e.g. 2/16)
-  // Primary/JSS: show position out of class count (e.g. 3/25) — same as before
-  // const positionDenominator = resolvePositionDenominator(report);
-  // const positionLabel       = resolvePositionLabel(report);
   const hasDeptRanking =
   (report.totalStudentsInDept ?? 0) > 0 &&
   report.totalStudentsInDept !== report.totalStudentsInClass;
@@ -793,11 +733,7 @@ function PageFooter({ report, signatureBase64 }: {
         </Text> */}
       </View>
       <View style={S.footerRight}>
-        {/* <View style={{ flexDirection: "row", gap: 8, marginBottom: 3, alignItems: "center" }}>
-          {signatureBase64 ? <Image src={signatureBase64} style={S.footerSigImg} /> : null}
-          {stampBase64     ? <Image src={stampBase64}     style={S.footerSigImg} /> : null}
-          {!signatureBase64 && !stampBase64 && <View style={S.footerSigLine} />}
-        </View> */}
+        
         <View style={{ flexDirection: "row", gap: 8, marginBottom: 1, alignItems: "center" }}>
   {signatureBase64 ? <Image src={signatureBase64} style={S.footerSigImg} /> : null}
   {!signatureBase64 && <View style={S.footerSigLine} />}
@@ -895,10 +831,12 @@ export async function downloadReportCardPDF(
 ): Promise<void> {
   console.log("[PDF] Starting download...");
 
-  const qrDataUrl = await QRCode.toDataURL(
-    `${window.location.origin}/verify-report/${report._id}`,
-    { width: 100, margin: 1 },
-  ).catch(() => null);
+ 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+const qrDataUrl = await QRCode.toDataURL(
+  `${baseUrl}/verify-report/${report._id}`,
+  { width: 100, margin: 1 },
+).catch(() => null);
 
   console.log("[PDF] QR generated:", !!qrDataUrl);
 

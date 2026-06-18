@@ -206,25 +206,6 @@ export default function TeacherResultsView() {
     });
   }
 
-  // async function autoFillAttendance(studentId: string) {
-  //   if (!selectedAssignment || !selectedTerm || attendanceFetched.has(studentId) || fetchingAttendance.has(studentId)) return;
-  //   const termObj = selectedAssignment.session.terms.find((t) => t._id === selectedTerm);
-  //   if (!termObj) return;
-  //   setFetchingAttendance((prev) => new Set(prev).add(studentId));
-  //   const summary = await fetchAttendanceSummary(
-  //     selectedAssignment.class._id, selectedAssignment.session._id,
-  //     selectedTerm, termObj.name, studentId,
-  //   );
-  //   setAttendanceFetched((prev) => new Set(prev).add(studentId));
-  //   setFetchingAttendance((prev) => { const next = new Set(prev); next.delete(studentId); return next; });
-  //   if (!summary) return;
-  //   setDrafts((prev) => {
-  //     const existing = prev[studentId];
-  //     if (!existing) return prev;
-  //     if (existing.attendance.schoolDaysOpen > 0) return prev;
-  //     return { ...prev, [studentId]: { ...existing, attendance: { schoolDaysOpen: summary.schoolDaysOpen, daysPresent: summary.daysPresent, daysAbsent: summary.daysAbsent } } };
-  //   });
-  // }
   async function autoFillAttendance(studentId: string) {
   if (!selectedAssignment || !selectedTerm || fetchingAttendance.has(studentId)) return;
   const termObj = selectedAssignment.session.terms.find((t) => t._id === selectedTerm);
@@ -479,11 +460,7 @@ export default function TeacherResultsView() {
                   isExpanded={expandedStudents.has(student._id)} saving={saving === student._id}
                   isFetchingAttendance={fetchingAttendance.has(student._id)}
                   adminExcludedIds={adminExcludedIds}
-                  // onToggle={() => {
-                  //   initStudentDraft(student._id);
-                  //   toggleExpanded(student._id);
-                  //   if (!expandedStudents.has(student._id)) setTimeout(() => autoFillAttendance(student._id), 50);
-                  // }}
+                
                   onToggle={() => {
   initStudentDraft(student._id);
   toggleExpanded(student._id);

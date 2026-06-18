@@ -35,15 +35,7 @@ const GRADE_SCALE_H = 38;
 const ATTENDANCE_COMMENTS_H = 136;
 const FOOTER_H = 48;
 
-// const FIXED_TOTAL =
-//   HEADER_H +
-//   STUDENT_STRIP_H +
-//   TABLE_TITLE_H +
-//   TABLE_HEADER_H +
-//   TABLE_FOOTER_H +
-//   GRADE_SCALE_H +
-//   ATTENDANCE_COMMENTS_H +
-//   FOOTER_H;
+
 const FIXED_TOTAL =
   HEADER_H + STUDENT_STRIP_H + TABLE_TITLE_H + TABLE_HEADER_H +
   TABLE_FOOTER_H + GRADE_SCALE_H + FOOTER_H;
@@ -107,9 +99,6 @@ export default function ReportCardComponent({
   const isThirdTerm = report.termName === TermName.THIRD;
   const avgScore = report.percentage.toFixed(1);
 
-  // ── Determine whether this report uses department-based ranking ───────────
-  // A report uses dept ranking when totalStudentsInDept differs from totalStudentsInClass.
-  // For Primary/JSS these are always equal so only one position row shows.
   const hasDeptRanking =
     report.totalStudentsInDept > 0 &&
     report.totalStudentsInDept !== report.totalStudentsInClass;
@@ -131,12 +120,14 @@ export default function ReportCardComponent({
     return () => observer.disconnect();
   }, []);
 
+  
   async function generateQR() {
-    return QRCode.toDataURL(
-      `${window.location.origin}/verify-report/${report._id}`,
-      { width: 100, margin: 1 },
-    );
-  }
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+  return QRCode.toDataURL(
+    `${baseUrl}/verify-report/${report._id}`,
+    { width: 100, margin: 1 },
+  );
+}
 
   async function convertImageToBase64(url: string): Promise<string> {
     try {
@@ -549,14 +540,7 @@ export default function ReportCardComponent({
 
   function AttendanceAndComments() {
     return (
-      // <div style={{
-      //   padding: "0 24px 8px",
-      //   display: "grid",
-      //   gridTemplateColumns: "1fr 1fr",
-      //   gap: 10,
-      //   flexShrink: 0,
-      //   height: ATTENDANCE_COMMENTS_H,
-      // }}>
+    
       <div style={{
   padding: "0 24px 8px",
   display: "grid",

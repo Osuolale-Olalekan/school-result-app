@@ -34,36 +34,7 @@ export async function GET(request: NextRequest) {
       ? [childId]
       : parent.children.map((c: unknown) => String(c));
 
-    // const children = await StudentModel.find(
-    //   { _id: { $in: childIds } },
-    //   { currentClass: 1, firstName: 1, surname: 1 }
-    // ).lean();
-
-    // const results = await Promise.all(
-    //   children.map(async (child) => {
-    //     const query: Record<string, unknown> = { classId: child.currentClass };
-    //     if (sessionId) query.sessionId = sessionId;
-    //     if (termId)    query.termId    = termId;
-
-    //     const timetable = await TimetableModel.findOne(query)
-    //       .populate("classId",           "name section")
-    //       .populate("sessionId",         "name")
-    //       .populate("termId",            "name")
-    //       .populate("periods.subjectId", "name")
-    //       .populate("periods.teacherId", "firstName surname")
-    //       .lean();
-
-    //     return {
-    //       child: {
-    //         _id:       child._id,
-    //         firstName: child.firstName,
-    //         surname:   child.surname,
-    //       },
-    //       timetable: timetable ?? null,
-    //     };
-    //   })
-    // );
-    const children = await StudentModel.find(
+        const children = await StudentModel.find(
   { _id: { $in: childIds } },
   { currentClass: 1 }
 ).lean();

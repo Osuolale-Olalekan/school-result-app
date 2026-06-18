@@ -49,11 +49,7 @@ const StudentSchema = new Schema<IStudentDocument>(
 StudentSchema.index({ currentClass: 1, studentStatus: 1 });
 StudentSchema.index({ parents: 1 });
 
-// const StudentModel: Model<IStudentDocument> =
-//   mongoose.models.Student ??
-//   UserModel.discriminator<IStudentDocument>("student", StudentSchema);
 
-// export default StudentModel;
 
 let StudentModel: Model<IStudentDocument>;
 

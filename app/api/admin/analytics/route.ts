@@ -59,14 +59,7 @@ export async function GET(): Promise<
       AuditLogModel.find().sort({ createdAt: -1 }).limit(10).lean(),
     ]);
 
-    // Students by class
-    // const studentsByClassRaw = await UserModel.aggregate([
-    //   { $match: { role: UserRole.STUDENT } },
-    //   { $lookup: { from: "classes", localField: "currentClass", foreignField: "_id", as: "classInfo" } },
-    //   { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
-    //   { $group: { _id: "$classInfo.name", count: { $sum: 1 } } },
-    //   { $sort: { _id: 1 } },
-    // ]);
+    
 
     // Students by class — exclude graduated students
     const studentsByClassRaw = await UserModel.aggregate([

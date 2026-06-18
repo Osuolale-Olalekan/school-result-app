@@ -57,66 +57,6 @@ export interface PromotionEligibility {
   nextClass: string | null;
 }
 
-/**
- * Determine if a student should be auto-promoted.
- * A student must pass (≥50%) in ALL three terms of the session.
- */
-// export function checkPromotionEligibility(
-//   currentClassName: string,
-//   termScores: TermScore[]
-// ): PromotionEligibility {
-//   const nextClass = CLASS_PROGRESSION[currentClassName];
-
-//   if (nextClass === null) {
-//     return {
-//       eligible: true,
-//       reason: "Student has completed SSS 2 and will graduate.",
-//       requiresDepartment: false,
-//       willGraduate: true,
-//       nextClass: null,
-//     };
-//   }
-
-//   const hasAllThreeTerms = termScores.length === 3;
-//   if (!hasAllThreeTerms) {
-//     return {
-//       eligible: false,
-//       reason: "All three term results must be available before promotion.",
-//       requiresDepartment: false,
-//       willGraduate: false,
-//       nextClass,
-//     };
-//   }
-
-//   const allPassed = termScores.every((t) => t.percentage >= 50);
-
-//   if (!allPassed) {
-//     const failedTerms = termScores
-//       .filter((t) => t.percentage < 50)
-//       .map((t) => t.term)
-//       .join(", ");
-//     return {
-//       eligible: false,
-//       reason: `Student failed the following term(s): ${failedTerms}. A minimum of 50% is required in all three terms.`,
-//       requiresDepartment: false,
-//       willGraduate: false,
-//       nextClass,
-//     };
-//   }
-
-//   const requiresDepartment = nextClass === "SSS_1_DEPT_REQUIRED";
-
-//   return {
-//     eligible: true,
-//     reason: allPassed
-//       ? "Student passed all three terms and is eligible for promotion."
-//       : "Student is not eligible for promotion.",
-//     requiresDepartment,
-//     willGraduate: false,
-//     nextClass: requiresDepartment ? null : nextClass,
-//   };
-// }
-
 export function checkPromotionEligibility(
   currentClassName: string,
   termScores: TermScore[],

@@ -4,7 +4,7 @@ import { UserRole, UserStatus } from "@/types/enums";
 export interface IUserDocument extends Document {
   surname: string;
   firstName: string;
-  otherName: string;
+  otherName?: string;
   // email: string;
   email?: string;
   password: string;
@@ -26,7 +26,7 @@ const UserSchema = new Schema<IUserDocument>(
   {
     surname: { type: String, required: true, trim: true },
     firstName: { type: String, required: true, trim: true },
-    otherName: { type: String, required: true, trim: true },
+    otherName: { type: String, required: false, trim: true },
     // email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     // email: { type: String, required: false, unique: true, sparse: true, lowercase: true, trim: true },
     email: { type: String, required: false, lowercase: true, trim: true },

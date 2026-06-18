@@ -28,59 +28,7 @@ export const authConfig: NextAuthOptions = {
 
         const loginType = credentials.loginType as string;
 
-        // ─────────────────────────────────────────────────────────────
-        // 1. PARENT LOGIN — via child's admission number + own password
-        // ─────────────────────────────────────────────────────────────
-        // if (loginType === "parent") {
-        //   const admissionNumber = credentials.admissionNumber as string;
-        //   const password = credentials.password as string;
-
-        //   if (!admissionNumber || !password) return null;
-
-        //   const StudentModel = (await import("@/models/Student")).default;
-        //   const ParentModel = (await import("@/models/Parent")).default;
-
-        //   // Find the student by admission number
-        //   const student = await StudentModel.findOne({
-        //     admissionNumber: admissionNumber.toUpperCase(),
-        //   }).lean();
-
-        //   if (!student) return null;
-
-        //   // Find the parent linked to this student
-        //   const parent = await ParentModel.findOne({
-        //     children: student._id,
-        //     status: UserStatus.ACTIVE,
-        //   })
-        //     .select("+password")
-        //     .lean();
-
-        //   if (!parent) return null;
-
-        //   const passwordMatch = await bcrypt.compare(
-        //     password,
-        //     (parent as unknown as { password: string }).password
-        //   );
-        //   if (!passwordMatch) return null;
-
-        //   const parentTyped = parent as unknown as IUser;
-
-        //   // Update last login
-        //   await UserModel.findByIdAndUpdate(parent._id, {
-        //     lastLogin: new Date(),
-        //   });
-
-        //   return {
-        //     id: parent._id.toString(),
-        //     email: parentTyped.email,
-        //     surname: parentTyped.surname,
-        //     firstName: parentTyped.firstName,
-        //     otherName: parentTyped.otherName,
-        //     roles: parentTyped.roles,
-        //     activeRole: UserRole.PARENT,
-        //     status: parentTyped.status,
-        //   };
-        // }
+       
         // ─────────────────────────────────────────────────────────────
 // 1. PARENT LOGIN — via child's admission number OR own email + password
 // ─────────────────────────────────────────────────────────────

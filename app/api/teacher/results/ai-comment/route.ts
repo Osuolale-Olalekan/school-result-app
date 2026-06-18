@@ -1,8 +1,4 @@
 // app/api/teacher/results/ai-comment/route.ts
-// Generates a teacher comment suggestion for a student's report card.
-// Called when the teacher clicks "AI Suggest" on an empty comment field.
-// Only accessible by authenticated teachers.
-
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";  // ← use this
 import { generateAITeacherComment } from "@/lib/aicomment";

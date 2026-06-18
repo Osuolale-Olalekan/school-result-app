@@ -8,25 +8,7 @@ import { SessionModel, TermModel } from "@/models/Session";
 import { SessionStatus } from "@/types/enums";
 import "@/lib/registerModels";
 
-// ─── GET /api/parent/attendance?studentId= ────────────────────────────────────
-// Returns attendance summary for the current term for one child.
-// Parent must have this child in their children array.
-//
-// Response:
-// {
-//   termName: string,
-//   sessionName: string,
-//   schoolDaysOpen: number,       // from Term.schoolDaysOpen
-//   daysPresent: number,          // 0.5 per session present
-//   daysAbsent: number,
-//   attendancePercentage: number,
-//   totalDaysMarked: number,      // how many days teacher has marked so far
-//   breakdown: Array<{
-//     date: string,
-//     morning: string,
-//     afternoon: string,
-//   }>
-// }
+
 
 function detectCurrentTerm(terms: Array<{
   _id: string;

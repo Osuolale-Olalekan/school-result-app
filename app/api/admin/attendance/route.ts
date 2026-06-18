@@ -33,14 +33,6 @@ function detectCurrentTerm(terms: Array<{
   return terms[0];
 }
 
-// ─── GET /api/admin/attendance ────────────────────────────────────────────────
-// Query params:
-//   sessionId  (optional — defaults to active session)
-//   term       (optional — defaults to auto-detected current term)
-//   classId    (optional — if provided, returns per-student breakdown for that class)
-//
-// Without classId → returns class-level summary array
-// With classId    → returns student-level breakdown for that class
 
 export async function GET(request: NextRequest): Promise<Response> {
   const session = await getSession();

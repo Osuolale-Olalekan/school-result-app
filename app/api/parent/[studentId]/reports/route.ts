@@ -48,13 +48,7 @@ export async function GET(
     const sessionId = searchParams.get("sessionId");
     const termId = searchParams.get("termId");
 
-    // const query: Record<string, unknown> = {
-    //   student: studentId,
-    //   $or: [
-    //     { status: ReportStatus.APPROVED },
-    //     { status: ReportStatus.DRAFT, approvedAt: { $exists: true } },
-    //   ],
-    // };
+    
   const query: Record<string, unknown> = {
   student: studentId,
   $or: [

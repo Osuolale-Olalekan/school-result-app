@@ -148,61 +148,11 @@ export default function TeacherBehaviourLog() {
     [page, typeFilter],
   );
 
-  // ── Pre-load students ──
-  // const loadClassStudents = useCallback(async () => {
-  //   setIsLoadingStudents(true);
-  //   try {
-  //     const classRes  = await fetch("/api/teacher/classes");
-  //     const classJson = await classRes.json();
-  //     if (!classJson.success) return;
-
-  //     const classes: TeacherClass[] = classJson.data ?? [];
-  //     if (classes.length === 0) return;
-
-  //     const results = await Promise.all(
-  //       classes.map((c) =>
-  //         fetch(`/api/teacher/classes/${c._id}/students`).then((r) => r.json())
-  //       )
-  //     );
-
-  //     const seen   = new Set<string>();
-  //     const unique = results
-  //       .filter((r) => r.success)
-  //       .flatMap((r) => (r.data ?? []) as Student[])
-  //       .filter((s) => { if (seen.has(s._id)) return false; seen.add(s._id); return true; });
-
-  //     setAllStudents(unique);
-  //   } catch { /* silent */ } finally {
-  //     setIsLoadingStudents(false);
-  //   }
-  // }, []);
-
+  
   useEffect(() => {
     void fetchRecords(true);
   }, [fetchRecords]);
-  // useEffect(() => { void loadClassStudents(); }, [loadClassStudents]);
-
-  // ── Student search ──
-  // function handleStudentSearchChange(value: string) {
-  //   setStudentSearch(value);
-  //   if (selectedStudent && value !== `${selectedStudent.firstName} ${selectedStudent.surname}`) {
-  //     setSelectedStudent(null);
-  //     setForm((f) => ({ ...f, studentId: "" }));
-  //   }
-  //   if (searchTimer.current) clearTimeout(searchTimer.current);
-  //   searchTimer.current = setTimeout(() => {
-  //     if (value.trim().length < 2) { setFilteredStudents([]); return; }
-  //     const q = value.toLowerCase();
-  //     setFilteredStudents(
-  //       allStudents
-  //         .filter((s) =>
-  //           `${s.firstName} ${s.surname}`.toLowerCase().includes(q) ||
-  //           s.admissionNumber.toLowerCase().includes(q)
-  //         )
-  //         .slice(0, 10)
-  //     );
-  //   }, 200);
-  // }
+  
   function handleStudentSearchChange(value: string) {
     setStudentSearch(value);
 

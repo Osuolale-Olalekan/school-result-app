@@ -41,49 +41,6 @@ export default function AdminSettingsView() {
       .finally(() => setLoading(false));
   }, []);
 
-  // async function handleSave() {
-  //   setSaving(true);
-  //   try {
-  //     let signatureUrl = settings.principalSignature;
-
-  //     if (signatureFile) {
-  //       const formData = new FormData();
-  //       formData.append("file", signatureFile);
-  //       const uploadRes = await fetch("/api/admin/upload-signature", {
-  //         method: "POST",
-  //         body: formData,
-  //       });
-  //       const uploadJson = (await uploadRes.json()) as {
-  //         success: boolean;
-  //         url?: string;
-  //       };
-  //       if (!uploadJson.success || !uploadJson.url) {
-  //         toast.error("Failed to upload signature");
-  //         return;
-  //       }
-  //       signatureUrl = uploadJson.url;
-  //     }
-
-  //     const res = await fetch("/api/admin/settings", {
-  //       method: "PATCH",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ principalSignature: signatureUrl }),
-  //     });
-  //     const json = (await res.json()) as { success: boolean };
-  //     if (json.success) {
-  //       toast.success("Settings saved successfully");
-  //       setSettings((prev) => ({ ...prev, principalSignature: signatureUrl }));
-  //       setSignatureFile(null);
-  //       setSignaturePreview(null);
-  //     } else {
-  //       toast.error("Failed to save settings");
-  //     }
-  //   } catch {
-  //     toast.error("An error occurred");
-  //   } finally {
-  //     setSaving(false);
-  //   }
-  // }
   async function handleSave() {
     setSaving(true);
     try {
