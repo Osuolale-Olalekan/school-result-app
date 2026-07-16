@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { UserRole } from "@/types/enums";
 
-const PUBLIC_ROUTES = ["/", "/sign-in", "/forgot-password", "/reset-password"];
+const PUBLIC_ROUTES = ["/", "/sign-in", "/forgot-password", "/reset-password", "/news", "/admissions", "/contact", "/gallery", "/portal", "/academics", "/about"];
 const ADMIN_ROUTES = ["/admin"];
 const TEACHER_ROUTES = ["/teacher"];
 const PARENT_ROUTES = ["/parent"];

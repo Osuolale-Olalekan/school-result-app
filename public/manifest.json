@@ -1,7 +1,7 @@
 {
   "name": "God's Way App",
-  "short_name": "GWMGS",
-  "description": "School management system for GWMGS",
+  "short_name": "GWMS",
+  "description": "School management system for GWMS",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a1628",

@@ -332,7 +332,7 @@ export async function POST(
       recipientId: created._id?.toString() ?? "",
       recipientRole: role,
       type: NotificationType.ACCOUNT_CREATED,
-      title: "Welcome to God's Way Model Groups of Schools",
+      title: "Welcome to God's Way Model Schools",
       message: created.email
         ? `Your ${role} account has been created. Please check your email for login credentials.`
         : `Your ${role} account has been created. Use your admission number and the password provided by your admin to log in.`,

@@ -526,7 +526,7 @@ function PageHeader({
 
         <View style={S.headerCenter}>
           <Text style={S.headerSchoolName}>
-            God&apos;s Way Model Groups of Schools
+            God&apos;s Way Model Schools
           </Text>
           <Text style={S.headerMotto}>
             SOWING THE SEED OF MERIT AND EXCELLENCE
@@ -1249,7 +1249,7 @@ function ReportCardDocument({
   return (
     <Document
       title={`Report Card — ${report.studentSnapshot.surname} ${report.studentSnapshot.firstName}`}
-      author="God's Way Model Groups of Schools"
+      author="God's Way Model Schools"
     >
       {/* ══ PAGE 1 ══ */}
       <Page size="A4" style={S.page}>

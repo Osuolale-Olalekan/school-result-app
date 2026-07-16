@@ -252,7 +252,7 @@ export default function DashboardSidebar({ role }: Props) {
           >
             <img
               src={SCHOOL_LOGO}
-              alt="God's Way Schools"
+              alt="God's Way Model Schools"
               className="w-full h-full object-contain"
             />
           </div>

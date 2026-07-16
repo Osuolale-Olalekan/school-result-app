@@ -60,5 +60,5 @@ export async function verifyPaystackPayment(reference: string): Promise<{
 }
 
 export function generatePaymentReference(studentId: string, termId: string): string {
-  return `GWMGS-${studentId.slice(-6)}-${termId.slice(-6)}-${Date.now()}`;
+  return `GWMS-${studentId.slice(-6)}-${termId.slice(-6)}-${Date.now()}`;
 }

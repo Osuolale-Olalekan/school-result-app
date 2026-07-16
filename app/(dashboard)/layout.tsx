@@ -5,13 +5,18 @@ import { getSession } from "@/lib/session";
 import DashboardSidebar from "@/components/layout/DashboardSidebar";
 import DashboardHeader from "@/components/layout/DashboardHeader";
 import RoleSwitcher from "./ComponentSwitcher";
+import type { Metadata } from "next";
 
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const session = await getSession();
 
   if (!session?.user) {
     redirect("/sign-in");
   }
+  
 
   return (
     <div className="flex h-screen bg-[#f0f4f8] overflow-hidden">

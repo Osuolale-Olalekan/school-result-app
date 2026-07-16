@@ -48,7 +48,7 @@ export default async function VerifyReportPage({ params }: Props) {
 
         {/* Footer */}
         <div className="mt-6 text-center text-xs text-gray-400">
-          God&apos;s Way Model Groups of Schools
+          God&apos;s Way Model Schools
         </div>
       </div>
     </div>

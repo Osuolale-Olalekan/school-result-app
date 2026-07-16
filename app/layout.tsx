@@ -3,6 +3,7 @@ import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import SchoolSchema from "@/components/SchoolSchema";
 import Script from "next/script";
 import PWAInstallBanner from "@/components/PWAInstallBanner";
 
@@ -19,28 +20,36 @@ const bodyFont = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://gods-way-app.vercel.app"),
+  metadataBase: new URL("https://godswayschool.com"),
   title: {
-    default: "God's Way Model Groups of Schools",
-    template: "%s | GWMGS",
+    default: "God's Way Model Schools",
+    template: "%s | GWMS",
   },
   description:
-    "A world-class school management system for God's Way Model Groups of Schools. Excellence, Integrity, and Faith.",
+    "A world-class school management system for God's Way Model Schools. Excellence, Integrity, and Faith.",
   keywords: [
     "school management",
     "education",
     "Nigeria",
     "Gods way",
-    "GWMGS",
+    "GWMS",
     "school results",
     "report cards",
     "student management",
   ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+  alternates: {
+    canonical: "/",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "GWMGS",
+    title: "GWMS",
   },
   icons: {
     icon: [
@@ -75,17 +84,17 @@ export const metadata: Metadata = {
 
   // ── Open Graph (Facebook, WhatsApp, LinkedIn, Telegram) ──
   openGraph: {
-    title: "God's Way Model Groups of Schools",
+    title: "God's Way Model Schools",
     description:
-      "A world-class school management system for God's Way Model Groups of Schools. Excellence, Integrity, and Faith.",
-    url: "https://gods-way-app.vercel.app",
-    siteName: "God's Way Model Groups of Schools",
+      "A world-class school management system for God's Way Model Schools. Excellence, Integrity, and Faith.",
+    url: "https://godswayschool.com",
+    siteName: "God's Way Model Schools",
     images: [
       {
-        url: "https://gods-way-app.vercel.app/og-image.png",
+        url: "https://godswayschool.com/og-image.png",
         width: 1200,
         height: 630,
-        alt: "God's Way Model Groups of Schools",
+        alt: "God's Way Model Schools",
         type: "image/png",
       },
     ],
@@ -96,10 +105,10 @@ export const metadata: Metadata = {
   // ── Twitter / X ──
   twitter: {
     card: "summary_large_image",
-    title: "God's Way Model Groups of Schools",
+    title: "God's Way Model Schools",
     description:
-      "A world-class school management system for God's Way Model Groups of Schools. Excellence, Integrity, and Faith.",
-    images: ["https://gods-way-app.vercel.app/og-image.png"],
+      "A world-class school management system for God's Way Model Schools. Excellence, Integrity, and Faith.",
+    images: ["https://godswayschool.com/og-image.png"],
   },
 };
 
@@ -113,6 +122,7 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#1e3a5f" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <SchoolSchema />
       </head>
       <body
         className={`${displayFont.variable} ${bodyFont.variable} font-body antialiased bg-background text-foreground`}

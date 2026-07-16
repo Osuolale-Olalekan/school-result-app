@@ -230,7 +230,7 @@ export default function ReportCardComponent({
 
           <div style={{ flex: 1, textAlign: "center", padding: "0 14px" }}>
             <h1 style={{ fontSize: 16, fontWeight: "900", margin: "0 0 2px", letterSpacing: "0.5px", textTransform: "uppercase", color: "white", lineHeight: 1.2 }}>
-              GOD&apos;S WAY MODEL GROUPS OF SCHOOLS
+              GOD&apos;S WAY MODEL SCHOOLS
             </h1>
             <p style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", margin: "0 0 4px", letterSpacing: "2px" }}>
               SOWING THE SEED OF MERIT AND EXCELLENCE

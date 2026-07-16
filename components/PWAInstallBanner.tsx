@@ -30,7 +30,7 @@ export default function PWAInstallBanner() {
               <Download className="w-4 h-4 text-[#f59e0b]" />
             </div>
             <div>
-              <p className="font-semibold text-sm leading-tight">Install GWMGS App</p>
+              <p className="font-semibold text-sm leading-tight">Install GWMS App</p>
               <p className="text-xs text-white/50 leading-tight">Add to your Home Screen</p>
             </div>
           </div>
@@ -81,7 +81,7 @@ export default function PWAInstallBanner() {
           <Download className="w-5 h-5 text-[#f59e0b]" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm leading-snug">Install GWMGS App</p>
+          <p className="font-semibold text-sm leading-snug">Install GWMS App</p>
           <p className="text-xs text-white/60 mt-0.5 leading-snug">
             Add to your home screen for faster access and offline use.
           </p>

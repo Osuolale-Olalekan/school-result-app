@@ -64,12 +64,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               }} />
               <div className="relative w-full h-full rounded-full overflow-hidden flex items-center justify-center"
                 style={{ background: "rgba(255,255,255,0.07)", border: "1.5px solid rgba(245,240,232,0.18)" }}>
-                <img src={SCHOOL_LOGO} alt="God's Way Schools" className="w-full h-full object-contain" />
+                <img src={SCHOOL_LOGO} alt="God's Way Model Schools" className="w-full h-full object-contain" />
               </div>
             </div>
             <div>
               <p className="text-sm font-bold leading-tight" style={{ color: "#f5f0e8" }}>God&apos;s Way</p>
-              <p className="text-xs leading-tight" style={{ color: "#7ab8d4" }}>Model Groups of Schools</p>
+              <p className="text-xs leading-tight" style={{ color: "#7ab8d4" }}>Model Schools</p>
             </div>
           </Link>
 
@@ -168,12 +168,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               }} />
               <div className="relative w-full h-full rounded-full overflow-hidden"
                 style={{ background: "rgba(255,255,255,0.07)", border: "1.5px solid rgba(245,240,232,0.18)" }}>
-                <img src={SCHOOL_LOGO} alt="God's Way Schools" className="w-full h-full object-contain" />
+                <img src={SCHOOL_LOGO} alt="God's Way Model Schools" className="w-full h-full object-contain" />
               </div>
             </div>
             <div>
               <p className="text-sm font-bold leading-tight" style={{ color: "#f5f0e8" }}>God&apos;s Way</p>
-              <p className="text-xs leading-tight" style={{ color: "#7ab8d4" }}>Model Groups of Schools</p>
+              <p className="text-xs leading-tight" style={{ color: "#7ab8d4" }}>Model Schools</p>
             </div>
           </div>
 
