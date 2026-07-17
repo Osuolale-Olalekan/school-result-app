@@ -48,7 +48,7 @@ export default function Footer() {
                 ["Academics", "/academics"],
                 ["Admissions", "/admissions"],
                 ["Student Portal", "/portal"],
-                ["News & Events", "/news"],
+                // ["News & Events", "/news"],
                 ["Gallery", "/gallery"],
               ].map(([l, h]) => (
                 <li key={l}>
