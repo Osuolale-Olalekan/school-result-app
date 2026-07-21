@@ -49,7 +49,7 @@ export default function AboutView() {
 
             <div>
               <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4">
-                📖 About Us
+                 About Us
               </span>
               <h2 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight mb-4">
                 Building Tomorrow&apos;s <span className="text-blue-600">Leaders</span> Today
@@ -128,7 +128,7 @@ export default function AboutView() {
             </div>
             <div className="order-1 lg:order-2">
               <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4">
-                📜 Our Story
+                 Our Story
               </span>
               <h2 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight mb-4">
                 A Legacy of Excellence Since Our Founding

@@ -76,7 +76,7 @@ export default function AdmissionsView() {
           <div id="inquiry-form" className="max-w-2xl mx-auto">
             <div className="text-center mb-6">
               <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4">
-                💬 Step 1
+                Step 1
               </span>
               <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-2">Admission Inquiry Form</h3>
               <p className="text-gray-500 text-sm">

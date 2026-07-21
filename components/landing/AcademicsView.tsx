@@ -22,7 +22,7 @@ export default function AcademicsView() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-xl mx-auto mb-12">
             <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4">
-              📚 Academic Programs
+              Academic Programs
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">From Nursery to Senior Secondary</h2>
             <p className="text-gray-500">

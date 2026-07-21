@@ -49,7 +49,7 @@ export default function Footer() {
                 ["Admissions", "/admissions"],
                 ["Student Portal", "/portal"],
                 // ["News & Events", "/news"],
-                ["Gallery", "/gallery"],
+                // ["Gallery", "/gallery"],
               ].map(([l, h]) => (
                 <li key={l}>
                   <Link href={h} className="text-white/45 hover:text-orange-400 text-xs transition-colors">

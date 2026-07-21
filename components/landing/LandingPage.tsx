@@ -286,7 +286,7 @@ export default function LandingPage() {
           <div className="bg-gradient-to-r from-blue-800 to-blue-600 rounded-3xl p-8 sm:p-12 text-white grid lg:grid-cols-2 gap-8 items-center">
             <div>
               <span className="inline-flex items-center gap-2 bg-white/15 text-white text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4">
-                🎓 Admissions Open
+                 Admissions Open
               </span>
               <h2 className="text-2xl sm:text-3xl font-black mb-3">Join the God&apos;s Way Family Today</h2>
               <p className="text-white/70 text-sm leading-relaxed">

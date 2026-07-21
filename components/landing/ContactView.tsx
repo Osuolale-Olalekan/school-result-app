@@ -51,9 +51,9 @@ export default function ContactView() {
       <section className="bg-white py-16 sm:py-20 lg:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-md mx-auto mb-12">
-            <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4">
+            {/* <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full mb-4">
               📍 Get In Touch
-            </span>
+            </span> */}
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">We&apos;d Love to Hear From You</h2>
             <p className="text-gray-500 text-sm">Reach out for enquiries, visit our campus, or send us a message below.</p>
           </div>

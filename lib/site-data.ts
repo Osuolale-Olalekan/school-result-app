@@ -141,7 +141,7 @@ export const CORE_VALUES = [
 export const PROGRAMS = [
   {
     level: "Primary School",
-    icon: "🌱",
+    icon: "",
     badge: "6 Classes",
     img: "https://images.unsplash.com/photo-1588072432836-e10032774350?w=700&q=80",
     alt: "Primary school students in classroom",
@@ -150,7 +150,7 @@ export const PROGRAMS = [
   },
   {
     level: "Junior Secondary",
-    icon: "📚",
+    icon: "",
     badge: "3 Classes",
     img: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=700&q=80",
     alt: "Junior secondary students studying",
@@ -159,7 +159,7 @@ export const PROGRAMS = [
   },
   {
     level: "Senior Secondary",
-    icon: "🎓",
+    icon: "",
     badge: "3 Classes",
     img: "https://images.unsplash.com/photo-1564981797816-1043664bf78d?w=700&q=80",
     alt: "Senior secondary students in science lab",
