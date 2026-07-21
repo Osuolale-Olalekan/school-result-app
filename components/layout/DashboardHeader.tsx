@@ -10,7 +10,7 @@ import type { INotification } from "@/types";
 import Image from "next/image";
 
 const SCHOOL_LOGO =
-  "https://res.cloudinary.com/dvgfumpoj/image/upload/v1771669318/school_logos_bm6n2y.png";
+  "https://res.cloudinary.com/dvgfumpoj/image/upload/v1784632470/ChatGPT_Image_Jul_21_2026_09_12_05_AM_1_qyhf63.png";
 
 interface SessionUser {
   id:         string;

@@ -28,7 +28,7 @@ export interface ReportCardPDFProps {
 }
 
 const SCHOOL_LOGO_URL =
-  "https://res.cloudinary.com/disxrmlco/image/upload/v1771881211/android-chrome-512x512_mc7kty.png";
+  "https://res.cloudinary.com/dvgfumpoj/image/upload/v1784632470/ChatGPT_Image_Jul_21_2026_09_12_05_AM_1_qyhf63.png";
 
 const NAVY = "#1e3a5f";
 const DARK_NAVY = "#0a1628";

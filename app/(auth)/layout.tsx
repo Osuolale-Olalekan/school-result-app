@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 const SCHOOL_LOGO =
-  "https://res.cloudinary.com/dvgfumpoj/image/upload/v1771669318/school_logos_bm6n2y.png";
+  "https://res.cloudinary.com/dvgfumpoj/image/upload/v1784632470/ChatGPT_Image_Jul_21_2026_09_12_05_AM_1_qyhf63.png";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (

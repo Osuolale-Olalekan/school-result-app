@@ -6,7 +6,7 @@ export const SCHOOL = {
   name: "God's Way Model Schools",
   fullName: "God's Way Model Schools",
   motto: "Sowing the Seed of Merit & Excellence",
-  logo: "https://res.cloudinary.com/dvgfumpoj/image/upload/v1771669318/school_logos_bm6n2y.png",
+  logo: "https://res.cloudinary.com/dvgfumpoj/image/upload/v1784632470/ChatGPT_Image_Jul_21_2026_09_12_05_AM_1_qyhf63.png",
   phone1: "08069825847",
   phone2: "08067110930",
   email: "osuolaleolalek7@gmail.com",
