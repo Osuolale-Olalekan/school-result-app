@@ -20,7 +20,7 @@ interface ClassAssignment {
 }
 
 interface Student {
-  _id: string; surname: string; firstName: string; otherName: string;
+  _id: string; surname: string; firstName: string; otherName?: string;
   admissionNumber: string; department: string;
 }
 
@@ -29,6 +29,7 @@ interface SubjectScore {
   testScore: number; examScore: number; practicalScore: number;
   hasPractical: boolean;
   excludedThisTerm?: boolean; // teacher-level override
+  subjectPosition?: number
 }
 
 interface ReportDraft {
@@ -38,6 +39,15 @@ interface ReportDraft {
   teacherComment: string;
   status?: ReportStatus;
   declineReason?: string;
+  // ── NEW ──
+  position?: number;
+  overallPosition?: number;
+  totalStudentsInClass?: number;
+  totalStudentsInDept?: number;
+  cumulativePosition?: number;
+  cumulativeOverallPosition?: number;
+  cumulativePercentage?: number;
+  cumulativeTermsCount?: number;
 }
 
 interface AttendanceSummary {
@@ -151,6 +161,11 @@ export default function TeacherResultsView() {
         subjects: SubjectScore[];
         attendance: { schoolDaysOpen: number; daysPresent: number; daysAbsent: number };
         teacherComment?: string; status: ReportStatus; declineReason?: string;
+        // ── NEW ──
+    position?: number; overallPosition?: number;
+    totalStudentsInClass?: number; totalStudentsInDept?: number;
+    cumulativePosition?: number; cumulativeOverallPosition?: number;
+    cumulativePercentage?: number; cumulativeTermsCount?: number;
       }>;
     };
 
@@ -174,6 +189,7 @@ export default function TeacherResultsView() {
             testScore: saved?.testScore ?? 0, examScore: saved?.examScore ?? 0,
             practicalScore: saved?.practicalScore ?? 0,
             excludedThisTerm: false, // teacher can re-exclude on re-edit
+            subjectPosition: saved?.subjectPosition,
           };
         });
 
@@ -188,6 +204,15 @@ export default function TeacherResultsView() {
   teacherComment: report.teacherComment ?? "",
   status: report.status,
   declineReason: report.declineReason,
+  // ── NEW ──
+  position: report.position,
+  overallPosition: report.overallPosition,
+  totalStudentsInClass: report.totalStudentsInClass,
+  totalStudentsInDept: report.totalStudentsInDept,
+  cumulativePosition: report.cumulativePosition,
+  cumulativeOverallPosition: report.cumulativeOverallPosition,
+  cumulativePercentage: report.cumulativePercentage,
+  cumulativeTermsCount: report.cumulativeTermsCount,
 };
         if (report.status === ReportStatus.DRAFT || report.status === ReportStatus.DECLINED) {
           loadedIds.push(report._id);
@@ -730,10 +755,13 @@ onChange={(e) => {
                       <tr key={score.subject} className={isExcluded ? "opacity-40 bg-gray-50/50" : ""}>
                         <td className="px-3 py-2 font-medium text-gray-700">
                           <div className="flex items-center gap-1.5">
-                            {isExcluded && <XCircle className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
-                            <span className={isExcluded ? "line-through text-gray-400" : ""}>{score.subjectName}</span>
-                            {isAdminExcluded && <span className="text-[10px] text-red-500 font-medium">(admin)</span>}
-                          </div>
+    {isExcluded && <XCircle className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
+    <span className={isExcluded ? "line-through text-gray-400" : ""}>{score.subjectName}</span>
+    {isAdminExcluded && <span className="text-[10px] text-red-500 font-medium">(admin)</span>}
+    {score.subjectPosition === 1 && !isExcluded && (
+      <span className="text-[10px] text-amber-600 font-bold">★ Best</span>
+    )}
+  </div>
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1">
@@ -798,13 +826,25 @@ onChange={(e) => {
             </div>
 
             {/* Active subjects summary */}
-            {activeScores.length > 0 && (
+            {/* {activeScores.length > 0 && (
               <div className="mt-2 flex items-center justify-end gap-2 text-xs text-gray-500 px-3">
                 <span>Active total:</span>
                 <span className="font-bold text-[#1e3a5f]">{totalObtained}/{totalObtainable}</span>
                 <span className={`font-bold ${color}`}>({percentage.toFixed(1)}% · {grade})</span>
               </div>
-            )}
+            )} */}
+            {activeScores.length > 0 && (
+  <div className="mt-2 flex items-center justify-end gap-2 text-xs text-gray-500 px-3">
+    <span>Active total:</span>
+    <span className="font-bold text-[#1e3a5f]">{totalObtained}/{totalObtainable}</span>
+    <span className={`font-bold ${color}`}>({percentage.toFixed(1)}% · {grade})</span>
+    {draft?.overallPosition ? (
+      <span className="text-[#1e3a5f] font-semibold">
+        · Currently {draft.overallPosition}{draft.overallPosition === 1 ? "st" : draft.overallPosition === 2 ? "nd" : draft.overallPosition === 3 ? "rd" : "th"} of {draft.totalStudentsInClass}
+      </span>
+    ) : null}
+  </div>
+)}
           </div>
 
           {/* Teacher Comment */}

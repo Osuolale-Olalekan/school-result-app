@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import mongoose from "mongoose";
-import { StudentStatus } from "@/types/enums";
+import { StudentStatus, TermName } from "@/types/enums";
 import { connectDB } from "@/lib/db";
 import ReportCardModel from "@/models/ReportCard";
 import ClassAssignmentModel from "@/models/ClassAssignment";
@@ -22,6 +22,7 @@ import type { ApiResponse } from "@/types";
 import type { ISubjectScore } from "@/types";
 import "@/lib/registerModels";
 
+
 interface SubjectInput {
   subject: string;
   subjectName: string;
@@ -31,6 +32,7 @@ interface SubjectInput {
   practicalScore?: number;
   hasPractical: boolean;
   excludedThisTerm?: boolean;
+
 }
 
 interface SubmitResultBody {
@@ -122,7 +124,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     const typedStudent = student as {
-      surname: string; firstName: string; otherName: string;
+      surname: string; firstName: string; otherName?: string;
       admissionNumber?: string; profilePhoto?: string;
       gender?: string; dateOfBirth?: Date; department?: string;
     };
@@ -200,6 +202,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     await recalculatePositions(body.classId, body.sessionId, body.termId);
 
+
     return NextResponse.json({ success: true, data: report, message: "Results saved as draft" });
   } catch (error) {
     console.error("[POST /api/teacher/results]", error);
@@ -262,11 +265,38 @@ async function recalculatePositions(classId: string, sessionId: string, termId: 
   const reports = await ReportCardModel.find({ class: classId, session: sessionId, term: termId }).lean();
   if (reports.length === 0) return;
 
-  const totalInClass = await UserModel.countDocuments({
-    $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
-    currentClass: new mongoose.Types.ObjectId(classId),
-    studentStatus: StudentStatus.ACTIVE,
+   // ── NEW: per-subject "best in subject" rankings ──────────────────────────
+  const subjectGroups = new Map<string, Array<{ reportId: string; subjectIndex: number; totalScore: number }>>();
+
+  reports.forEach((report) => {
+    report.subjects.forEach((s, idx) => {
+      const key = s.subject.toString();
+      if (!subjectGroups.has(key)) subjectGroups.set(key, []);
+      subjectGroups.get(key)!.push({ reportId: report._id.toString(), subjectIndex: idx, totalScore: s.totalScore });
+    });
   });
+
+  const subjectPositionUpdates = new Map<string, Record<number, number>>();
+  for (const entries of subjectGroups.values()) {
+    const sorted = [...entries].sort((a, b) => b.totalScore - a.totalScore);
+    sorted.forEach((e, i) => {
+      if (!subjectPositionUpdates.has(e.reportId)) subjectPositionUpdates.set(e.reportId, {});
+      subjectPositionUpdates.get(e.reportId)![e.subjectIndex] = i + 1;
+    });
+  }
+
+  for (const [reportId, positions] of subjectPositionUpdates.entries()) {
+    const report = reports.find((r) => r._id.toString() === reportId)!;
+    const updatedSubjects = report.subjects.map((s, idx) => ({
+      ...s,
+      subjectPosition: positions[idx] ?? s.subjectPosition ?? 0,
+    }));
+    await ReportCardModel.findByIdAndUpdate(reportId, { subjects: updatedSubjects });
+  }
+
+  // ✅ FIX: total students in class = how many report cards exist for this term,
+  // NOT a live headcount of who's currently still in the class.
+  const totalInClass = reports.length;
 
   const allSorted = [...reports].sort((a, b) => b.percentage - a.percentage);
   const overallPositionMap = new Map<string, number>();
@@ -290,16 +320,13 @@ async function recalculatePositions(classId: string, sessionId: string, termId: 
   }
 
   for (const dept of departments) {
-    const deptQuery = dept === "none" ? { $in: [null, "none", undefined] } : dept;
-    const totalInDept = await UserModel.countDocuments({
-      $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
-      currentClass: new mongoose.Types.ObjectId(classId),
-      studentStatus: StudentStatus.ACTIVE,
-      department: deptQuery,
-    });
     const deptReports = reports
       .filter((r) => ((r.studentSnapshot as { department?: string })?.department ?? "none") === dept)
       .sort((a, b) => b.percentage - a.percentage);
+
+    // ✅ FIX: same idea — count report cards in this department, not live enrollment
+    const totalInDept = deptReports.length;
+
     for (let i = 0; i < deptReports.length; i++) {
       await ReportCardModel.findByIdAndUpdate(deptReports[i]._id, {
         position: i + 1,

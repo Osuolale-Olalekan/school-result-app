@@ -112,12 +112,17 @@ export async function POST(
       }
     }
 
-    const updateData: Record<string, unknown> = { currentClass: new Types.ObjectId(newClassId) };
-    if (department && department !== Department.NONE) {
-      updateData.department = department;
-    }
+    // const updateData: Record<string, unknown> = { currentClass: new Types.ObjectId(newClassId) };
+    // if (department && department !== Department.NONE) {
+    //   updateData.department = department;
+    // }
 
-    await StudentModel.findByIdAndUpdate(studentId, updateData);
+    // await StudentModel.findByIdAndUpdate(studentId, updateData);
+    const updateData: Record<string, unknown> = { pendingClass: new Types.ObjectId(newClassId) };
+if (department && department !== Department.NONE) {
+  updateData.pendingDepartment = department;
+}
+await StudentModel.findByIdAndUpdate(studentId, updateData);
 
     await createAuditLog({
       actorId: session.user.id,

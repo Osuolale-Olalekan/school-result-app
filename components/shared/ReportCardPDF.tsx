@@ -315,7 +315,7 @@ const S = StyleSheet.create({
   tdCell: {
     fontSize: 9,
     color: "#111111",
-    paddingVertical: 3,
+    paddingVertical: 2,
     paddingHorizontal: 3,
     borderBottom: `1 solid #f0f4f8`,
   },
@@ -420,7 +420,7 @@ const S = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 7,
-    padding: "7 12",
+    padding: "2 12",
     gap: 7,
   },
   promotionTitle: {
@@ -438,7 +438,7 @@ const S = StyleSheet.create({
     backgroundColor: "#fffbeb",
     border: `1 solid #fde68a`,
     borderRadius: 5,
-    padding: "5 11",
+    padding: "4 11",
     gap: 6,
   },
   resumptionLabel: {
@@ -473,7 +473,7 @@ const S = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: DARK_NAVY,
-    padding: "7 20",
+    padding: "4 20",
     marginTop: "auto",
   },
   footerDate: {
@@ -739,6 +739,27 @@ function StudentInfoStrip({
             <Text style={[S.perfPosSub, { marginTop: 1 }]}>students</Text>
           </>
         )}
+
+        {/* ── NEW: cumulative row — shown regardless of hasDeptRanking ── */}
+  {report.termName === TermName.THIRD && report.cumulativeOverallPosition ? (
+    <>
+      <View style={{ width: "100%", height: 1, backgroundColor: "rgba(255,255,255,0.08)", marginVertical: 3 }} />
+      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center" }}>
+        <Text style={[S.perfPosition, { fontSize: 8 }]}>
+          {getOrdinal(report.cumulativeOverallPosition)}
+        </Text>
+        <Text style={[S.perfPosSub, { color: "rgba(255,255,255,0.4)" }]}> / {report.totalStudentsInClass}</Text>
+      </View>
+      <Text style={[S.perfPosSub, { marginTop: 1, color: "rgba(255,255,255,0.3)" }]}>
+        SESSION CUMULATIVE ({report.cumulativePercentage?.toFixed(1)}%)
+      </Text>
+      {report.cumulativeTermsCount && report.cumulativeTermsCount < 3 ? (
+        <Text style={{ fontSize: 6, color: "rgba(245,158,11,0.7)", fontStyle: "italic", marginTop: 1 }}>
+          based on {report.cumulativeTermsCount} of 3 terms
+        </Text>
+      ) : null}
+    </>
+  ) : null}
       </View>
     </View>
   );
@@ -835,6 +856,11 @@ function SubjectsTable({
             ]}
           >
             <Text>{subject.subjectName}</Text>
+            {subject.subjectPosition === 1 ? (
+    <Text style={{ fontSize: 6, color: "#f59e0b", fontFamily: "Helvetica-Bold", marginTop: 1 }}>
+      ★ Best in Class
+    </Text>
+  ) : null}
           </View>
           {/* Test — center */}
           <View style={[S.colTest, S.tdCell, { alignItems: "center" }]}>
@@ -1229,6 +1255,25 @@ function PageFooter({
   );
 }
 
+function PageWatermark({ logoBase64 }: { logoBase64: string }) {
+  return (
+    <View
+      style={{
+        position: "absolute",
+        top: 300,
+        left: 187,
+        width: 220,
+        height: 220,
+      }}
+    >
+      <Image
+        src={logoBase64 || SCHOOL_LOGO_URL}
+        style={{ width: 220, height: 220, opacity: 0.07 }}
+      />
+    </View>
+  );
+}
+
 // ─── ReportCardDocument ───────────────────────────────────────────
 function ReportCardDocument({
   report,
@@ -1253,6 +1298,7 @@ function ReportCardDocument({
     >
       {/* ══ PAGE 1 ══ */}
       <Page size="A4" style={S.page}>
+        <PageWatermark logoBase64={assets.logoBase64} />
         <PageHeader
           showQR
           qrDataUrl={assets.qrDataUrl}
@@ -1300,6 +1346,7 @@ function ReportCardDocument({
         )}
 
         <PageFooter report={report} signatureBase64={assets.signatureBase64} />
+        <PageWatermark logoBase64={assets.logoBase64} />
       </Page>
 
       {/* ══ PAGE 2 ══ */}
@@ -1352,6 +1399,7 @@ function ReportCardDocument({
             report={report}
             signatureBase64={assets.signatureBase64}
           />
+          <PageFooter report={report} signatureBase64={assets.signatureBase64} />
         </Page>
       )}
     </Document>

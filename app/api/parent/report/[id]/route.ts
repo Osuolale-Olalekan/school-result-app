@@ -89,11 +89,14 @@ export async function GET(
     // ── Hydrate latest profile photo ──────────────────────────────────────
     const StudentModel = (await import("@/models/Student")).default;
     const freshStudent = await StudentModel.findById(typedReport.student.toString())
-      .select("profilePhoto")
+      .select("profilePhoto dateOfBirth")
       .lean();
 
-    const freshPhoto = (freshStudent as unknown as { profilePhoto?: string })?.profilePhoto;
-    const snapshot = report.studentSnapshot as Record<string, unknown>;
+    // const freshPhoto = (freshStudent as unknown as { profilePhoto?: string })?.profilePhoto;
+    // const snapshot = report.studentSnapshot as Record<string, unknown>;
+
+    const freshData = freshStudent as unknown as { profilePhoto?: string; dateOfBirth?: string };
+const snapshot = report.studentSnapshot as Record<string, unknown>;
 
     // ── Resolve live student counts ───────────────────────────────────────
     const cls = report.class as { _id: { toString(): string } } | null;
@@ -135,20 +138,37 @@ export async function GET(
     }
     // ─────────────────────────────────────────────────────────────────────
 
+    // return NextResponse.json({
+    //   success: true,
+    //   data: {
+    //     ...report,
+    //     studentSnapshot: freshPhoto
+    //       ? { ...snapshot, profilePhoto: freshPhoto }
+    //       : snapshot,
+    //     principalSignature: schoolSettings?.principalSignature ?? null,
+    //     schoolStamp: schoolSettings?.schoolStamp ?? null,
+    //     totalStudentsInClass,
+    //     totalStudentsInDept,
+    //     overallPosition,
+    //   },
+    // });
+
     return NextResponse.json({
-      success: true,
-      data: {
-        ...report,
-        studentSnapshot: freshPhoto
-          ? { ...snapshot, profilePhoto: freshPhoto }
-          : snapshot,
-        principalSignature: schoolSettings?.principalSignature ?? null,
-        schoolStamp: schoolSettings?.schoolStamp ?? null,
-        totalStudentsInClass,
-        totalStudentsInDept,
-        overallPosition,
-      },
-    });
+  success: true,
+  data: {
+    ...report,
+    studentSnapshot: {
+      ...snapshot,
+      ...(freshData?.profilePhoto && { profilePhoto: freshData.profilePhoto }),
+      ...(freshData?.dateOfBirth && { dateOfBirth: freshData.dateOfBirth }),
+    },
+    principalSignature: schoolSettings?.principalSignature ?? null,
+    schoolStamp: schoolSettings?.schoolStamp ?? null,
+    totalStudentsInClass,
+    totalStudentsInDept,
+    overallPosition,
+  },
+});
 
   } catch (error) {
     console.error("Get report error:", error);

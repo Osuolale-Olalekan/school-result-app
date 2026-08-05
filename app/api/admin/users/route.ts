@@ -94,6 +94,7 @@ export async function GET(
   .skip((page - 1) * limit)
   .limit(limit)
   .populate("currentClass", "name section")
+  .populate("pendingClass", "name")   // ← add this line
   .populate("parents", "surname firstName otherName")
   .populate({
     path: "children",

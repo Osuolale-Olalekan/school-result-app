@@ -48,7 +48,15 @@ interface ReportSummary {
     maxTotalScore: number;
     grade: string;
     remark: string;
+    subjectPosition?:number;
   }>;
+
+  // ── NEW: cumulative fields (only populated on 3rd-term reports) ──
+  cumulativePercentage?: number;
+  cumulativeGrade?: string;
+  cumulativePosition?: number;
+  cumulativeOverallPosition?: number;
+  cumulativeTermsCount?: number;
 }
 
 interface Session {
@@ -281,6 +289,7 @@ export default function AdminReportsView() {
     }
   }
 
+  
   return (
     <div className="space-y-5">
       <div>
@@ -449,6 +458,40 @@ export default function AdminReportsView() {
           </div>
         ) : (
           <>
+          {/* ── NEW: Subject Toppers, shown above the table ── */}
+            {reports.length > 0 && (() => {
+              const toppers = new Map<string, { subjectName: string; studentName: string; totalScore: number; maxTotalScore: number }>();
+              reports.forEach((r) => {
+                r.subjects?.forEach((s) => {
+                  if (s.subjectPosition === 1) {
+                    toppers.set(s.subject, {
+                      subjectName: s.subjectName,
+                      studentName: `${r.studentSnapshot.surname} ${r.studentSnapshot.firstName}`,
+                      totalScore: s.totalScore,
+                      maxTotalScore: s.maxTotalScore,
+                    });
+                  }
+                });
+              });
+              if (toppers.size === 0) return null;
+              return (
+                <div className="p-4 sm:p-5 border-b border-gray-50">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
+                    🏆 Subject Toppers
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {[...toppers.values()].map((t) => (
+                      <div key={t.subjectName} className="bg-amber-50 border border-amber-100 rounded-xl p-2.5">
+                        <p className="text-xs text-amber-600 font-semibold">{t.subjectName}</p>
+                        <p className="text-sm font-medium text-gray-800">{t.studentName}</p>
+                        <p className="text-xs text-gray-500">{t.totalScore}/{t.maxTotalScore}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+            
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -542,6 +585,12 @@ export default function AdminReportsView() {
                                   {report.totalStudentsInClass} overall
                                 </p>
                               )}
+                               {/* ── NEW ── */}
+  {report.termName === "third" && report.cumulativeOverallPosition ? (
+    <p className="text-xs text-purple-600 font-medium mt-0.5">
+      Cum: {report.cumulativeOverallPosition}/{report.totalStudentsInClass} ({report.cumulativePercentage?.toFixed(1)}%)
+    </p>
+  ) : null}
                           </td>
                           <td className="px-4 py-3.5">
                             <span
@@ -726,6 +775,31 @@ export default function AdminReportsView() {
                     </div>
                   </div>
 
+                  {/* ── NEW: cumulative block, 3rd term only ── */}
+{previewReport.termName === "third" && previewReport.cumulativeOverallPosition ? (
+  <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+    <p className="text-xs text-purple-500 uppercase tracking-wide mb-1 font-semibold">
+      Session Cumulative (All 3 Terms)
+    </p>
+    <div className="flex items-baseline gap-3">
+      <span className="font-bold text-purple-700 text-xl">
+        {previewReport.cumulativePercentage?.toFixed(1)}%
+      </span>
+      <span className="text-sm text-purple-600">
+        {previewReport.cumulativeOverallPosition}/{previewReport.totalStudentsInClass} overall
+        {previewReport.cumulativePosition && previewReport.cumulativePosition !== previewReport.cumulativeOverallPosition
+          ? ` · ${previewReport.cumulativePosition}/${previewReport.totalStudentsInDept} in dept`
+          : ""}
+      </span>
+    </div>
+    {previewReport.cumulativeTermsCount && previewReport.cumulativeTermsCount < 3 && (
+      <p className="text-xs text-purple-400 italic mt-1">
+        Based on {previewReport.cumulativeTermsCount} of 3 terms (student joined mid-session)
+      </p>
+    )}
+  </div>
+) : null}
+
                   <div className="flex items-center gap-2">
                     <span
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${STATUS_CONFIG[previewReport.status].color}`}
@@ -782,6 +856,9 @@ export default function AdminReportsView() {
                                 >
                                   <td className="px-4 py-2.5 font-medium text-gray-700">
                                     {s.subjectName}
+                                    {(s as { subjectPosition?: number }).subjectPosition === 1 && (
+    <span className="ml-1.5 text-[10px] text-amber-600 font-bold">★ Best</span>
+  )}
                                   </td>
                                   <td className="px-3 py-2.5 text-center text-gray-600">
                                     {s.testScore}

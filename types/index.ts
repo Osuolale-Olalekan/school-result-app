@@ -124,6 +124,7 @@ export interface ISubject extends BaseDocument {
   hasPractical: boolean;
   department: Department | "general";
   assignedClasses: string[];
+  // subjectPosition: number; // department-scoped rank for this subject
 }
 
 // ─── Class Assignment ─────────────────────────────────────────────────────────
@@ -152,6 +153,7 @@ export interface ISubjectScore {
   maxExamScore: number;
   maxPracticalScore: number;
   maxTotalScore: number;
+  subjectPosition?: number; // department-scoped rank for this subject
 }
 
 export interface IAttendance {
@@ -204,6 +206,14 @@ export interface IReportCard extends BaseDocument {
   paymentStatus: PaymentStatus;
   paidAt?: string;
   qrCode?: string;
+  // ── NEW: session-cumulative fields (populated on 3rd-term reports only) ──
+  cumulativeTotalObtained?: number;
+  cumulativeTotalObtainable?: number;
+  cumulativePercentage?: number;
+  cumulativeGrade?: string;
+  cumulativePosition?: number;
+  cumulativeOverallPosition?: number;
+  cumulativeTermsCount?: number;
 }
 
 // ─── Notification ─────────────────────────────────────────────────────────────

@@ -23,6 +23,7 @@ import { CLASS_PROGRESSION } from "@/lib/promotion";
 import { generateAIPrincipalComment } from "@/lib/aicomment";
 import type { ApiResponse } from "@/types";
 import { sendToAllPhones } from "@/lib/whatsapp";
+import { calculateGrade } from "@/lib/utils";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -157,6 +158,72 @@ async function resolveDeptCount(
   return count;
 }
 // ─────────────────────────────────────────────────────────────────────────────
+
+async function recalculateCumulativePositions(classId: string, sessionId: string): Promise<void> {
+  const thirdTermReports = await ReportCardModel.find({
+    class: classId, session: sessionId, termName: TermName.THIRD,
+    status: ReportStatus.APPROVED, // only rank students whose 3rd term is actually approved
+  }).lean();
+  if (thirdTermReports.length === 0) return;
+
+  const cumulativeData: Array<{
+    reportId: string; department: string;
+    totalObtained: number; totalObtainable: number; percentage: number;
+    termsCount: number;
+  }> = [];
+
+  for (const thirdReport of thirdTermReports) {
+    const allTermReports = await ReportCardModel.find({
+      student: thirdReport.student, session: sessionId,
+      status: ReportStatus.APPROVED, // ← only count approved terms
+    }).lean();
+
+    const totalObtained = allTermReports.reduce((sum, r) => sum + r.totalObtained, 0);
+    const totalObtainable = allTermReports.reduce((sum, r) => sum + r.totalObtainable, 0);
+    const percentage = totalObtainable > 0 ? (totalObtained / totalObtainable) * 100 : 0;
+
+    cumulativeData.push({
+      reportId: thirdReport._id.toString(),
+      department: (thirdReport.studentSnapshot as { department?: string })?.department ?? "none",
+      totalObtained, totalObtainable, percentage,
+      termsCount: allTermReports.length,
+    });
+  }
+
+  const eligibleForRanking = cumulativeData.filter((d) => d.termsCount >= 2);
+  const overallSorted = [...eligibleForRanking].sort((a, b) => b.percentage - a.percentage);
+  const overallRank = new Map<string, number>();
+  overallSorted.forEach((d, i) => overallRank.set(d.reportId, i + 1));
+
+  const departments = [...new Set(eligibleForRanking.map((d) => d.department))];
+  const meaningfulDepts = departments.filter((d) => d !== "none");
+  const shouldSplitByDept = meaningfulDepts.length >= 1 && departments.length > 1;
+
+  const deptRank = new Map<string, number>();
+  if (shouldSplitByDept) {
+    for (const dept of departments) {
+      eligibleForRanking
+        .filter((d) => d.department === dept)
+        .sort((a, b) => b.percentage - a.percentage)
+        .forEach((d, i) => deptRank.set(d.reportId, i + 1));
+    }
+  } else {
+    overallSorted.forEach((d, i) => deptRank.set(d.reportId, i + 1));
+  }
+
+  for (const d of cumulativeData) {
+    const { grade } = calculateGrade(d.percentage);
+    await ReportCardModel.findByIdAndUpdate(d.reportId, {
+      cumulativeTotalObtained: d.totalObtained,
+      cumulativeTotalObtainable: d.totalObtainable,
+      cumulativePercentage: d.percentage,
+      cumulativeGrade: grade,
+      cumulativeTermsCount: d.termsCount,
+      cumulativePosition: deptRank.get(d.reportId) ?? 0,
+      cumulativeOverallPosition: overallRank.get(d.reportId) ?? 0,
+    });
+  }
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -295,6 +362,27 @@ export async function PATCH(
       }
 
       await report.save();
+
+      // ── NEW: if THIS report is a 3rd term report, its own cumulative numbers
+// are now stale — wipe them so nobody sees an outdated cumulative while
+// this report sits in Draft awaiting correction/re-approval.
+// if (report.termName === TermName.THIRD) {
+//   report.cumulativeTotalObtained = undefined;
+//   report.cumulativeTotalObtainable = undefined;
+//   report.cumulativePercentage = undefined;
+//   report.cumulativeGrade = undefined;
+//   report.cumulativePosition = undefined;
+//   report.cumulativeOverallPosition = undefined;
+//   report.cumulativeTermsCount = undefined;
+//   await report.save();
+// }
+
+// This handles OTHER students' 3rd-term reports in the same class whose
+// cumulative was built partly from this now-revoked term:
+await recalculateCumulativePositions(
+  report.class.toString(),
+  report.session.toString(),
+);
 
       // Notify teacher
       await createNotification({
@@ -462,7 +550,7 @@ export async function PATCH(
         message: "Report approved",
       });
 
-      // ── REVOKE ────────────────────────────────────────────────────────────────
+    // ── REVOKE ────────────────────────────────────────────────────────────────
     } else if (action === "revoke") {
       if (
         report.status !== ReportStatus.APPROVED &&
@@ -487,19 +575,31 @@ export async function PATCH(
       report.status = ReportStatus.DRAFT;
       report.declineReason = `[REVOKED BY ADMIN] ${revokeReason.trim()}`;
       report.approvedBy = undefined;
-      // report.approvedAt = undefined;
       report.principalComment = undefined;
       report.isPromoted = undefined;
       report.promotedToClass = undefined;
 
-      // ADD THIS
-      console.log("REVOKE SAVE:", {
-        id: report._id,
-        status: report.status,
-        declineReason: report.declineReason,
-        revokeReason,
-      });
       await report.save();
+
+      // ── Clear stale cumulative fields if THIS report is the 3rd term ──────
+      if (report.termName === TermName.THIRD) {
+        report.cumulativeTotalObtained = undefined;
+        report.cumulativeTotalObtainable = undefined;
+        report.cumulativePercentage = undefined;
+        report.cumulativeGrade = undefined;
+        report.cumulativePosition = undefined;
+        report.cumulativeOverallPosition = undefined;
+        report.cumulativeTermsCount = undefined;
+        await report.save();
+      }
+
+      // ── Recalculate cumulative for other students in this class+session ───
+      // (covers the case where a 1st/2nd term revoke affects OTHER students'
+      // already-approved 3rd term cumulative numbers)
+      await recalculateCumulativePositions(
+        report.class.toString(),
+        report.session.toString(),
+      );
 
       // Notify the teacher who submitted it
       await createNotification({

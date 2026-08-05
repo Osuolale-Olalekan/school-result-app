@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/db";
 import { SessionModel, TermModel } from "@/models/Session";
 import ClassAssignmentModel from "@/models/ClassAssignment";
+import StudentModel from "@/models/Student"; // ← add this import
 import {
   AuditAction,
   SessionStatus,
@@ -73,6 +74,43 @@ export async function PATCH(
           { session: id },
           { isActive: false },
         );
+      }
+
+      // ── NEW: when a session goes ACTIVE, batch-apply all pending promotions ──
+      // Students promoted mid-session sit with a `pendingClass` until this moment.
+      // This atomically moves everyone's pendingClass → currentClass at once,
+      // so no promoted student appears in a new class's roster before the new
+      // session actually begins.
+      if (body.status === SessionStatus.ACTIVE) {
+        const rolloverResult = await StudentModel.updateMany(
+          { pendingClass: { $ne: null } },
+          [
+            {
+              $set: {
+                currentClass: "$pendingClass",
+                department: {
+                  $cond: [
+                    { $ne: ["$pendingDepartment", null] },
+                    "$pendingDepartment",
+                    "$department",
+                  ],
+                },
+                pendingClass: null,
+                pendingDepartment: null,
+              },
+            },
+          ],
+        );
+
+        await createAuditLog({
+          actorId: session.user.id,
+          actorName: `${session.user.surname} ${session.user.firstName} ${session.user.otherName}`,
+          actorRole: UserRole.ADMIN,
+          action: AuditAction.PROMOTE,
+          entity: "Student",
+          entityId: "bulk",
+          description: `Rolled over ${rolloverResult.modifiedCount} pending student promotion(s) into their new classes as session ${academicSession.name} became active`,
+        });
       }
 
       await createAuditLog({

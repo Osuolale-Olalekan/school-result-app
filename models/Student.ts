@@ -11,6 +11,8 @@ export interface IStudentDocument extends Document {
   guardianName?: string;
   guardianPhone?: string;
   currentClass: mongoose.Types.ObjectId;
+  pendingClass?: mongoose.Types.ObjectId | null;       // ← add
+  pendingDepartment?: Department | null;
   department: Department;
   studentStatus: StudentStatus;
   parents: mongoose.Types.ObjectId[];
@@ -33,6 +35,8 @@ const StudentSchema = new Schema<IStudentDocument>(
     guardianName: { type: String },
     guardianPhone: { type: String },
     currentClass: { type: Schema.Types.ObjectId, ref: "Class", required: true },
+    pendingClass: { type: Schema.Types.ObjectId, ref: "Class", default: null },     // ← add
+    pendingDepartment: { type: String, enum: Object.values(Department), default: null }, // ← add
     department: { type: String, enum: Object.values(Department), default: Department.NONE },
     studentStatus: { type: String, enum: Object.values(StudentStatus), default: StudentStatus.ACTIVE },
     parents: [{ type: Schema.Types.ObjectId, ref: "parent" }],

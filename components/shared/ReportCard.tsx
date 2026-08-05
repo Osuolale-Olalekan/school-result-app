@@ -24,7 +24,7 @@ const SCHOOL_LOGO_URL =
 
 const A4_W = 794;
 const A4_H = 1123;
-const TWO_PAGE_THRESHOLD = 24;
+const TWO_PAGE_THRESHOLD = 35;
 
 const HEADER_H = 140;
 const STUDENT_STRIP_H = 100;
@@ -36,9 +36,13 @@ const ATTENDANCE_COMMENTS_H = 136;
 const FOOTER_H = 48;
 
 
+// const FIXED_TOTAL =
+//   HEADER_H + STUDENT_STRIP_H + TABLE_TITLE_H + TABLE_HEADER_H +
+//   TABLE_FOOTER_H + GRADE_SCALE_H + FOOTER_H;
+
 const FIXED_TOTAL =
   HEADER_H + STUDENT_STRIP_H + TABLE_TITLE_H + TABLE_HEADER_H +
-  TABLE_FOOTER_H + GRADE_SCALE_H + FOOTER_H;
+  TABLE_FOOTER_H + GRADE_SCALE_H + ATTENDANCE_COMMENTS_H + FOOTER_H;
 
 function fixFlexAlignment(el: HTMLElement) {
   const style = el.style;
@@ -187,10 +191,7 @@ export default function ReportCardComponent({
 
   const availableForRows = A4_H - FIXED_TOTAL - conditionalH;
 
-  const singlePageRowHeight = Math.min(
-    26,
-    Math.max(20, Math.floor(availableForRows / Math.max(report.subjects.length, 1))),
-  );
+ const singlePageRowHeight = Math.min(26, Math.max(14, Math.floor(availableForRows / report.subjects.length)));
 
   const twoPageAvailableForRows =
     A4_H - HEADER_H - STUDENT_STRIP_H - TABLE_TITLE_H - TABLE_HEADER_H - TABLE_FOOTER_H - FOOTER_H - 40;
@@ -395,6 +396,7 @@ export default function ReportCardComponent({
                   </div>
                 </div>
               </>
+              
             ) : (
               // ── Single row: overall position only (Primary / JSS) ───────────
               <div>
@@ -411,6 +413,31 @@ export default function ReportCardComponent({
                 </div>
               </div>
             )}
+
+             {/* ── NEW: cumulative row — sits BELOW the ternary above, shown regardless of hasDeptRanking ── */}
+  {isThirdTerm && report.cumulativeOverallPosition ? (
+    <>
+      <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "4px 0" }} />
+      <div>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 2 }}>
+          <span style={{ color: "#f59e0b", fontWeight: "bold", fontSize: 12 }}>
+            {getOrdinal(report.cumulativeOverallPosition)}
+          </span>
+          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 8.5 }}>
+            {" "}/ {report.totalStudentsInClass}
+          </span>
+        </div>
+        <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.3 }}>
+          SESSION CUMULATIVE ({report.cumulativePercentage?.toFixed(1)}%)
+        </div>
+        {report.cumulativeTermsCount && report.cumulativeTermsCount < 3 && (
+          <div style={{ fontSize: 6.5, color: "rgba(245,158,11,0.7)", fontStyle: "italic", marginTop: 1 }}>
+            based on {report.cumulativeTermsCount} of 3 terms
+          </div>
+        )}
+      </div>
+    </>
+  ) : null}
           </div>
         </div>
       </div>
@@ -475,8 +502,11 @@ export default function ReportCardComponent({
           <tbody>
             {report.subjects.map((subject: ISubjectScore, i) => (
               <tr key={subject.subject} style={{ background: i % 2 === 0 ? "white" : "#fafbfc" }}>
-                <td style={{ padding: `${Math.max(2, (rowHeight - 14) / 2)}px 7px`, borderBottom: "1px solid #f0f4f8", fontWeight: "500", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", verticalAlign: "middle", lineHeight: 1.2, fontSize: 10.5 }}>
+                <td style={{ padding: `${Math.max(1, (rowHeight - 14) / 2)}px 7px`, borderBottom: "1px solid #f0f4f8", fontWeight: "500", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", verticalAlign: "middle", lineHeight: 1.2, fontSize: 10.5 }}>
                   {subject.subjectName}
+                  {subject.subjectPosition === 1 && (
+    <span style={{ display: "block", fontSize: 8, color: "#f59e0b", fontWeight: "bold" }}>★ Best in Class</span>
+  )}
                 </td>
                 <td style={{ padding: "2px 4px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle", lineHeight: 1.2, fontSize: 10.5 }}>{subject.testScore}</td>
                 <td style={{ padding: "2px 4px", borderBottom: "1px solid #f0f4f8", textAlign: "center", verticalAlign: "middle", lineHeight: 1.2, fontSize: 10.5 }}>{subject.examScore}</td>
@@ -636,7 +666,7 @@ export default function ReportCardComponent({
 
     return (
       <div style={{ padding: "0 24px 7px", flexShrink: 0 }}>
-        <div style={{ padding: "8px 13px", borderRadius: 8, background: config.bg, border: `1px solid ${config.border}`, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ padding: "2px 13px", borderRadius: 8, background: config.bg, border: `1px solid ${config.border}`, display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 16, lineHeight: 1 }}>{config.icon}</span>
           <div>
             <p style={{ fontSize: 11.5, fontWeight: "bold", color: config.titleColor, margin: 0, lineHeight: 1.3 }}>{config.title}</p>

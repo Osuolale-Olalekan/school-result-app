@@ -16,6 +16,7 @@ export interface ISubjectScoreDocument {
   maxExamScore: number;
   maxPracticalScore: number;
   maxTotalScore: number;
+  subjectPosition?: number; // department-scoped rank for this subject
 }
 
 export interface IAttendanceDocument {
@@ -71,6 +72,13 @@ export interface IReportCardDocument extends Document {
   createdAt: Date;
   updatedAt: Date;
   principalSignature?: string;
+  cumulativeTotalObtained?: number;
+  cumulativeTotalObtainable?: number;
+  cumulativePercentage?: number;
+  cumulativeGrade?: string;
+  cumulativePosition?: number;        // dept-scoped, session-wide
+  cumulativeOverallPosition?: number; // class-wide, session-wide
+  cumulativeTermsCount?: number; // number of terms included in cumulative calculation
 }
 
 const SubjectScoreSchema = new Schema<ISubjectScoreDocument>(
@@ -89,6 +97,7 @@ const SubjectScoreSchema = new Schema<ISubjectScoreDocument>(
     maxExamScore: { type: Number, default: 70 },
     maxPracticalScore: { type: Number, default: 0 },
     maxTotalScore: { type: Number, default: 100 },
+    subjectPosition: { type: Number, default: 0 },
   },
   { _id: false }
 );
@@ -148,6 +157,13 @@ const ReportCardSchema = new Schema<IReportCardDocument>(
     paidAt: { type: Date },
     markedPaidBy: { type: Schema.Types.ObjectId, ref: "User" },
     qrCode: { type: String },
+    cumulativeTotalObtained: { type: Number },
+    cumulativeTotalObtainable: { type: Number },
+    cumulativePercentage: { type: Number },
+    cumulativeGrade: { type: String },
+    cumulativePosition: { type: Number },
+    cumulativeOverallPosition: { type: Number },
+    cumulativeTermsCount: { type: Number }, // ← ADD THIS — currently missing from schema
   },
   { timestamps: true }
 );

@@ -62,6 +62,7 @@ interface StudentSummary {
   department?: string;
   studentStatus: string;
   currentClass?: { name: string };
+  pendingClass?: { name: string } | null;  // ← add
   parents?: Array<{ _id: string; surname: string; firstName: string; otherName: string }>;
 }
 
@@ -274,8 +275,15 @@ function StudentsView({ onViewProfile }: { onViewProfile: (id: string) => void }
                     <span className="text-xs font-mono text-gray-600">{s.admissionNumber}</span>
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className="text-sm text-gray-700">{s.currentClass?.name ?? <span className="text-gray-300 italic">Unassigned</span>}</span>
-                  </td>
+  <span className="text-sm text-gray-700">
+    {s.currentClass?.name ?? <span className="text-gray-300 italic">Unassigned</span>}
+  </span>
+  {s.pendingClass && (
+    <span className="block text-xs text-amber-600 mt-0.5">
+      → {s.pendingClass.name} <span className="text-gray-400">(next session)</span>
+    </span>
+  )}
+</td>
                   <td className="px-4 py-3.5">
                     {s.department && s.department !== "none" ? (
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 capitalize">{s.department}</span>
@@ -339,8 +347,13 @@ function StudentsView({ onViewProfile }: { onViewProfile: (id: string) => void }
                 <p className="text-sm font-medium text-gray-900">{s.surname} {s.firstName} {s.otherName}</p>
                 <p className="text-xs text-gray-400 font-mono">{s.admissionNumber}</p>
                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                  {s.currentClass && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{s.currentClass.name}</span>}
-                  {s.department && s.department !== "none" && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full capitalize">{s.department}</span>}
+  {s.currentClass && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{s.currentClass.name}</span>}
+  {s.pendingClass && (
+    <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full">
+      → {s.pendingClass.name} (next session)
+    </span>
+  )}
+  {s.department && s.department !== "none" && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full capitalize">{s.department}</span>}
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                     s.studentStatus === "graduated" ? "bg-teal-100 text-teal-700"
                     : s.studentStatus === "active" ? "bg-emerald-100 text-emerald-700"
