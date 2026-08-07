@@ -108,8 +108,12 @@ async function handlePromotion(
     };
   }
 
+  // await StudentModel.findByIdAndUpdate(studentId, {
+  //   currentClass: nextClassDoc._id,
+  // });
+
   await StudentModel.findByIdAndUpdate(studentId, {
-    currentClass: nextClassDoc._id,
+    pendingClass: nextClassDoc._id,
   });
 
   return {
@@ -285,19 +289,21 @@ export async function PATCH(
 
       // ── Resolve dept count ──────────────────────────────────────────────
       const classId = report.class?.toString() ?? "";
-      const department = report.studentSnapshot?.department ?? "none";
+      // const department = report.studentSnapshot?.department ?? "none";
 
-      const totalInClass = classId
-        ? await UserModel.countDocuments({
-            $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
-            currentClass: new mongoose.Types.ObjectId(classId),
-            studentStatus: StudentStatus.ACTIVE,
-          })
-        : report.totalStudentsInClass;
+      // const totalInClass = classId
+      //   ? await UserModel.countDocuments({
+      //       $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
+      //       currentClass: new mongoose.Types.ObjectId(classId),
+      //       studentStatus: StudentStatus.ACTIVE,
+      //     })
+      //   : report.totalStudentsInClass;
 
-      const totalInDept = classId
-        ? await resolveDeptCount(classId, department, totalInClass)
-        : (report.totalStudentsInDept ?? report.totalStudentsInClass);
+      // const totalInDept = classId
+      //   ? await resolveDeptCount(classId, department, totalInClass)
+      //   : (report.totalStudentsInDept ?? report.totalStudentsInClass);
+      const totalInClass = report.totalStudentsInClass;
+const totalInDept = (report as unknown as { totalStudentsInDept?: number }).totalStudentsInDept ?? report.totalStudentsInClass;
       // ───────────────────────────────────────────────────────────────────
 
       // ── AI Comment ─────────────────────────────────────────────────────
@@ -722,29 +728,33 @@ export async function GET(
     }
 
     // ── Recalculate totalStudentsInClass and totalStudentsInDept live ────
-    const cls = report.class as { _id: { toString(): string } } | null;
-    const cId = cls?._id?.toString();
-    const snap = report.studentSnapshot as { department?: string } | undefined;
-    const department = snap?.department ?? "none";
+    // const cls = report.class as { _id: { toString(): string } } | null;
+    // const cId = cls?._id?.toString();
+    // const snap = report.studentSnapshot as { department?: string } | undefined;
+    // const department = snap?.department ?? "none";
 
-    let totalStudentsInClass = report.totalStudentsInClass;
-    let totalStudentsInDept =
-      (report as unknown as { totalStudentsInDept?: number })
-        .totalStudentsInDept ?? 0;
+    // let totalStudentsInClass = report.totalStudentsInClass;
+    // let totalStudentsInDept =
+    //   (report as unknown as { totalStudentsInDept?: number })
+    //     .totalStudentsInDept ?? 0;
 
-    if (cId) {
-      totalStudentsInClass = await UserModel.countDocuments({
-        $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
-        currentClass: new mongoose.Types.ObjectId(cId),
-        studentStatus: StudentStatus.ACTIVE,
-      });
+    // if (cId) {
+    //   totalStudentsInClass = await UserModel.countDocuments({
+    //     $or: [{ activeRole: UserRole.STUDENT }, { role: UserRole.STUDENT }],
+    //     currentClass: new mongoose.Types.ObjectId(cId),
+    //     studentStatus: StudentStatus.ACTIVE,
+    //   });
 
-      totalStudentsInDept = await resolveDeptCount(
-        cId,
-        department,
-        totalStudentsInClass,
-      );
-    }
+    //   totalStudentsInDept = await resolveDeptCount(
+    //     cId,
+    //     department,
+    //     totalStudentsInClass,
+    //   );
+    // }
+    const totalStudentsInClass = report.totalStudentsInClass;
+const totalStudentsInDept =
+  (report as unknown as { totalStudentsInDept?: number })
+    .totalStudentsInDept ?? 0;
     // ────────────────────────────────────────────────────────────────────
 
     // ── Hydrate latest profile photo from student document ───────────────

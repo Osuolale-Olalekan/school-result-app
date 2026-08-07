@@ -741,7 +741,7 @@ function StudentInfoStrip({
         )}
 
         {/* ── NEW: cumulative row — shown regardless of hasDeptRanking ── */}
-  {report.termName === TermName.THIRD && report.cumulativeOverallPosition ? (
+  {/* {report.termName === TermName.THIRD && report.cumulativeOverallPosition ? (
     <>
       <View style={{ width: "100%", height: 1, backgroundColor: "rgba(255,255,255,0.08)", marginVertical: 3 }} />
       <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "center" }}>
@@ -759,7 +759,7 @@ function StudentInfoStrip({
         </Text>
       ) : null}
     </>
-  ) : null}
+  ) : null} */}
       </View>
     </View>
   );

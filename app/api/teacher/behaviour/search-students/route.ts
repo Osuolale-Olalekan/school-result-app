@@ -33,20 +33,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: [] });
     }
 
-    // ── 2. Single query on UserModel — all student data lives here ────────
-    const regex = new RegExp(q, "i");
+    // ── 2. Split query into words — every word must match somewhere ───────
+    const words = q.split(/\s+/).filter(Boolean);
+    const wordConditions = words.map((word) => {
+      const regex = new RegExp(word, "i");
+      return {
+        $or: [
+          { firstName:       regex },
+          { surname:         regex },
+          { otherName:       regex },
+          { admissionNumber: regex },
+        ],
+      };
+    });
 
     const students = await UserModel.find(
       {
         currentClass:  { $in: assignedClassIds },
-        studentStatus: "active",                   // raw string — avoids enum mismatch
-        $or: [
-          { firstName:       regex },
-          { surname:         regex },
-          { admissionNumber: regex },
-        ],
+        studentStatus: "active",
+        $and: wordConditions,
       },
-      { firstName: 1, surname: 1, admissionNumber: 1, currentClass: 1 }
+      { firstName: 1, surname: 1, otherName: 1, admissionNumber: 1, currentClass: 1 }
     )
       .populate("currentClass", "name")
       .limit(10)

@@ -77,15 +77,28 @@ export async function GET(
     const query: Record<string, unknown> = {};
     if (role) query.roles = role;
     if (status) query.status = status;
+
+    // if (search) {
+    //   query.$or = [
+    //     { surname: { $regex: search, $options: "i" } },
+    //     { firstName: { $regex: search, $options: "i" } },
+    //     { otherName: { $regex: search, $options: "i" } },
+    //     { email: { $regex: search, $options: "i" } },
+    //     { admissionNumber: { $regex: search, $options: "i" } },
+    //   ];
+    // }
     if (search) {
-      query.$or = [
-        { surname: { $regex: search, $options: "i" } },
-        { firstName: { $regex: search, $options: "i" } },
-        { otherName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { admissionNumber: { $regex: search, $options: "i" } },
-      ];
-    }
+  const words = search.trim().split(/\s+/).filter(Boolean);
+  query.$and = words.map((word) => ({
+    $or: [
+      { surname: { $regex: word, $options: "i" } },
+      { firstName: { $regex: word, $options: "i" } },
+      { otherName: { $regex: word, $options: "i" } },
+      { email: { $regex: word, $options: "i" } },
+      { admissionNumber: { $regex: word, $options: "i" } },
+    ],
+  }));
+}
 
     const total = await UserModel.countDocuments(query);
     const users = await UserModel.find(query)

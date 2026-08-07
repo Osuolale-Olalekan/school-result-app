@@ -70,7 +70,6 @@ export async function generateAIPrincipalComment(
     subjects,
   } = input;
 
-  // Use dept count for position text when class is split by department (SSS)
   const positionTotal =
     totalStudentsInDept > 0 && totalStudentsInDept !== totalStudentsInClass
       ? totalStudentsInDept
@@ -80,9 +79,16 @@ export async function generateAIPrincipalComment(
     .map((s) => `${s.subjectName}: ${s.totalScore}/${s.maxTotalScore} (${s.grade})`)
     .join(", ");
 
+  const isThirdTerm = termName.toLowerCase() === "third";
+  const forwardLookingInstruction = isThirdTerm
+    ? `This is the THIRD (final) term of the academic session — do NOT say "next term". If ending with encouragement about the future, refer to "next session" or "the new session" instead, since the academic year is complete.`
+    : `This is the ${termName} term — you may reference "next term" if ending with forward-looking encouragement, since more terms remain this session.`;
+
   const prompt = `Write a 2-sentence school principal's report card comment. Be formal and concise.
 
 Facts: ${studentName}, ${className}, ${termName} term, ${percentage.toFixed(1)}%, position ${position} of ${positionTotal}, grade ${grade}, subjects: ${subjectSummary}.
+
+${forwardLookingInstruction}
 
 Rules:
 - Exactly 2 sentences, no more
@@ -134,9 +140,16 @@ export async function generateAITeacherComment(
     })
     .join(", ");
 
+  const isThirdTerm = termName.toLowerCase() === "third";
+  const forwardLookingInstruction = isThirdTerm
+    ? `This is the THIRD (final) term of the academic session — do NOT say "next term". If ending with encouragement or advice about the future, refer to "next session" instead, since the academic year is complete.`
+    : `This is the ${termName} term — you may reference "next term" if ending with forward-looking advice, since more terms remain this session.`;
+
   const prompt = `Write a 2-sentence class teacher's report card comment. Be warm but professional.
 
 Facts: ${studentName}, ${className}, ${termName} term, ${percentage.toFixed(1)}% overall. Scores: ${subjectSummary}.
+
+${forwardLookingInstruction}
 
 Rules:
 - Exactly 2 sentences

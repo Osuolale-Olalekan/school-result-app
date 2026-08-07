@@ -415,7 +415,7 @@ export default function ReportCardComponent({
             )}
 
              {/* ── NEW: cumulative row — sits BELOW the ternary above, shown regardless of hasDeptRanking ── */}
-  {isThirdTerm && report.cumulativeOverallPosition ? (
+  {/* {isThirdTerm && report.cumulativeOverallPosition ? (
     <>
       <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "4px 0" }} />
       <div>
@@ -437,7 +437,7 @@ export default function ReportCardComponent({
         )}
       </div>
     </>
-  ) : null}
+  ) : null} */}
           </div>
         </div>
       </div>
