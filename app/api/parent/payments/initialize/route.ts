@@ -15,6 +15,9 @@ import {
 import type { ApiResponse } from "@/types";
 import FeeStructureModel from "@/models/FeeStructure";
 import StudentModel from "@/models/Student";
+import { checkPaymentOrder } from "@/lib/paymentOrder";
+
+
 
 export async function POST(
   request: NextRequest,
@@ -134,6 +137,12 @@ export async function POST(
         { status: 400 },
       );
     }
+// Enforce in-order term payment
+const order = await checkPaymentOrder(studentId, sessionId, termId, type);
+if (!order.allowed) {
+  return NextResponse.json({ success: false, error: order.message }, { status: 409 });
+}
+    
 
     const reference = generatePaymentReference(studentId, `${termId}-${type}`);
 

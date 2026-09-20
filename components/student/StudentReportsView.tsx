@@ -31,6 +31,7 @@ interface ReportSummary {
   sessionName?: string;
   className?: string;
   underReview?: boolean;
+  paymentBlockedBy?: TermName | null;
 }
 
 interface FullReport extends IReportCard {
@@ -270,16 +271,17 @@ export default function StudentReportsView() {
                       )}
                     </div>
                   ) : report.isLocked && !report.underReview ? (
-  <div className="mt-1 space-y-0.5">
-    {!report.schoolFeesPaid && (
+                    <div className="mt-1 space-y-0.5">
+                      {!report.schoolFeesPaid && (
                         <p className="text-xs text-amber-600">
                           ⚠ School fees not confirmed
                         </p>
                       )}
                       {report.schoolFeesPaid && !report.reportCardPaid && (
                         <p className="text-xs text-gray-400">
-                          Pay ₦{REPORT_CARD_FEE.toLocaleString()} to unlock
-                          report card
+                          {report.paymentBlockedBy
+                            ? `Pay the ${report.paymentBlockedBy} term report card fee before this one`
+                            : `Pay ₦${REPORT_CARD_FEE.toLocaleString()} to unlock report card`}
                         </p>
                       )}
                       {report.reportCardPaid && !report.schoolFeesPaid && (
@@ -307,6 +309,13 @@ export default function StudentReportsView() {
                       <Eye className="w-3 h-3" />
                       View
                     </button>
+                  ) : report.schoolFeesPaid &&
+                    !report.reportCardPaid &&
+                    report.paymentBlockedBy ? (
+                    <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-gray-100 text-gray-500 text-xs font-medium">
+                      <Lock className="w-3 h-3" />
+                      Pay {report.paymentBlockedBy} term before this one
+                    </span>
                   ) : report.schoolFeesPaid && !report.reportCardPaid ? (
                     <button
                       onClick={() =>

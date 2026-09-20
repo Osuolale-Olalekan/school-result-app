@@ -1,0 +1,1 @@
+export const REPORT_CARD_FEE = 1000; // ₦

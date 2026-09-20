@@ -7,6 +7,7 @@ import PaymentRecordModel from "@/models/PaymentRecord";
 import UserModel from "@/models/User";
 import { PaymentStatus, ReportStatus, UserRole } from "@/types/enums";
 import type { ApiResponse } from "@/types";
+import { getTermPaymentStates } from "@/lib/paymentOrder";
 
 interface RouteParams {
   params: Promise<{ studentId: string }>;
@@ -70,6 +71,16 @@ export async function GET(
       .populate("class", "name section")
       .sort({ createdAt: -1 })
       .lean();
+
+      // Which earlier term (if any) must be paid first, per term
+const blockedByTerm = new Map<string, string | null>();
+const sessionIds = Array.from(
+  new Set(reports.map((r) => String((r.session as unknown as { _id: unknown })._id))),
+);
+for (const sid of sessionIds) {
+  const states = await getTermPaymentStates(studentId, sid, "report_card");
+  states.forEach((s) => blockedByTerm.set(s.termId, s.blockedBy));
+}
 
     // For each report, check BOTH payment records from PaymentRecordModel
     const safeReports = await Promise.all(
@@ -161,6 +172,7 @@ export async function GET(
             isLocked: true,
             reportCardPaid,
             schoolFeesPaid,
+            paymentBlockedBy: blockedByTerm.get(String(termObjId)) ?? null,
           };
         }
 

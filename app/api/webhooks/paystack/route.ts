@@ -43,21 +43,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const { reference, amount, metadata } = event.data;
       const { studentId, sessionId, termId, type } = metadata;
 
-      if (type === "report_card") {
-        // Update payment record
-        await PaymentRecordModel.findOneAndUpdate(
-          { paystackReference: reference },
-          {
-            $set: {
-              status: PaymentStatus.PAID,
-              amount: amount / 100,
-              paidAt: new Date(),
-              paymentMethod: "paystack",
-            },
+      // Mark the payment record as paid for EVERY payment type
+      // (school_fees and report_card)
+      await PaymentRecordModel.findOneAndUpdate(
+        { paystackReference: reference },
+        {
+          $set: {
+            status: PaymentStatus.PAID,
+            amount: amount / 100,
+            paidAt: new Date(),
+            paymentMethod: "paystack",
           },
-        );
+        },
+      );
 
-        // Unlock report card
+      // Only report card payments unlock the report card
+      if (type === "report_card") {
         await ReportCardModel.findOneAndUpdate(
           { student: studentId, session: sessionId, term: termId },
           {

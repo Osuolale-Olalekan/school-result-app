@@ -11,6 +11,8 @@ import {
 } from "@/lib/paystack";
 import type { ApiResponse } from "@/types";
 
+    import { checkPaymentOrder } from "@/lib/paymentOrder";
+
 export async function POST(
   request: NextRequest,
 ): Promise<NextResponse<ApiResponse<object>>> {
@@ -60,6 +62,13 @@ export async function POST(
         { status: 400 },
       );
     }
+
+// Enforce in-order term payment
+const order = await checkPaymentOrder(studentId, sessionId, termId, "report_card");
+
+if (!order.allowed) {
+  return NextResponse.json({ success: false, error: order.message }, { status: 409 });
+}
 
     const reference = generatePaymentReference(studentId, `${termId}-report_card`);
 

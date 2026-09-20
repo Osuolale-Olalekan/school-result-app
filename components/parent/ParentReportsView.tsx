@@ -36,6 +36,7 @@ interface ReportSummary {
   reportCardPaid: boolean;
   schoolFeesPaid: boolean;
   underReview?: boolean;
+  paymentBlockedBy?: TermName | null;
 }
 
 interface PaymentModalState {
@@ -467,6 +468,11 @@ export default function ParentReportsView() {
                       <span className="text-xs text-blue-500 font-medium">
                         Awaiting school fees
                       </span>
+                      ) : report.paymentBlockedBy ? (
+  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-500 text-xs font-medium">
+    <Lock className="w-3.5 h-3.5" />
+    Pay {report.paymentBlockedBy} term before this one
+  </span>
                     ) : (
                       <button
                         onClick={() =>
