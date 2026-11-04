@@ -164,14 +164,41 @@ export default function ParentPaymentHistory() {
     void fetchHistory();
   }, [fetchHistory]);
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   const params = new URLSearchParams(window.location.search);
+  //   if (params.get("verified") === "1") {
+  //     toast.success("Payment verified successfully!");
+  //     void fetchFeeInfo(true);
+  //     void fetchHistory();
+  //     window.history.replaceState({}, "", window.location.pathname);
+  //   }
+  // }, [fetchFeeInfo, fetchHistory]);
+
+    useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("verified") === "1") {
-      toast.success("Payment verified successfully!");
+    const reference = params.get("reference") ?? params.get("trxref");
+    if (params.get("verified") !== "1" && !reference) return;
+
+    window.history.replaceState({}, "", window.location.pathname);
+
+    (async () => {
+      if (reference) {
+        try {
+          const res = await fetch("/api/parent/payments/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reference }),
+          });
+          const json = await res.json();
+          if (json.success) toast.success("Payment verified successfully!");
+          else toast.error(json.error ?? "Could not verify payment");
+        } catch {
+          toast.error("Could not verify payment");
+        }
+      }
       void fetchFeeInfo(true);
       void fetchHistory();
-      window.history.replaceState({}, "", window.location.pathname);
-    }
+    })();
   }, [fetchFeeInfo, fetchHistory]);
 
   async function handlePaySchoolFees(childId: string, amount: number) {

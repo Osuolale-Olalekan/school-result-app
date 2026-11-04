@@ -1,5 +1,6 @@
 // app/api/parent/payments/verify/route.ts
 
+import UserModel from "@/models/User";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { connectDB } from "@/lib/db";
@@ -47,16 +48,41 @@ export async function POST(
     };
 
 
+    // await PaymentRecordModel.findOneAndUpdate(
+    //   { paystackReference: reference },
+    //   {
+    //     $set: {
+    //       status: PaymentStatus.PAID, // full payment via Paystack always completes it
+    //       amount: paystackResult.amount/100, // adds to any previous cash amount
+    //       paidAt: new Date(),
+    //       paymentMethod: "paystack",
+    //     },
+    //   },
+    // );
+
+     // Security: the payment must belong to one of this parent's children
+    const parent = (await UserModel.findById(session.user.id)
+      .select("children")
+      .lean()) as { children?: Array<{ toString(): string }> } | null;
+    if (!parent?.children?.some((c) => c.toString() === studentId)) {
+      return NextResponse.json(
+        { success: false, error: "Payment does not belong to your child" },
+        { status: 403 },
+      );
+    }
+
     await PaymentRecordModel.findOneAndUpdate(
-      { paystackReference: reference },
+      { student: studentId, session: sessionId, term: termId, type },
       {
         $set: {
-          status: PaymentStatus.PAID, // full payment via Paystack always completes it
-          amount: paystackResult.amount/100, // adds to any previous cash amount
+          status: PaymentStatus.PAID,
+          amount: paystackResult.amount / 100,
           paidAt: new Date(),
           paymentMethod: "paystack",
+          paystackReference: reference,
         },
       },
+      { upsert: true },
     );
 
     // If report card payment, unlock the report card

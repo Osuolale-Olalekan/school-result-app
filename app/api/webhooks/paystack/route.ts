@@ -45,16 +45,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       // Mark the payment record as paid for EVERY payment type
       // (school_fees and report_card)
-      await PaymentRecordModel.findOneAndUpdate(
-        { paystackReference: reference },
+      // await PaymentRecordModel.findOneAndUpdate(
+      //   { paystackReference: reference },
+      //   {
+      //     $set: {
+      //       status: PaymentStatus.PAID,
+      //       amount: amount / 100,
+      //       paidAt: new Date(),
+      //       paymentMethod: "paystack",
+      //     },
+      //   },
+      // );
+
+            await PaymentRecordModel.findOneAndUpdate(
+        { student: studentId, session: sessionId, term: termId, type },
         {
           $set: {
             status: PaymentStatus.PAID,
             amount: amount / 100,
             paidAt: new Date(),
             paymentMethod: "paystack",
+            paystackReference: reference,
           },
         },
+        { upsert: true },
       );
 
       // Only report card payments unlock the report card
@@ -66,8 +80,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
         );
       }
-    } catch (error) {
+    // } catch (error) {
+    //   console.error("Webhook processing error:", error);
+    // }
+        } catch (error) {
       console.error("Webhook processing error:", error);
+      return NextResponse.json({ error: "Processing failed" }, { status: 500 });
     }
   }
 

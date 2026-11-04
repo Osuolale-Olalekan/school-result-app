@@ -31,7 +31,7 @@ export interface IReportCardDocument extends Document {
   studentSnapshot: {
     surname: string;
     firstName: string;
-    otherName: string;
+    otherName?: string;
     admissionNumber: string;
     profilePhoto?: string;
     gender: "male" | "female";
@@ -118,7 +118,7 @@ const ReportCardSchema = new Schema<IReportCardDocument>(
     studentSnapshot: {
       surname: { type: String, required: true },
       firstName: { type: String, required: true },
-      otherName: { type: String, required: true },
+      otherName: { type: String, required: false },
       admissionNumber: { type: String, required: true },
       profilePhoto: { type: String },
       gender: { type: String, enum: ["male", "female"], required: true },

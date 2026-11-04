@@ -52,16 +52,30 @@ export async function POST(
       );
     }
 
-    await PaymentRecordModel.findOneAndUpdate(
-      { paystackReference: reference },
+    // await PaymentRecordModel.findOneAndUpdate(
+    //   { paystackReference: reference },
+    //   {
+    //     $set: {
+    //       status: PaymentStatus.PAID,
+    //       amount: paystackResult.amount / 100,
+    //       paidAt: new Date(),
+    //       paymentMethod: "paystack",
+    //     },
+    //   },
+    // );
+
+        await PaymentRecordModel.findOneAndUpdate(
+      { student: studentId, session: sessionId, term: termId, type },
       {
         $set: {
           status: PaymentStatus.PAID,
           amount: paystackResult.amount / 100,
           paidAt: new Date(),
           paymentMethod: "paystack",
+          paystackReference: reference,
         },
       },
+      { upsert: true },
     );
 
     if (type === "report_card") {
